@@ -1,0 +1,529 @@
+﻿PerformerExperimentID,FacilityID,EquipmentUnitID,DateOfSurvey,Timestamp (hyperspectral technologies only),StartTime,EndTime,SurveyTime,Gas,PlumeLength (hyperspectral technologies only),Kairos Flag for Dropped Passes or Uncertain Rate Quantification,FacilityEmissionRate,FacilityEmissionRateUpper,FacilityEmissionRateLower,UncertaintyType,WindSpeed,WindDirection,TransitDirection,NumberOfEmissionSourcesReported
+1,1,1,10/24/22,9:46:16,N/A,N/A,N/A,Methane,,,0,,,,,,N,N/A
+2,1,1,10/24/22,9:49:22,N/A,N/A,N/A,Methane,,,0,,,,,,S,N/A
+3,1,1,10/24/22,9:52:33,N/A,N/A,N/A,Methane,,Plane deviated from flightline,,,,,,,N,N/A
+4,1,1,10/24/22,9:55:42,N/A,N/A,N/A,Methane,,,17.57448,,,,4.25,159,S,N/A
+5,1,1,10/24/22,9:59:02,N/A,N/A,N/A,Methane,,,30.7568,,,,4.2,160,N,N/A
+6,1,1,10/24/22,10:02:04,N/A,N/A,N/A,Methane,,,119.00672,,,,4.15,160,S,N/A
+7,1,1,10/24/22,10:05:21,N/A,N/A,N/A,Methane,,,253.1824,,,,4.09,160,N,N/A
+8,1,1,10/24/22,10:08:22,N/A,N/A,N/A,Methane,,,128.58496,,,,4.04,160,S,N/A
+9,1,1,10/24/22,10:11:38,N/A,N/A,N/A,Methane,,,0,,,,,,N,N/A
+10,1,1,10/24/22,10:14:38,N/A,N/A,N/A,Methane,,,0,,,,,,S,N/A
+11,1,1,10/24/22,10:17:54,N/A,N/A,N/A,Methane,,,0,,,,,,N,N/A
+12,1,1,10/24/22,10:20:59,N/A,N/A,N/A,Methane,,,11.50552,,,,3.8,161,S,N/A
+13,1,1,10/24/22,10:24:13,N/A,N/A,N/A,Methane,,,18.436,,,,3.75,161,N,N/A
+14,1,1,10/24/22,10:27:12,N/A,N/A,N/A,Methane,,,0,,,,,,S,N/A
+15,1,1,10/24/22,10:30:28,N/A,N/A,N/A,Methane,,PARTIAL DETECTION,PD,,,,3.63,161,N,N/A
+16,1,1,10/24/22,10:33:39,N/A,N/A,N/A,Methane,,,0,,,,,,S,N/A
+17,1,1,10/24/22,10:36:53,N/A,N/A,N/A,Methane,,,0,,,,,,N,N/A
+18,1,1,10/24/22,10:40:00,N/A,N/A,N/A,Methane,,,31.02192,,,,3.46,161,S,N/A
+19,1,1,10/24/22,10:43:18,N/A,N/A,N/A,Methane,,,55.4736,,,,3.41,161,N,N/A
+20,1,1,10/24/22,10:46:21,N/A,N/A,N/A,Methane,,,22.92096,,,,3.36,161,S,N/A
+21,1,1,10/24/22,10:49:37,N/A,N/A,N/A,Methane,,,149.85984,,,,3.31,161,N,N/A
+22,1,1,10/24/22,10:52:40,N/A,N/A,N/A,Methane,,,213.39264,,,,3.27,161,S,N/A
+23,1,1,10/24/22,10:57:59,N/A,N/A,N/A,Methane,,,140.61312,,,,3.21,161,N,N/A
+24,1,1,10/24/22,11:01:12,N/A,N/A,N/A,Methane,,,67.00464,,,,3.18,161,S,N/A
+25,1,1,10/24/22,11:04:31,N/A,N/A,N/A,Methane,,,72.9816,,,,3.15,161,N,N/A
+26,1,1,10/24/22,11:07:34,N/A,N/A,N/A,Methane,,,190.568,,,,3.13,161,S,N/A
+27,1,1,10/24/22,11:10:51,N/A,N/A,N/A,Methane,,,0,,,,,,N,N/A
+28,1,1,10/24/22,11:13:54,N/A,N/A,N/A,Methane,,Cutoff - low confidence quantification,702.2544,,,,3.08,161,S,N/A
+29,1,1,10/24/22,11:17:18,N/A,N/A,N/A,Methane,,Excessive methane pooling near site,,,,,,,N,N/A
+30,1,1,10/24/22,11:20:26,N/A,N/A,N/A,Methane,,Excessive methane pooling near site,,,,,,,S,N/A
+31,1,1,10/24/22,11:23:39,N/A,N/A,N/A,Methane,,Cutoff - low confidence quantification,720.60696,,,,3.04,161,N,N/A
+32,1,1,10/24/22,11:26:41,N/A,N/A,N/A,Methane,,,447.5488,,,,3.04,161,S,N/A
+33,1,1,10/24/22,11:29:54,N/A,N/A,N/A,Methane,,,367.09632,,,,3.03,161,N,N/A
+34,1,1,10/24/22,11:33:04,N/A,N/A,N/A,Methane,,Excessive methane pooling near site,,,,,,,S,N/A
+35,1,1,10/24/22,11:39:07,N/A,N/A,N/A,Methane,,,146.66496,,,,3.02,161,N,N/A
+36,1,1,10/24/22,11:42:16,N/A,N/A,N/A,Methane,,,141.58144,,,,3.02,161,S,N/A
+37,1,1,10/24/22,11:45:34,N/A,N/A,N/A,Methane,,,128.63,,,,3.03,161,N,N/A
+38,1,1,10/24/22,11:48:36,N/A,N/A,N/A,Methane,,,19.36368,,,,3.03,161,S,N/A
+39,1,1,10/24/22,11:51:57,N/A,N/A,N/A,Methane,,,45.30288,,,,3.04,161,N,N/A
+40,1,1,10/24/22,11:55:01,N/A,N/A,N/A,Methane,,Excessive methane pooling over site,,,,,,,S,N/A
+41,1,1,10/24/22,11:58:14,N/A,N/A,N/A,Methane,,,4.79424,,,,3.04,161,N,N/A
+42,1,1,10/24/22,12:01:19,N/A,N/A,N/A,Methane,,,0,,,,,,S,N/A
+43,1,1,10/24/22,12:04:28,N/A,N/A,N/A,Methane,,,15.092,,,,3.07,162,N,N/A
+44,1,1,10/24/22,12:07:37,N/A,N/A,N/A,Methane,,,0,,,,,,S,N/A
+45,1,1,10/24/22,12:11:02,N/A,N/A,N/A,Methane,,,0,,,,,,N,N/A
+46,1,1,10/24/22,12:14:06,N/A,N/A,N/A,Methane,,,10.77712,,,,3.12,162,S,N/A
+47,1,1,10/24/22,12:17:24,N/A,N/A,N/A,Methane,,,18.24768,,,,3.15,163,N,N/A
+48,1,1,10/24/22,12:20:30,N/A,N/A,N/A,Methane,,,45.156,,,,3.17,163,S,N/A
+49,1,1,10/24/22,12:23:45,N/A,N/A,N/A,Methane,,,10.0672,,,,3.2,164,N,N/A
+50,1,1,10/24/22,12:26:51,N/A,N/A,N/A,Methane,,,4.55672,,,,3.22,164,S,N/A
+51,1,1,10/24/22,12:30:05,N/A,N/A,N/A,Methane,,,17.35552,,,,3.25,164,N,N/A
+52,1,1,10/24/22,12:33:08,N/A,N/A,N/A,Methane,,,15.91312,,,,3.28,165,S,N/A
+53,1,1,10/24/22,12:36:20,N/A,N/A,N/A,Methane,,,18.79176,,,,3.31,165,N,N/A
+54,1,1,10/24/22,12:39:22,N/A,N/A,N/A,Methane,,,0,,,,,,S,N/A
+55,1,1,10/24/22,12:42:34,N/A,N/A,N/A,Methane,,,13.01184,,,,3.37,166,N,N/A
+56,1,1,10/24/22,12:45:37,N/A,N/A,N/A,Methane,,,0,,,,,,S,N/A
+57,1,1,10/24/22,12:48:46,N/A,N/A,N/A,Methane,,,0,,,,,,N,N/A
+58,1,1,10/25/22,9:35:28,N/A,N/A,N/A,Methane,,,30.8416,,,,1.77,288,N,N/A
+59,1,1,10/25/22,9:38:31,N/A,N/A,N/A,Methane,,,34.58224,,,,1.79,288,S,N/A
+60,1,1,10/25/22,9:41:46,N/A,N/A,N/A,Methane,,,57.72888,,,,1.82,287,N,N/A
+61,1,1,10/25/22,9:44:54,N/A,N/A,N/A,Methane,,Excessive methane pooling over site,,,,,,,S,N/A
+62,1,1,10/25/22,9:48:06,N/A,N/A,N/A,Methane,,Excessive methane pooling over site,,,,,,,N,N/A
+63,1,1,10/25/22,9:51:13,N/A,N/A,N/A,Methane,,,7.37592,,,,1.88,286,S,N/A
+64,1,1,10/25/22,9:54:29,N/A,N/A,N/A,Methane,,,4.83936,,,,1.9,285,N,N/A
+65,1,1,10/25/22,9:57:35,N/A,N/A,N/A,Methane,,,11.05104,,,,1.92,284,S,N/A
+66,1,1,10/25/22,10:00:52,N/A,N/A,N/A,Methane,,,0,,,,,,N,N/A
+67,1,1,10/25/22,10:04:00,N/A,N/A,N/A,Methane,,,15.9344,,,,1.94,282,S,N/A
+68,1,1,10/25/22,10:07:16,N/A,N/A,N/A,Methane,,,14.3724,,,,1.94,280,N,N/A
+69,1,1,10/25/22,10:10:31,N/A,N/A,N/A,Methane,,Excessive methane pooling over site,,,,,,,S,N/A
+70,1,1,10/25/22,10:13:51,N/A,N/A,N/A,Methane,,Excessive methane pooling over site,,,,,,,N,N/A
+71,1,1,10/25/22,10:16:59,N/A,N/A,N/A,Methane,,Excessive methane pooling over site,,,,,,,S,N/A
+72,1,1,10/25/22,10:20:12,N/A,N/A,N/A,Methane,,,27.82816,,,,1.95,269,N,N/A
+73,1,1,10/25/22,10:23:22,N/A,N/A,N/A,Methane,,,18.49384,,,,1.95,265,S,N/A
+74,1,1,10/25/22,10:26:36,N/A,N/A,N/A,Methane,,,108.19776,,,,1.95,262,N,N/A
+75,1,1,10/25/22,10:29:47,N/A,N/A,N/A,Methane,,,89.6796,,,,1.94,258,S,N/A
+76,1,1,10/25/22,10:32:56,N/A,N/A,N/A,Methane,,,140.8008,,,,1.94,255,N,N/A
+77,1,1,10/25/22,10:36:04,N/A,N/A,N/A,Methane,,Excessive methane pooling over site,,,,,,,S,N/A
+78,1,1,10/25/22,10:39:20,N/A,N/A,N/A,Methane,,Excessive methane pooling over site,,,,,,,N,N/A
+79,1,1,10/25/22,10:42:26,N/A,N/A,N/A,Methane,,Excessive methane pooling over site,,,,,,,S,N/A
+80,1,1,10/25/22,10:45:43,N/A,N/A,N/A,Methane,,Excessive methane pooling over site,,,,,,,N,N/A
+81,1,1,10/25/22,10:48:48,N/A,N/A,N/A,Methane,,Excessive methane pooling over site,,,,,,,S,N/A
+82,1,1,10/25/22,10:52:10,N/A,N/A,N/A,Methane,,Excessive methane pooling near site,,,,,,,N,N/A
+83,1,1,10/25/22,10:55:18,N/A,N/A,N/A,Methane,,Excessive methane pooling over site,,,,,,,S,N/A
+84,1,1,10/25/22,10:58:33,N/A,N/A,N/A,Methane,,Excessive methane pooling near site,,,,,,,N,N/A
+85,1,1,10/25/22,11:01:38,N/A,N/A,N/A,Methane,,Excessive methane pooling over site,,,,,,,S,N/A
+86,1,1,10/25/22,11:04:54,N/A,N/A,N/A,Methane,,Excessive methane pooling over site,,,,,,,N,N/A
+87,1,1,10/25/22,11:08:04,N/A,N/A,N/A,Methane,,Excessive methane pooling over site,,,,,,,S,N/A
+88,1,1,10/25/22,11:11:22,N/A,N/A,N/A,Methane,,Excessive methane pooling over site,,,,,,,N,N/A
+89,1,1,10/25/22,11:14:25,N/A,N/A,N/A,Methane,,Excessive methane pooling over site,,,,,,,S,N/A
+90,1,1,10/25/22,11:17:40,N/A,N/A,N/A,Methane,,,44.94528,,,,1.82,227,N,N/A
+91,1,1,10/25/22,11:20:42,N/A,N/A,N/A,Methane,,Excessive methane pooling over site,,,,,,,S,N/A
+92,1,1,10/25/22,11:23:59,N/A,N/A,N/A,Methane,,,0,,,,,,N,N/A
+93,1,1,10/25/22,11:27:08,N/A,N/A,N/A,Methane,,,0,,,,,,S,N/A
+94,1,1,10/25/22,11:30:19,N/A,N/A,N/A,Methane,,,0,,,,,,N,N/A
+95,1,1,10/25/22,11:33:32,N/A,N/A,N/A,Methane,,,25.37208,,,,1.76,227,S,N/A
+96,1,1,10/25/22,11:36:53,N/A,N/A,N/A,Methane,,Cutoff - low confidence quantification,670.332,,,,1.74,227,N,N/A
+97,1,1,10/25/22,11:40:05,N/A,N/A,N/A,Methane,,Excessive methane pooling over site,,,,,,,S,N/A
+98,1,1,10/25/22,11:43:26,N/A,N/A,N/A,Methane,,Excessive methane pooling over site,,,,,,,N,N/A
+99,1,1,10/25/22,11:46:38,N/A,N/A,N/A,Methane,,Excessive methane pooling over site,,,,,,,S,N/A
+100,1,1,10/25/22,11:49:54,N/A,N/A,N/A,Methane,,,380.22,,,,1.68,226,N,N/A
+101,1,1,10/25/22,11:53:04,N/A,N/A,N/A,Methane,,Excessive methane pooling near site,,,,,,,S,N/A
+102,1,1,10/25/22,11:56:22,N/A,N/A,N/A,Methane,,,0,,,,,,N,N/A
+103,1,1,10/25/22,11:59:31,N/A,N/A,N/A,Methane,,,26.10696,,,,1.62,223,S,N/A
+104,1,1,10/25/22,12:02:47,N/A,N/A,N/A,Methane,,,14.18768,,,,1.6,222,N,N/A
+105,1,1,10/25/22,12:05:57,N/A,N/A,N/A,Methane,,,11.7576,,,,1.59,221,S,N/A
+106,1,1,10/25/22,12:09:08,N/A,N/A,N/A,Methane,,,19.17864,,,,1.57,219,N,N/A
+107,1,1,10/25/22,12:12:18,N/A,N/A,N/A,Methane,,,277.51968,,,,1.55,217,S,N/A
+108,1,1,10/25/22,12:15:37,N/A,N/A,N/A,Methane,,,133.99936,,,,1.52,215,N,N/A
+109,1,1,10/25/22,12:18:48,N/A,N/A,N/A,Methane,,Excessive methane pooling over site,,,,,,,S,N/A
+110,1,1,10/25/22,12:22:07,N/A,N/A,N/A,Methane,,,521.928,,,,1.48,212,N,N/A
+111,1,1,10/25/22,12:25:20,N/A,N/A,N/A,Methane,,,565.812,,,,1.45,210,S,N/A
+112,1,1,10/25/22,12:28:44,N/A,N/A,N/A,Methane,,,634.19752,,,,1.43,208,N,N/A
+113,1,1,10/25/22,12:31:53,N/A,N/A,N/A,Methane,,"Excessive methane pooling over site
+",,,,,,,S,N/A
+114,1,1,10/25/22,12:35:15,N/A,N/A,N/A,Methane,,Cutoff - low confidence quantification,41.81408,,,,1.38,205,N,N/A
+115,1,1,10/25/22,12:38:28,N/A,N/A,N/A,Methane,,Excessive methane pooling over site,,,,,,,S,N/A
+116,1,1,10/25/22,12:41:50,N/A,N/A,N/A,Methane,,Cutoff - low confidence quantification,274.5176,,,,1.33,202,N,N/A
+117,1,1,10/25/22,12:45:00,N/A,N/A,N/A,Methane,,Cutoff - low confidence quantification,490.22416,,,,1.31,201,S,N/A
+118,1,1,10/25/22,12:48:12,N/A,N/A,N/A,Methane,,Excessive methane pooling over site,,,,,,,N,N/A
+119,1,1,10/25/22,12:51:24,N/A,N/A,N/A,Methane,,,3.0324,,,,1.27,198,S,N/A
+120,1,1,10/25/22,12:54:38,N/A,N/A,N/A,Methane,,,2.94488,,,,1.26,197,N,N/A
+121,1,1,10/25/22,12:57:45,N/A,N/A,N/A,Methane,,,2.75776,,,,1.24,196,S,N/A
+122,1,1,10/25/22,13:01:02,N/A,N/A,N/A,Methane,,,122.45568,,,,1.23,194,N,N/A
+123,1,1,10/25/22,13:04:13,N/A,N/A,N/A,Methane,,,96.93024,,,,1.22,193,S,N/A
+124,1,1,10/25/22,13:07:27,N/A,N/A,N/A,Methane,,Excessive methane pooling over site,,,,,,,N,N/A
+125,1,1,10/25/22,13:10:31,N/A,N/A,N/A,Methane,,Cutoff - low confidence quantification,93.57088,,,,1.21,191,S,N/A
+126,1,1,10/25/22,13:13:50,N/A,N/A,N/A,Methane,,Excessive methane pooling near site,,,,,,,N,N/A
+127,1,1,10/25/22,13:16:56,N/A,N/A,N/A,Methane,,,0,,,,,,S,N/A
+128,1,1,10/25/22,13:20:10,N/A,N/A,N/A,Methane,,,3.9664,,,,1.2,186,N,N/A
+129,1,1,10/25/22,13:23:21,N/A,N/A,N/A,Methane,,,42.8268,,,,1.19,184,S,N/A
+130,1,1,10/25/22,13:26:35,N/A,N/A,N/A,Methane,,Excessive methane pooling over site,,,,,,,N,N/A
+131,1,1,10/25/22,13:29:41,N/A,N/A,N/A,Methane,,Excessive methane pooling over site,,,,,,,S,N/A
+132,1,1,10/25/22,13:33:00,N/A,N/A,N/A,Methane,,Plane deviated from flightpath,,,,,,,N,N/A
+133,1,1,10/26/22,9:39:47,N/A,N/A,N/A,Methane,,,0,,,,,,N,N/A
+134,1,1,10/26/22,9:42:56,N/A,N/A,N/A,Methane,,,0,,,,,,S,N/A
+135,1,1,10/26/22,9:46:11,N/A,N/A,N/A,Methane,,,0,,,,,,N,N/A
+136,1,1,10/26/22,9:49:18,N/A,N/A,N/A,Methane,,,0,,,,,,S,N/A
+137,1,1,10/26/22,9:52:32,N/A,N/A,N/A,Methane,,,0,,,,,,N,N/A
+138,1,1,10/26/22,9:55:40,N/A,N/A,N/A,Methane,,,7.392,,,,1.97,341,S,N/A
+139,1,1,10/26/22,9:58:46,N/A,N/A,N/A,Methane,,,7.8144,,,,1.97,342,N,N/A
+140,1,1,10/26/22,10:11:57,N/A,N/A,N/A,Methane,,,0,,,,,,S,N/A
+141,1,1,10/26/22,10:15:07,N/A,N/A,N/A,Methane,,,5.05744,,,,1.94,343,N,N/A
+142,1,1,10/26/22,10:18:18,N/A,N/A,N/A,Methane,,,0,,,,,,S,N/A
+143,1,1,10/26/22,10:21:29,N/A,N/A,N/A,Methane,,,5.24096,,,,1.93,343,N,N/A
+144,1,1,10/26/22,10:24:42,N/A,N/A,N/A,Methane,,,0,,,,,,S,N/A
+145,1,1,10/26/22,10:27:48,N/A,N/A,N/A,Methane,,,0,,,,,,N,N/A
+146,1,1,10/26/22,10:30:56,N/A,N/A,N/A,Methane,,,66.37488,,,,1.92,343,S,N/A
+147,1,1,10/26/22,10:34:04,N/A,N/A,N/A,Methane,,,85.55976,,,,1.92,343,N,N/A
+148,1,1,10/26/22,10:37:14,N/A,N/A,N/A,Methane,,,144.89904,,,,1.92,343,S,N/A
+149,1,1,10/26/22,10:40:28,N/A,N/A,N/A,Methane,,,67.74768,,,,1.92,343,N,N/A
+150,1,1,10/26/22,10:43:42,N/A,N/A,N/A,Methane,,,97.05696,,,,1.92,343,S,N/A
+151,1,1,10/26/22,10:46:51,N/A,N/A,N/A,Methane,,,48.1944,,,,1.92,343,N,N/A
+152,1,1,10/26/22,10:50:01,N/A,N/A,N/A,Methane,,,51.82344,,,,1.93,343,S,N/A
+153,1,1,10/26/22,10:53:09,N/A,N/A,N/A,Methane,,,53.42976,,,,1.93,343,N,N/A
+154,1,1,10/26/22,10:56:19,N/A,N/A,N/A,Methane,,,38.5392,,,,1.94,344,S,N/A
+155,1,1,10/26/22,10:59:29,N/A,N/A,N/A,Methane,,,45.24,,,,1.94,344,N,N/A
+156,1,1,10/26/22,11:02:42,N/A,N/A,N/A,Methane,,,675.95664,,,,1.96,345,S,N/A
+157,1,1,10/26/22,11:05:47,N/A,N/A,N/A,Methane,,Cutoff - low confidence quantification,1365.5488,,,,1.97,345,N,N/A
+158,1,1,10/26/22,11:08:58,N/A,N/A,N/A,Methane,,Excessive methane pooling near site,,,,,,,S,N/A
+159,1,1,10/26/22,11:12:03,N/A,N/A,N/A,Methane,,Excessive methane pooling near site,,,,,,,N,N/A
+160,1,1,10/26/22,11:15:15,N/A,N/A,N/A,Methane,,,1183.85696,,,,2.02,347,S,N/A
+161,1,1,10/26/22,11:18:26,N/A,N/A,N/A,Methane,,Cutoff - low confidence quantification,735.9352,,,,2.03,347,N,N/A
+162,1,1,10/26/22,11:21:39,N/A,N/A,N/A,Methane,,,1230.8128,,,,2.06,348,S,N/A
+163,1,1,10/26/22,11:24:48,N/A,N/A,N/A,Methane,,,1676.896,,,,2.07,349,N,N/A
+164,1,1,10/26/22,11:28:01,N/A,N/A,N/A,Methane,,,1073.97248,,,,2.1,349,S,N/A
+165,1,1,10/26/22,11:31:09,N/A,N/A,N/A,Methane,,Excessive methane pooling near site,,,,,,,N,N/A
+166,1,1,10/26/22,11:34:18,N/A,N/A,N/A,Methane,,Excessive methane pooling near site,,,,,,,S,N/A
+167,1,1,10/26/22,11:37:29,N/A,N/A,N/A,Methane,,,0,,,,,,N,N/A
+168,1,1,10/26/22,11:40:37,N/A,N/A,N/A,Methane,,,0,,,,,,S,N/A
+169,1,1,10/26/22,11:43:47,N/A,N/A,N/A,Methane,,,0,,,,,,N,N/A
+170,1,1,10/26/22,11:46:59,N/A,N/A,N/A,Methane,,,0,,,,,,S,N/A
+171,1,1,10/26/22,11:50:03,N/A,N/A,N/A,Methane,,,0,,,,,,N,N/A
+172,1,1,10/26/22,11:53:16,N/A,N/A,N/A,Methane,,,0,,,,,,S,N/A
+173,1,1,10/26/22,11:56:26,N/A,N/A,N/A,Methane,,,0,,,,,,N,N/A
+174,1,1,10/26/22,11:59:36,N/A,N/A,N/A,Methane,,,0,,,,,,S,N/A
+175,1,1,10/26/22,12:02:45,N/A,N/A,N/A,Methane,,,0,,,,,,N,N/A
+176,1,1,10/26/22,12:05:51,N/A,N/A,N/A,Methane,,,8.05896,,,,2.38,5,S,N/A
+177,1,1,10/26/22,12:09:02,N/A,N/A,N/A,Methane,,,11.1456,,,,2.41,8,N,N/A
+178,1,1,10/26/22,12:12:10,N/A,N/A,N/A,Methane,,,7.2072,,,,2.44,11,S,N/A
+179,1,1,10/26/22,12:15:22,N/A,N/A,N/A,Methane,,,6.624,,,,2.47,14,N,N/A
+180,1,1,10/26/22,12:18:35,N/A,N/A,N/A,Methane,,,0,,,,,,S,N/A
+181,1,1,10/26/22,12:21:46,N/A,N/A,N/A,Methane,,,17.176,,,,2.53,22,N,N/A
+182,1,1,10/26/22,12:25:02,N/A,N/A,N/A,Methane,,,0,,,,,,S,N/A
+183,1,1,10/26/22,12:28:08,N/A,N/A,N/A,Methane,,,0,,,,,,N,N/A
+184,1,1,10/26/22,12:31:15,N/A,N/A,N/A,Methane,,,0,,,,,,S,N/A
+185,1,1,10/26/22,12:34:27,N/A,N/A,N/A,Methane,,,0,,,,,,N,N/A
+186,1,1,10/26/22,12:37:38,N/A,N/A,N/A,Methane,,,0,,,,,,S,N/A
+187,1,1,10/26/22,12:40:57,N/A,N/A,N/A,Methane,,,9.47072,,,,2.7,46,N,N/A
+188,1,1,10/26/22,12:44:07,N/A,N/A,N/A,Methane,,,0,,,,,,S,N/A
+189,1,1,10/26/22,12:47:22,N/A,N/A,N/A,Methane,,,0,,,,,,N,N/A
+190,1,1,10/26/22,12:50:33,N/A,N/A,N/A,Methane,,,176.08472,,,,2.78,55,S,N/A
+191,1,1,10/26/22,12:53:45,N/A,N/A,N/A,Methane,,,110.15048,,,,2.81,57,N,N/A
+192,1,1,10/26/22,12:56:53,N/A,N/A,N/A,Methane,,Excessive methane pooling over site,,,,,,,S,N/A
+193,1,1,10/26/22,13:00:04,N/A,N/A,N/A,Methane,,Excessive methane pooling over site,,,,,,,N,N/A
+194,1,1,10/26/22,13:03:10,N/A,N/A,N/A,Methane,,,49.1748,,,,2.88,63,S,N/A
+195,1,1,10/26/22,13:06:18,N/A,N/A,N/A,Methane,,,45.72624,,,,2.91,64,N,N/A
+196,1,1,10/26/22,13:09:26,N/A,N/A,N/A,Methane,,Excessive methane pooling over site,,,,,,,S,N/A
+197,1,1,10/26/22,13:12:35,N/A,N/A,N/A,Methane,,,30.1872,,,,2.96,67,N,N/A
+198,1,1,10/26/22,13:15:41,N/A,N/A,N/A,Methane,,,12.89376,,,,2.98,68,S,N/A
+199,1,1,10/26/22,13:18:52,N/A,N/A,N/A,Methane,,,11.71968,,,,3,69,N,N/A
+200,1,1,10/26/22,13:21:59,N/A,N/A,N/A,Methane,,,10.34456,,,,3.03,71,S,N/A
+201,1,1,10/26/22,13:25:07,N/A,N/A,N/A,Methane,,,16.69536,,,,3.05,72,N,N/A
+202,1,1,10/26/22,13:28:19,N/A,N/A,N/A,Methane,,,16.59792,,,,3.07,73,S,N/A
+203,1,1,10/26/22,13:31:30,N/A,N/A,N/A,Methane,,,15.33472,,,,3.09,74,N,N/A
+204,1,1,10/26/22,13:34:41,N/A,N/A,N/A,Methane,,,11.7096,,,,3.12,74,S,N/A
+205,1,1,10/26/22,13:37:47,N/A,N/A,N/A,Methane,,,7.3008,,,,3.14,75,N,N/A
+206,1,1,10/26/22,13:40:55,N/A,N/A,N/A,Methane,,,0,,,,,,S,N/A
+207,1,1,10/27/22,9:37:23,N/A,N/A,N/A,Methane,,,0,,,,,,SE,N/A
+208,1,1,10/27/22,9:40:45,N/A,N/A,N/A,Methane,,,15.9572,,,,3.11,78,NW,N/A
+209,1,1,10/27/22,9:43:54,N/A,N/A,N/A,Methane,,Excessive methane pooling over site,,,,,,,SE,N/A
+210,1,1,10/27/22,9:47:10,N/A,N/A,N/A,Methane,,,26.80432,,,,3.21,87,NW,N/A
+211,1,1,10/27/22,9:50:18,N/A,N/A,N/A,Methane,,Excessive methane pooling over site,,,,,,,SE,N/A
+212,1,1,10/27/22,9:53:36,N/A,N/A,N/A,Methane,,,16.37624,,,,3.3,94,NW,N/A
+213,1,1,10/27/22,9:56:41,N/A,N/A,N/A,Methane,,,0,,,,,,SE,N/A
+214,1,1,10/27/22,10:00:00,N/A,N/A,N/A,Methane,,,0,,,,,,NW,N/A
+215,1,1,10/27/22,10:03:09,N/A,N/A,N/A,Methane,,,0,,,,,,SE,N/A
+216,1,1,10/27/22,10:06:27,N/A,N/A,N/A,Methane,,,0,,,,,,NW,N/A
+217,1,1,10/27/22,10:09:34,N/A,N/A,N/A,Methane,,,0,,,,,,SE,N/A
+218,1,1,10/27/22,10:12:52,N/A,N/A,N/A,Methane,,,70.8984,,,,3.46,104,NW,N/A
+219,1,1,10/27/22,10:15:57,N/A,N/A,N/A,Methane,,,60.41952,,,,3.47,105,SE,N/A
+220,1,1,10/27/22,10:19:12,N/A,N/A,N/A,Methane,,,0,,,,,,NW,N/A
+221,1,1,10/27/22,10:22:21,N/A,N/A,N/A,Methane,,,13.87952,,,,3.48,106,SE,N/A
+222,1,1,10/27/22,10:25:45,N/A,N/A,N/A,Methane,,,7.22912,,,,3.48,107,NW,N/A
+223,1,1,10/27/22,10:28:58,N/A,N/A,N/A,Methane,,,15.2684,,,,3.48,107,SE,N/A
+224,1,1,10/27/22,10:32:15,N/A,N/A,N/A,Methane,,,0,,,,,,NW,N/A
+225,1,1,10/27/22,10:35:24,N/A,N/A,N/A,Methane,,,10.608,,,,3.49,108,SE,N/A
+226,1,1,10/27/22,10:38:46,N/A,N/A,N/A,Methane,,,0,,,,,,NW,N/A
+227,1,1,10/27/22,10:41:52,N/A,N/A,N/A,Methane,,,0,,,,,,SE,N/A
+228,1,1,10/27/22,10:45:11,N/A,N/A,N/A,Methane,,,24.52352,,,,3.5,109,NW,N/A
+229,1,1,10/27/22,10:48:21,N/A,N/A,N/A,Methane,,,17.81248,,,,3.5,110,SE,N/A
+230,1,1,10/27/22,10:51:40,N/A,N/A,N/A,Methane,,,25.8136,,,,3.52,110,NW,N/A
+231,1,1,10/27/22,10:54:46,N/A,N/A,N/A,Methane,,,0,,,,,,SE,N/A
+232,1,1,10/27/22,10:58:01,N/A,N/A,N/A,Methane,,,0,,,,,,NW,N/A
+233,1,1,10/27/22,11:01:09,N/A,N/A,N/A,Methane,,,0,,,,,,SE,N/A
+234,1,1,10/27/22,11:04:28,N/A,N/A,N/A,Methane,,,0,,,,,,NW,N/A
+235,1,1,10/27/22,11:07:44,N/A,N/A,N/A,Methane,,,294.12,,,,3.65,109,SE,N/A
+236,1,1,10/27/22,11:11:04,N/A,N/A,N/A,Methane,,,433.08832,,,,3.69,109,NW,N/A
+237,1,1,10/27/22,11:14:15,N/A,N/A,N/A,Methane,,,354.53088,,,,3.74,109,SE,N/A
+238,1,1,10/27/22,11:17:50,N/A,N/A,N/A,Methane,,,405.47968,,,,3.79,108,NW,N/A
+239,1,1,10/27/22,11:20:58,N/A,N/A,N/A,Methane,,,290.20456,,,,3.84,107,SE,N/A
+240,1,1,10/27/22,11:24:24,N/A,N/A,N/A,Methane,,,369.51304,,,,3.89,106,NW,N/A
+241,1,1,10/27/22,11:27:36,N/A,N/A,N/A,Methane,,,282.13616,,,,3.95,106,SE,N/A
+242,1,1,10/27/22,11:31:01,N/A,N/A,N/A,Methane,,,0,,,,,,NW,N/A
+243,1,1,10/27/22,11:34:09,N/A,N/A,N/A,Methane,,,0,,,,,,SE,N/A
+244,1,1,10/27/22,11:37:31,N/A,N/A,N/A,Methane,,,0,,,,,,NW,N/A
+245,1,1,10/27/22,11:40:34,N/A,N/A,N/A,Methane,,,0,,,,,,SE,N/A
+246,1,1,10/27/22,11:43:53,N/A,N/A,N/A,Methane,,,7.22688,,,,4.21,104,NW,N/A
+247,1,1,10/27/22,11:47:05,N/A,N/A,N/A,Methane,,,8.07296,,,,4.26,104,SE,N/A
+248,1,1,10/27/22,11:50:26,N/A,N/A,N/A,Methane,,,6.5416,,,,4.3,104,NW,N/A
+249,1,1,10/27/22,11:53:33,N/A,N/A,N/A,Methane,,Glare,,,,,,,SE,N/A
+250,1,1,10/27/22,11:56:58,N/A,N/A,N/A,Methane,,,4.8608,,,,4.38,105,NW,N/A
+251,1,1,10/27/22,12:00:06,N/A,N/A,N/A,Methane,,,29.37312,,,,4.41,106,SE,N/A
+252,1,1,10/27/22,12:03:29,N/A,N/A,N/A,Methane,,,12.80272,,,,4.44,108,NW,N/A
+253,1,1,10/27/22,12:06:40,N/A,N/A,N/A,Methane,,,9.03096,,,,4.47,109,SE,N/A
+254,1,1,10/27/22,12:10:00,N/A,N/A,N/A,Methane,,Cutoff - low confidence quantification,12.864,,,,4.49,112,NW,N/A
+255,1,1,10/27/22,12:13:13,N/A,N/A,N/A,Methane,,,0,,,,,,SE,N/A
+256,1,1,10/27/22,12:16:39,N/A,N/A,N/A,Methane,,,0,,,,,,NW,N/A
+257,1,1,10/27/22,12:19:47,N/A,N/A,N/A,Methane,,,6.99696,,,,4.55,120,SE,N/A
+258,1,1,10/27/22,12:23:15,N/A,N/A,N/A,Methane,,,8.0784,,,,4.56,124,NW,N/A
+259,1,1,10/27/22,12:26:22,N/A,N/A,N/A,Methane,,,8.184,,,,4.57,120,SE,N/A
+260,1,1,10/27/22,12:29:31,N/A,N/A,N/A,Methane,,PARTIAL DETECTION,PD,,,,,,NW,N/A
+261,1,1,10/27/22,12:32:38,N/A,N/A,N/A,Methane,,,0,,,,,,SE,N/A
+262,1,1,10/27/22,12:35:57,N/A,N/A,N/A,Methane,,,0,,,,,,NW,N/A
+263,1,1,10/27/22,12:39:05,N/A,N/A,N/A,Methane,,,0,,,,,,SE,N/A
+264,1,1,10/27/22,12:42:35,N/A,N/A,N/A,Methane,,,0,,,,,,NW,N/A
+265,1,1,10/27/22,12:45:42,N/A,N/A,N/A,Methane,,,0,,,,,,SE,N/A
+266,1,1,10/27/22,12:49:00,N/A,N/A,N/A,Methane,,,0,,,,,,NW,N/A
+267,1,1,10/27/22,12:52:09,N/A,N/A,N/A,Methane,,,0,,,,,,SE,N/A
+268,1,1,10/27/22,12:55:22,N/A,N/A,N/A,Methane,,,0,,,,,,NW,N/A
+269,1,1,10/27/22,12:58:28,N/A,N/A,N/A,Methane,,,0,,,,,,SE,N/A
+270,1,1,10/27/22,13:01:40,N/A,N/A,N/A,Methane,,,0,,,,,,NW,N/A
+271,1,1,10/27/22,13:04:44,N/A,N/A,N/A,Methane,,,0,,,,,,SE,N/A
+272,1,1,10/27/22,13:08:03,N/A,N/A,N/A,Methane,,,39.32712,,,,4.79,157,NW,N/A
+273,1,1,10/27/22,13:11:04,N/A,N/A,N/A,Methane,,,29.7252,,,,4.81,156,SE,N/A
+274,1,1,10/27/22,13:14:18,N/A,N/A,N/A,Methane,,,0,,,,,,NW,N/A
+275,1,1,10/28/22,9:41:12,N/A,N/A,N/A,Methane,,,16.72704,,,,3.86,254,E,N/A
+276,1,1,10/28/22,9:44:21,N/A,N/A,N/A,Methane,,,17.6088,,,,3.89,254,W,N/A
+277,1,1,10/28/22,9:47:43,N/A,N/A,N/A,Methane,,,0,,,,,,E,N/A
+278,1,1,10/28/22,9:50:53,N/A,N/A,N/A,Methane,,,0,,,,,,W,N/A
+279,1,1,10/28/22,9:54:17,N/A,N/A,N/A,Methane,,,0,,,,,,E,N/A
+280,1,1,10/28/22,9:57:25,N/A,N/A,N/A,Methane,,,0,,,,,,W,N/A
+281,1,1,10/28/22,10:00:48,N/A,N/A,N/A,Methane,,,32.72472,,,,4.04,255,E,N/A
+282,1,1,10/28/22,10:03:50,N/A,N/A,N/A,Methane,,,35.05528,,,,4.07,255,W,N/A
+283,1,1,10/28/22,10:07:10,N/A,N/A,N/A,Methane,,,0,,,,,,E,N/A
+284,1,1,10/28/22,10:10:17,N/A,N/A,N/A,Methane,,,0,,,,,,W,N/A
+285,1,1,10/28/22,10:13:39,N/A,N/A,N/A,Methane,,,0,,,,,,E,N/A
+286,1,1,10/28/22,10:16:43,N/A,N/A,N/A,Methane,,,0,,,,,,W,N/A
+287,1,1,10/28/22,10:20:05,N/A,N/A,N/A,Methane,,,0,,,,,,E,N/A
+288,1,1,10/28/22,10:23:05,N/A,N/A,N/A,Methane,,,0,,,,,,W,N/A
+289,1,1,10/28/22,10:26:29,N/A,N/A,N/A,Methane,,,0,,,,,,E,N/A
+290,1,1,10/28/22,10:29:30,N/A,N/A,N/A,Methane,,,9.78768,,,,4.34,256,W,N/A
+291,1,1,10/28/22,10:32:54,N/A,N/A,N/A,Methane,,,9.55504,,,,4.38,256,E,N/A
+292,1,1,10/28/22,10:35:56,N/A,N/A,N/A,Methane,,,10.6272,,,,4.4,257,W,N/A
+293,1,1,10/28/22,10:39:22,N/A,N/A,N/A,Methane,,,26.87592,,,,4.43,257,E,N/A
+294,1,1,10/28/22,10:42:29,N/A,N/A,N/A,Methane,,,12.7616,,,,4.46,257,W,N/A
+295,1,1,10/28/22,10:45:59,N/A,N/A,N/A,Methane,,,22.76544,,,,4.48,257,E,N/A
+296,1,1,10/28/22,10:49:03,N/A,N/A,N/A,Methane,,,26.71936,,,,4.5,257,W,N/A
+297,1,1,10/28/22,10:52:29,N/A,N/A,N/A,Methane,,,1844.0484,,,,4.51,258,E,N/A
+298,1,1,10/28/22,10:55:27,N/A,N/A,N/A,Methane,,Excessive methane pooling near site,,,,,,,W,N/A
+299,1,1,10/28/22,10:58:53,N/A,N/A,N/A,Methane,,,0,,,,,,E,N/A
+300,1,1,10/28/22,11:01:56,N/A,N/A,N/A,Methane,,,814.842,,,,4.54,259,W,N/A
+301,1,1,10/28/22,11:05:18,N/A,N/A,N/A,Methane,,,804.97032,,,,4.53,259,E,N/A
+302,1,1,10/28/22,11:08:16,N/A,N/A,N/A,Methane,,,0,,,,,,W,N/A
+303,1,1,10/28/22,11:11:40,N/A,N/A,N/A,Methane,,,800.01592,,,,4.51,260,E,N/A
+304,1,1,10/28/22,11:14:41,N/A,N/A,N/A,Methane,,,651.0832,,,,4.5,260,W,N/A
+305,1,1,10/28/22,11:18:05,N/A,N/A,N/A,Methane,,,8.33664,,,,4.48,260,E,N/A
+306,1,1,10/28/22,11:21:10,N/A,N/A,N/A,Methane,,,26.90608,,,,4.46,261,W,N/A
+307,1,1,10/28/22,11:24:29,N/A,N/A,N/A,Methane,,Excessive methane pooling near site,,,,,,,E,N/A
+308,1,1,10/28/22,11:27:32,N/A,N/A,N/A,Methane,,Excessive methane pooling near site,,,,,,,W,N/A
+309,1,1,10/28/22,11:30:56,N/A,N/A,N/A,Methane,,Excessive methane pooling near site,,,,,,,E,N/A
+310,1,1,10/28/22,11:33:56,N/A,N/A,N/A,Methane,,,15.834,,,,4.36,262,W,N/A
+311,1,1,10/28/22,11:37:13,N/A,N/A,N/A,Methane,,Excessive methane pooling near site,,,,,,,E,N/A
+312,1,1,10/28/22,11:40:18,N/A,N/A,N/A,Methane,,Excessive methane pooling near site,,,,,,,W,N/A
+313,1,1,10/28/22,11:43:39,N/A,N/A,N/A,Methane,,Excessive methane pooling near site,,,,,,,E,N/A
+314,1,1,10/28/22,11:46:46,N/A,N/A,N/A,Methane,,,13.16832,,,,4.23,264,W,N/A
+315,1,1,10/28/22,11:50:00,N/A,N/A,N/A,Methane,,,0,,,,,,E,N/A
+316,1,1,10/28/22,11:52:58,N/A,N/A,N/A,Methane,,,0,,,,,,W,N/A
+317,1,1,10/28/22,11:56:18,N/A,N/A,N/A,Methane,,,13.21736,,,,4.13,265,E,N/A
+318,1,1,10/28/22,11:59:27,N/A,N/A,N/A,Methane,,,358.9728,,,,4.09,266,W,N/A
+319,1,1,10/28/22,12:02:55,N/A,N/A,N/A,Methane,,Excessive methane pooling near site,,,,,,,E,N/A
+320,1,1,10/28/22,12:06:01,N/A,N/A,N/A,Methane,,,0,,,,,,W,N/A
+321,1,1,10/28/22,12:09:20,N/A,N/A,N/A,Methane,,,4.68336,,,,3.97,267,E,N/A
+322,1,1,10/28/22,12:12:30,N/A,N/A,N/A,Methane,,,0,,,,,,W,N/A
+323,1,1,10/28/22,12:15:56,N/A,N/A,N/A,Methane,,,0,,,,,,E,N/A
+324,1,1,10/28/22,12:18:59,N/A,N/A,N/A,Methane,,,0,,,,,,W,N/A
+325,1,1,10/28/22,12:22:18,N/A,N/A,N/A,Methane,,,8.5344,,,,3.76,270,E,N/A
+326,1,1,10/28/22,12:25:26,N/A,N/A,N/A,Methane,,,6.88896,,,,3.7,270,W,N/A
+327,1,1,10/28/22,12:28:43,N/A,N/A,N/A,Methane,,,61.0924,,,,3.64,271,E,N/A
+328,1,1,10/28/22,12:31:52,N/A,N/A,N/A,Methane,,,83.408,,,,3.59,272,W,N/A
+329,1,1,10/28/22,12:35:12,N/A,N/A,N/A,Methane,,Excessive methane pooling over site,,,,,,,E,N/A
+330,1,1,10/28/22,12:38:23,N/A,N/A,N/A,Methane,,Excessive methane pooling over site,,,,,,,W,N/A
+331,1,1,10/28/22,12:41:55,N/A,N/A,N/A,Methane,,,1129.63552,,,,3.42,273,E,N/A
+332,1,1,10/28/22,12:45:07,N/A,N/A,N/A,Methane,,,1159.4988,,,,3.38,274,W,N/A
+333,1,1,10/28/22,12:48:31,N/A,N/A,N/A,Methane,,,149.2384,,,,3.33,274,E,N/A
+334,1,1,10/28/22,12:51:35,N/A,N/A,N/A,Methane,,,65.88672,,,,3.29,275,W,N/A
+335,1,1,10/28/22,12:55:01,N/A,N/A,N/A,Methane,,,1127.58464,,,,3.25,275,E,N/A
+336,1,1,10/28/22,12:58:08,N/A,N/A,N/A,Methane,,,58.19912,,,,3.22,275,W,N/A
+337,1,1,10/28/22,13:01:31,N/A,N/A,N/A,Methane,,,70.11072,,,,3.2,276,E,N/A
+338,1,1,10/28/22,13:04:36,N/A,N/A,N/A,Methane,,Excessive methane pooling over site,,,,,,,W,N/A
+339,1,1,10/28/22,13:07:51,N/A,N/A,N/A,Methane,,Excessive methane pooling over site,,,,,,,E,N/A
+340,1,1,10/28/22,13:10:53,N/A,N/A,N/A,Methane,,Excessive methane pooling over site,,,,,,,W,N/A
+341,1,1,10/28/22,13:14:12,N/A,N/A,N/A,Methane,,Excessive methane pooling over site,,,,,,,E,N/A
+342,1,1,10/28/22,13:17:16,N/A,N/A,N/A,Methane,,Cutoff - low confidence quantification,1315.4192,,,,3.16,274,W,N/A
+343,1,1,10/28/22,13:20:43,N/A,N/A,N/A,Methane,,Excessive methane pooling near site,,,,,,,E,N/A
+344,1,1,10/28/22,13:23:50,N/A,N/A,N/A,Methane,,,7.6356,,,,3.16,273,W,N/A
+345,1,1,10/28/22,13:27:06,N/A,N/A,N/A,Methane,,,475.20016,,,,3.17,273,E,N/A
+346,1,1,10/28/22,13:30:10,N/A,N/A,N/A,Methane,,,556.924,,,,3.17,272,W,N/A
+347,1,1,10/28/22,13:33:34,N/A,N/A,N/A,Methane,,,468.15424,,,,3.18,271,E,N/A
+348,1,1,10/28/22,13:36:39,N/A,N/A,N/A,Methane,,,19.76352,,,,3.19,270,W,N/A
+349,1,1,10/28/22,13:39:57,N/A,N/A,N/A,Methane,,,149.15712,,,,3.2,270,E,N/A
+350,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+351,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+352,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+353,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+354,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+355,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+356,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+357,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+358,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+359,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+360,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+361,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+362,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+363,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+364,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+365,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+366,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+367,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+368,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+369,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+370,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+371,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+372,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+373,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+374,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+375,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+376,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+377,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+378,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+379,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+380,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+381,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+382,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+383,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+384,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+385,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+386,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+387,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+388,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+389,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+390,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+391,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+392,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+393,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+394,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+395,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+396,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+397,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+398,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+399,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+400,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+401,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+402,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+403,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+404,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+405,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+406,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+407,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+408,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+409,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+410,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+411,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+412,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+413,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+414,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+415,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+416,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+417,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+418,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+419,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+420,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+421,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+422,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+423,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+424,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+425,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+426,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+427,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+428,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+429,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+430,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+431,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+432,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+433,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+434,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+435,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+436,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+437,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+438,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+439,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+440,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+441,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+442,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+443,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+444,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+445,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+446,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+447,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+448,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+449,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+450,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+451,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+452,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+453,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+454,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+455,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+456,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+457,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+458,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+459,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+460,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+461,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+462,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+463,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+464,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+465,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+466,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+467,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+468,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+469,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+470,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+471,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+472,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+473,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+474,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+475,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+476,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+477,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+478,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+479,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+480,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+481,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+482,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+483,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+484,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+485,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+486,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+487,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+488,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+489,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+490,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+491,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+492,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+493,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+494,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+495,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+496,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+497,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+498,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+499,1,1,,,N/A,N/A,N/A,Methane,,,,,,,,,,N/A
+500,1,1,,,,,0:00,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,
