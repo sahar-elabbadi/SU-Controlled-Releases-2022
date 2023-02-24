@@ -7,8 +7,13 @@
 # > convert_utc
 # > convert_to_24hr_time
 
+
+# Notes: Use of the datetime module is very confusing as there is a datetime method and a datetime object. It is
+# important to consistently import in the same way, otherwise the two will get confused. See Solution here:
+# https://stackoverflow.com/questions/66431493/typeerror-descriptor-date-for-datetime-datetime-objects-doesnt-apply-to-a
+
 # Imports
-from datetime import datetime
+import datetime
 
 
 # Modules
@@ -27,7 +32,7 @@ def convert_utc(dt, delta_t):
 def convert_to_twentyfour(time):
     """Convert a string of format HH:MM AM/PM to 24 hour time. Used for converting GHGSat's reported timestamps
     from 12 hour time to 24 hour time. Output is of class datetime"""
-    time_12hr = str(datetime.strptime(time, '%I:%M %p'))
+    time_12hr = str(datetime.datetime.strptime(time, '%I:%M:%S %p'))
     time_24hr = time_12hr[-8:]
-    time_24hr = datetime.strptime(time_24hr, '%H:%M:%S')
+    time_24hr = datetime.datetime.strptime(time_24hr, '%H:%M:%S').time()
     return time_24hr
