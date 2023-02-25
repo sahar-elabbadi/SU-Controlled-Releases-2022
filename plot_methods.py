@@ -95,12 +95,12 @@ def plot_parity(operator, stage, x_data, y_data, y_index):
              marker='o',
              markersize=5,
              mfc='white',
-             label='Stage 1 data')
+             label=f'{operator} Stage {stage} data')
 
     # Set title
     plt.title(f'{operator} Stage {stage} Results ({sample_size} measurements)')
-    # Set axes
 
+    # Set axes
     ax.set(xlim=(0, largest_kgh),
            ylim=(0, largest_kgh),
            alpha=0.8)

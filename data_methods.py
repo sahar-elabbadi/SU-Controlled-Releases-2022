@@ -38,7 +38,8 @@ def load_clean_data():
 
     return cm_1, ghg_1, kairos_1_ls23
 
-#%% Load meter data
+
+# %% Load meter data
 
 def load_meter_data():
     # Carbon Mapper meter data
@@ -54,6 +55,21 @@ def load_meter_data():
     kairos_1_ls23_meter = pd.read_csv(kairos_path_meter)
 
     return cm_meter, ghg_meter, kairos_1_ls23_meter
+
+
+#%%
+def merge_meter_and_operator_data(operator_report, operator_meter):
+    """Merge operator report and operator meter dataframes and select overpasses which pass Stanford QC criteria.
+    Operator report dataframe should already have 'nan' values for quantification estimates that do not meet operator
+    QC criteria. Returns a combined dataframe matched by PerformerExperimentID"""
+    
+    # Merge the two data frames
+    combined_df = operator_report.merge(operator_meter, on='PerformerExperimentID')
+
+    # Filter based on overpasses that meet Stanford's QC criteria
+    combined_df = combined_df[(combined_df['QC: discard - from Stanford'] == 0)]
+    
+    return combined_df
 
 
 # %% Function to convert 24 hour datetime in AZ local time to 24 hour time in UTC
