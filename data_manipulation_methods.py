@@ -1,4 +1,4 @@
-# Script for methods used in data cleaning and manipulation
+# Script for methods used in data manipulating operator reported data and clean data
 # Author: Sahar H. El Abbadi
 # Date Created: 2023-02-22
 # Date Last Modified: 2023-02-24
