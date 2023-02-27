@@ -2,11 +2,12 @@
 # Note: all scripts in this file are meant to be run directly on the operator loaded data
 # Author: Sahar H. El Abbadi
 # Date Created: 2023-02-22
-# Date Last Modified: 2023-02-24
+# Date Last Modified: 2023-02-27
 
 # Methods in this file:
 # > clean_cm: clean Carbon Mapper data reports
 # > clean_ghgsat: clean GHGSat data reports
+# > clean_kairos: clean Kairos data reports
 
 # Imports
 import numpy as np
@@ -74,6 +75,10 @@ def clean_ghgsat(ghg_report, ghg_overpasses, ghg_stage):
     # Code variables for iterating in the for loop
     gh_overpasses = np.linspace(1, ghg_overpasses, ghg_overpasses)  # for indexing for loop
     overpass_list = []  # for generating all new rows
+
+    # Replace all "#VALUE!" and "N/A" entries with "nan":
+    ghg_report = ghg_report.replace(to_replace=['#VALUE!', 'N/A'], value=float("nan"))
+
     for overpass in gh_overpasses:
 
         # Convert local time to UTC
@@ -86,8 +91,11 @@ def clean_ghgsat(ghg_report, ghg_overpasses, ghg_stage):
         if ghg_report.loc[overpass - 1, "QC Flag "] == 1 or ghg_report.loc[overpass - 1, "QC Flag "] == 2:
             quantified = 1
             emission_rate = ghg_report.loc[overpass - 1, "FacilityEmissionRate"]
-            emission_upper = ghg_report.loc[overpass - 1, "FacilityEmissionRateUpper"]
-            emission_lower = ghg_report.loc[overpass - 1, "FacilityEmissionRateLower"]
+
+            # In Stage 2, GHGSat FacilityEmissionRateUpper and FacilityEmissionRateLower are importing as strings
+            # instead of floats. Convert to float here
+            emission_upper = float(ghg_report.loc[overpass - 1, "FacilityEmissionRateUpper"])
+            emission_lower = float(ghg_report.loc[overpass - 1, "FacilityEmissionRateLower"])
         else:
             quantified = 0
             emission_rate = float("nan")

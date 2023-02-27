@@ -30,17 +30,33 @@ def load_clean_data():
 
     # Carbon Mapper Stage 2
     cm_path_2 = pathlib.PurePath('01_clean_data', 'cm_2_clean.csv')
-    cm_1 = pd.read_csv(cm_path_2)
+    cm_2 = pd.read_csv(cm_path_2)
 
     # GHGSat Stage 1
     ghg_path_1 = pathlib.PurePath('01_clean_data', 'ghg_1_clean.csv')
     ghg_1 = pd.read_csv(ghg_path_1)
 
-    # Kairos Stage 1 Pod LS23
-    kairos_path_1 = pathlib.PurePath('01_clean_data', 'kairos_clean.csv')
-    kairos_1_ls23 = pd.read_csv(kairos_path_1)
+    # GHGSat Stage 2
+    ghg_path_2 = pathlib.PurePath('01_clean_data', 'ghg_2_clean.csv')
+    ghg_2 = pd.read_csv(ghg_path_2)
 
-    return cm_1, ghg_1, kairos_1_ls23
+    # Kairos Stage 1 Pod LS23
+    kairos_path_1_ls23 = pathlib.PurePath('01_clean_data', 'kairos_1_ls23_clean.csv')
+    kairos_1_ls23 = pd.read_csv(kairos_path_1_ls23)
+
+    # Kairos Stage 1 Pod LS25
+    kairos_path_1_ls25 = pathlib.PurePath('01_clean_data', 'kairos_1_ls25_clean.csv')
+    kairos_1_ls25 = pd.read_csv(kairos_path_1_ls25)
+
+    # Kairos Stage 2 Pod LS23
+    kairos_path_2_ls23 = pathlib.PurePath('01_clean_data', 'kairos_2_ls23_clean.csv')
+    kairos_2_ls23 = pd.read_csv(kairos_path_2_ls23)
+
+    # Kairos Stage 2 Pod LS25
+    kairos_path_2_ls25 = pathlib.PurePath('01_clean_data', 'kairos_2_ls25_clean.csv')
+    kairos_2_ls25 = pd.read_csv(kairos_path_2_ls25)
+
+    return cm_1, cm_2, ghg_1, ghg_2, kairos_1_ls23, kairos_1_ls25, kairos_2_ls23, kairos_2_ls25
 
 
 # %% Load meter data
