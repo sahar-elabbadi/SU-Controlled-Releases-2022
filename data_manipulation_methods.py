@@ -56,7 +56,16 @@ def load_clean_data():
     kairos_path_2_ls25 = pathlib.PurePath('01_clean_data', 'kairos_2_ls25_clean.csv')
     kairos_2_ls25 = pd.read_csv(kairos_path_2_ls25)
 
-    return cm_1, cm_2, ghg_1, ghg_2, kairos_1_ls23, kairos_1_ls25, kairos_2_ls23, kairos_2_ls25
+    # Kairos Stage 3 Pod LS23
+    kairos_path_3_ls23 = pathlib.PurePath('01_clean_data', 'kairos_3_ls23_clean.csv')
+    kairos_3_ls23 = pd.read_csv(kairos_path_3_ls23)
+
+    # Kairos Stage 3 Pod LS25
+    kairos_path_3_ls25 = pathlib.PurePath('01_clean_data', 'kairos_3_ls25_clean.csv')
+    kairos_3_ls25 = pd.read_csv(kairos_path_3_ls25)
+
+    return cm_1, cm_2, ghg_1, ghg_2, kairos_1_ls23, kairos_1_ls25, kairos_2_ls23, kairos_2_ls25, kairos_3_ls23, \
+        kairos_3_ls25
 
 
 # %% Load meter data
@@ -77,18 +86,18 @@ def load_meter_data():
     return cm_meter, ghg_meter, kairos_1_ls23_meter
 
 
-#%%
+# %%
 def merge_meter_and_operator_data(operator_report, operator_meter):
     """Merge operator report and operator meter dataframes and select overpasses which pass Stanford QC criteria.
     Operator report dataframe should already have 'nan' values for quantification estimates that do not meet operator
     QC criteria. Returns a combined dataframe matched by PerformerExperimentID"""
-    
+
     # Merge the two data frames
     combined_df = operator_report.merge(operator_meter, on='PerformerExperimentID')
 
     # Filter based on overpasses that meet Stanford's QC criteria
     combined_df = combined_df[(combined_df['QC: discard - from Stanford'] == 0)]
-    
+
     return combined_df
 
 
