@@ -25,11 +25,15 @@ import pathlib
 
 def load_clean_data():
     # Carbon Mapper Stage 1
-    cm_path_1 = pathlib.PurePath('01_clean_data', 'cm_clean.csv')
+    cm_path_1 = pathlib.PurePath('01_clean_data', 'cm_1_clean.csv')
     cm_1 = pd.read_csv(cm_path_1)
 
+    # Carbon Mapper Stage 2
+    cm_path_2 = pathlib.PurePath('01_clean_data', 'cm_2_clean.csv')
+    cm_1 = pd.read_csv(cm_path_2)
+
     # GHGSat Stage 1
-    ghg_path_1 = pathlib.PurePath('01_clean_data', 'ghg_clean.csv')
+    ghg_path_1 = pathlib.PurePath('01_clean_data', 'ghg_1_clean.csv')
     ghg_1 = pd.read_csv(ghg_path_1)
 
     # Kairos Stage 1 Pod LS23
