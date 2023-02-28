@@ -96,10 +96,40 @@ def clean_ghgsat(ghg_report, ghg_overpasses, ghg_stage):
         local_time = convert_to_twentyfour(local_time)
         utc_time = convert_utc(local_time, 7)
 
+        # Determine if a plume was detected or not
+
+        # If QCFlag is 1, conditions were good. Any N/A for quantification is thus a zero
+        if ghg_report.loc[overpass - 1, "QC Flag "] == 1:
+            if ghg_report.loc[overpass - 1, "FacilityEmissionRate"] > 0:
+                detected = True
+            else:
+                detected = False
+
+        # QCFlag 4 means diffuse emissions visible over site. GHGSat does not provide information on whether these
+        # estimates should be considered valid quantifications.
+        #
+        # If QCFlag == 4, and it is not quantified then I assume no detect. If it is quantified, I assume detect.
+        #
+        # Note: I compared with our QC criteria, and all QCFlag == 4 will be removed in Stanford's QC process
+
+        elif ghg_report.loc[overpass - 1, "QC Flag "] == 4:
+            if ghg_report.loc[overpass - 1, "FacilityEmissionRate"] == 'N/A':
+                detected = False
+            else:
+                detected = True
+
+        # QCFlag is 5 should be removed
+        elif ghg_report.loc[overpass - 1, "QC Flag "] == 5:
+            detected = 'discard'
+
+        # QCFlag of 2 or 3 both indicate a plume was detected, as per GHGSat definition in data submission
+        else:
+            detected = True
+
         # Determine if plume was quantified and set emission rate and uncertainty based on the reported QC flags by
         # GHGSat
         if ghg_report.loc[overpass - 1, "QC Flag "] == 1 or ghg_report.loc[overpass - 1, "QC Flag "] == 2:
-            quantified = 1
+            quantified = True
             emission_rate = ghg_report.loc[overpass - 1, "FacilityEmissionRate"]
 
             # In Stage 2, GHGSat FacilityEmissionRateUpper and FacilityEmissionRateLower are importing as strings
@@ -107,7 +137,7 @@ def clean_ghgsat(ghg_report, ghg_overpasses, ghg_stage):
             emission_upper = float(ghg_report.loc[overpass - 1, "FacilityEmissionRateUpper"])
             emission_lower = float(ghg_report.loc[overpass - 1, "FacilityEmissionRateLower"])
         else:
-            quantified = 0
+            quantified = False
             emission_rate = float("nan")
             emission_upper = float("nan")
             emission_lower = float("nan")
@@ -118,7 +148,6 @@ def clean_ghgsat(ghg_report, ghg_overpasses, ghg_stage):
 
         # GHGSat changed column  name for WindSpeed in Stage 2 to WindSpeed (LOCAL)
         # I believe this means this is the value for windspeed they are using from the data we provided
-
         if ghg_stage == 1:
             windspeed = ghg_report.loc[overpass - 1, "WindSpeed"]
         elif ghg_stage == 2:
@@ -132,6 +161,7 @@ def clean_ghgsat(ghg_report, ghg_overpasses, ghg_stage):
             'PerformerExperimentID': overpass,
             'DateOfSurvey': ghg_report.loc[overpass - 1, "DateOfSurvey"],
             'TimestampUTC': utc_time,
+            'Detected': detected,
             'QuantifiedPlume': quantified,
             'FacilityEmissionRate': emission_rate,
             'FacilityEmissionRateUpper': emission_upper,
@@ -167,12 +197,12 @@ def clean_kairos(kairos_report, kairos_overpasses, kairos_stage):
         kairos_quantified = kairos_report.loc[
             overpass - 1, "Kairos Flag for Dropped Passes or Uncertain Rate Quantification"]
         if pd.isna(kairos_quantified):
-            quantified = 1
+            quantified = True
             emission_rate = kairos_report.loc[overpass - 1, "FacilityEmissionRate"]
             emission_upper = kairos_report.loc[overpass - 1, "FacilityEmissionRateUpper"]
             emission_lower = kairos_report.loc[overpass - 1, "FacilityEmissionRateLower"]
         else:
-            quantified = 0
+            quantified = False
             emission_rate = float("nan")
             emission_upper = float("nan")
             emission_lower = float("nan")
@@ -194,12 +224,25 @@ def clean_kairos(kairos_report, kairos_overpasses, kairos_stage):
         else:
             qc_flag = 'ERROR! Identify misclassified QC'
 
+        # Determine if Kairos detected a plume or not Kairos reports zeros (character '0' for some reason) in the
+        # quantification column. FacilityEmissionRate is blank if there is a QC Flag. In some instances, there is a
+        # qnatification estimate with QC Flag KA-3 (cutoff, low confidence in quantification)
+
+        if qc_flag == 'clear':
+            if kairos_report.loc[overpass - 1, "FacilityEmissionRate"] == '0':
+                detected = False
+            else:
+                detected = True
+        else:
+            detected = 'discard'
+
         new_row = {
             'Operator': 'Kairos - LS23',
             'Stage': kairos_stage,
             'PerformerExperimentID': overpass,
             'DateOfSurvey': kairos_report.loc[overpass - 1, "DateOfSurvey"],
             'TimestampUTC': utc_time,
+            'Detected': detected,
             'QuantifiedPlume': quantified,
             'FacilityEmissionRate': emission_rate,
             'FacilityEmissionRateUpper': emission_upper,
