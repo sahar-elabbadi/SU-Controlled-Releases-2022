@@ -29,14 +29,23 @@ def clean_cm(cm_report, cm_overpasses, cm_stage):
 
         # Check if the quantification estimate is valid by passing Carbon Mapper's "Good Quality" criteria. Use
         # quantification estimates if valid, otherwise input nan
-        if cm_report.loc[overpass - 1, "CR plume present (Y/N)"] == "Y" and cm_report.loc[
-            overpass - 1, "Good Quality (Y/N)"] == "Y":
-            quantified = 1
+
+        # Detected data: if CR plume present = Y, plume is detected
+        if cm_report.loc[overpass - 1, "CR plume present (Y/N)"] == "Y":
+            detected = True
+        else:
+            detected = False
+
+        # Quantified data: CR plume present = Y and Good Quality = Y
+        if cm_report.loc[overpass - 1, "CR plume present (Y/N)"] == "Y" and cm_report.loc[overpass - 1, "Good Quality " \
+                                                                                                        "(Y/N)"] == "Y":
+            quantified = True
             emission_rate = cm_report.loc[overpass - 1, "Emission Rate (kg/hr)"]
             emission_upper = cm_report.loc[overpass - 1, "FacilityEmissionRateUpper"]
             emission_lower = cm_report.loc[overpass - 1, "FacilityEmissionRateLower"]
+
         else:
-            quantified = 0
+            quantified = False
             emission_rate = float("nan")
             emission_upper = float("nan")
             emission_lower = float("nan")
@@ -57,6 +66,7 @@ def clean_cm(cm_report, cm_overpasses, cm_stage):
             'PerformerExperimentID': overpass,
             'DateOfSurvey': cm_report.loc[overpass - 1, "DateOfSurvey"].strftime('%Y-%m-%d'),
             'TimestampUTC': utc_time,
+            'Detected': detected,
             'QuantifiedPlume': quantified,
             'FacilityEmissionRate': emission_rate,
             'FacilityEmissionRateUpper': emission_upper,
