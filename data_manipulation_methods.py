@@ -87,7 +87,7 @@ def load_meter_data():
 
 
 # %%
-def merge_meter_and_operator_data(operator_report, operator_meter):
+def apply_qc_filter(operator_report, operator_meter):
     """Merge operator report and operator meter dataframes and select overpasses which pass Stanford QC criteria.
     Operator report dataframe should already have 'nan' values for quantification estimates that do not meet operator
     QC criteria. Returns a combined dataframe matched by PerformerExperimentID"""
@@ -97,6 +97,9 @@ def merge_meter_and_operator_data(operator_report, operator_meter):
 
     # Filter based on overpasses that meet Stanford's QC criteria
     combined_df = combined_df[(combined_df['QC: discard - from Stanford'] == 0)]
+
+    # Filter based on operator QC criteria
+    combined_df = combined_df[(combined_df['OperatorKeep'] ==1)]
 
     return combined_df
 

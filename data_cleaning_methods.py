@@ -54,7 +54,13 @@ def clean_cm(cm_report, cm_overpasses, cm_stage):
         if cm_report.loc[overpass - 1, "Good Quality (Y/N)"] == "N":
             qc_flag = 'CM-1'
         else:
-            qc_flag = 'nan'
+            qc_flag = 'clear'
+
+        # Set OperatorKeep to True if operator keeps value, False if Operator discards based on QC Flag
+        if qc_flag == 'clear':
+            operator_kept = True
+        else:
+            operator_kept = False
 
         # Convert local time to UTC
         local_time = cm_report.loc[overpass - 1, "Timestamp (hyperspectral technologies only)"]
@@ -74,6 +80,7 @@ def clean_cm(cm_report, cm_overpasses, cm_stage):
             'UncertaintyType': '1-sigma',
             'OperatorWindspeed': cm_report.loc[overpass - 1, "WindSpeed (m/s)"],
             'QCFlag': qc_flag,
+            'OperatorKeep': operator_kept,
         }
         overpass_list.append(new_row)
     cm_clean = pd.DataFrame(overpass_list)
@@ -120,7 +127,7 @@ def clean_ghgsat(ghg_report, ghg_overpasses, ghg_stage):
 
         # QCFlag is 5 should be removed
         elif ghg_report.loc[overpass - 1, "QC Flag "] == 5:
-            detected = 'discard'
+            detected = False
 
         # QCFlag of 2 or 3 both indicate a plume was detected, as per GHGSat definition in data submission
         else:
@@ -146,6 +153,12 @@ def clean_ghgsat(ghg_report, ghg_overpasses, ghg_stage):
         ghg_flag = ghg_report.loc[overpass - 1, "QC Flag "]
         qc_flag = f'GH-{ghg_flag:1.0f}'
 
+        # Set OperatorKeep to True if operator keeps value, False if Operator discards based on QC Flag
+        if qc_flag in {'GH-1', 'GH-2', 'GH-3'}:
+            operator_kept = True
+        else:
+            operator_kept = False
+
         # GHGSat changed column  name for WindSpeed in Stage 2 to WindSpeed (LOCAL)
         # I believe this means this is the value for windspeed they are using from the data we provided
         if ghg_stage == 1:
@@ -169,6 +182,8 @@ def clean_ghgsat(ghg_report, ghg_overpasses, ghg_stage):
             'UncertaintyType': '1-sigma',
             'OperatorWindspeed': windspeed,
             'QCFlag': qc_flag,
+            'OperatorKeep': operator_kept,
+
         }
         overpass_list.append(new_row)
 
@@ -234,7 +249,13 @@ def clean_kairos(kairos_report, kairos_overpasses, kairos_stage):
             else:
                 detected = True
         else:
-            detected = 'discard'
+            detected = False
+
+        # Set OperatorKeep to True if operator keeps value, False if Operator discards based on QC Flag
+        if qc_flag == 'clear':
+            operator_kept = True
+        else:
+            operator_kept = False
 
         new_row = {
             'Operator': 'Kairos - LS23',
@@ -250,6 +271,8 @@ def clean_kairos(kairos_report, kairos_overpasses, kairos_stage):
             'UncertaintyType': 'nan',
             'OperatorWindspeed': kairos_report.loc[overpass - 1, "WindSpeed"],
             'QCFlag': qc_flag,
+            'OperatorKeep': operator_kept,
+
         }
         overpass_list.append(new_row)
 
