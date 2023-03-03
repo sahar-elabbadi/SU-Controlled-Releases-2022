@@ -105,7 +105,7 @@ def apply_qc_filter(operator_report, operator_meter):
     combined_df = combined_df[(combined_df['QC: discard - from Stanford'] == 0)]
 
     # Filter based on operator QC criteria
-    combined_df = combined_df[(combined_df['OperatorKeep'] ==1)]
+    combined_df = combined_df[(combined_df['OperatorKeep'] == 1)]
 
     return combined_df
 
