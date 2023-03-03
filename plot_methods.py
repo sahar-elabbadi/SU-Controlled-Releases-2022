@@ -23,6 +23,7 @@ def rand_jitter(input_list):
     delta = 0.2
     return input_list + np.random.randn(len(input_list)) * delta
 
+
 # %% Function: select_valid_overpasses
 
 # Inputs:
@@ -42,6 +43,27 @@ def select_valid_overpasses(operator_report, operator_meter):
     operator_plot = operator_plot[(operator_plot['QC: discard - from Stanford'] == 0)]
 
     return operator_plot
+
+
+# %% Operator abbreviations for saving
+
+def abbreviate_op_name(operator):
+    """Abbreviate operator name for saving files. Input names: 'Kairos', 'Carbon Mapper', 'GHGSat', 'Methane Air'.
+    Use because input to my functions will often be the operator name spelled out in full for plotting purposes,
+    while for saving I want the abbreviated name."""
+    if operator == "Carbon Mapper":
+        op_abb = 'cm'
+    elif operator == "GHGSat":
+        op_abb = 'ghg'
+    elif operator == 'Kairos':
+        op_abb = 'kairos'
+    elif operator == 'Methane Air':
+        op_abb = 'mair'
+    else:
+        print('Typo in operator name')
+        return
+
+    return op_abb
 
 
 # %% Function: plot_parity
@@ -65,7 +87,6 @@ def plot_parity(operator, stage, operator_report, operator_meter):
     y_data = operator_plot['FacilityEmissionRate']
     y_error = operator_plot['FacilityEmissionRateUpper'] - operator_plot['FacilityEmissionRate']
 
-
     # Fit linear regression via least squares with numpy.polyfit
     # m is slope, intercept is b
     m, b = np.polyfit(x_data[y_index], y_data[y_index], deg=1)
@@ -73,7 +94,7 @@ def plot_parity(operator, stage, operator_report, operator_meter):
     # Calculate R^2 value
     # (using method described here: https://www.askpython.com/python/coefficient-of-determination)
     correlation_matrix = np.corrcoef(x_data[y_index], y_data[y_index])
-    correlation = correlation_matrix[0,1]
+    correlation = correlation_matrix[0, 1]
     r2 = correlation ** 2
 
     # Number of valid overpasses:
@@ -148,14 +169,15 @@ def plot_parity(operator, stage, operator_report, operator_meter):
 
     # Save figure
     now = datetime.datetime.now()
+    op_ab = abbreviate_op_name(operator)
     save_time = now.strftime("%Y%m%d")
-    fig_name = f'parity_{operator}_stage{stage}_{save_time}'
+    fig_name = f'parity_{op_ab}_stage{stage}_{save_time}'
     fig_path = pathlib.PurePath('04_figures', fig_name)
     plt.savefig(fig_path)
     plt.show()
 
+    # %% Function: plot_detection_limit
 
-    #%% Function: plot_detection_limit
 
 # inputs:
 # operator: name of operator
@@ -165,7 +187,6 @@ def plot_parity(operator, stage, operator_report, operator_meter):
 # threshold: highest release rate in kgh to show in detection threshold graph
 
 def plot_detection_limit(operator, stage, operator_report, operator_meter, n_bins, threshold):
-
     # merge meter and operator reports and apply Stanford QC filter
     operator_df = apply_qc_filter(operator_report, operator_meter)
 
@@ -178,6 +199,7 @@ def plot_detection_limit(operator, stage, operator_report, operator_meter, n_bin
     operator_detection['non_zero_release'] = operator_df.release_rate_kgh != 0  # True if we conducted a release
     operator_detection['operator_detected'] = operator_df.Detected
     operator_detection['release_rate_kgh'] = operator_df.release_rate_kgh
+    operator_detection['operator_quantification'] = operator_df.FacilityEmissionRate
 
     # Select overpasses that are below the threshold of interest AND where release is non-zero
     operator_detection = operator_detection.loc[operator_detection.release_rate_kgh <= threshold].loc[
@@ -295,9 +317,13 @@ def plot_detection_limit(operator, stage, operator_report, operator_meter, n_bin
     # Save figure
     now = datetime.datetime.now()
     save_time = now.strftime("%Y%m%d")
-    fig_name = f'detect_limit_{operator}_stage{stage}_{save_time}'
+    op_ab = abbreviate_op_name(operator)
+    fig_name = f'detect_limit_{op_ab}_stage{stage}_{save_time}'
     fig_path = pathlib.PurePath('04_figures', fig_name)
     plt.savefig(fig_path)
     plt.show()
 
+    # Save data used to make plots
+    operator_detection.to_csv('01_clean_data', 'detect_probability_data', f'{op_ab}_{stage}_detect')
+    detection_prob.to_csv(('01_clean_data', 'detect_probability_data', f'{op_ab}_{stage}_bins'))
     return
