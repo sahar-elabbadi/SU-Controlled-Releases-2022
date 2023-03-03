@@ -4,9 +4,11 @@
 # Date Last Modified: 2023-02-24
 
 # List of methods in this file:
-# > convert_utc
-# > convert_to_24hr_time
-# > load_clean_data
+# > load_clean_data()
+# > load_meter_data()
+# > apply_qc_filter(operator_report, operator_meter)
+# > convert_utc(dt, delta_t)
+# > convert_to_twentyfour(time)
 
 
 # Notes: Use of the datetime module is very confusing as there is a datetime method and a datetime object. It is
