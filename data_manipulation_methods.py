@@ -34,6 +34,10 @@ def load_clean_data():
     cm_path_2 = pathlib.PurePath('01_clean_data', 'cm_2_clean.csv')
     cm_2 = pd.read_csv(cm_path_2)
 
+    # Carbon Mapper Stage 3
+    cm_path_3 = pathlib.PurePath('01_clean_data', 'cm_3_clean.csv')
+    cm_3 = pd.read_csv(cm_path_3)
+
     # GHGSat Stage 1
     ghg_path_1 = pathlib.PurePath('01_clean_data', 'ghg_1_clean.csv')
     ghg_1 = pd.read_csv(ghg_path_1)
@@ -66,7 +70,7 @@ def load_clean_data():
     kairos_path_3_ls25 = pathlib.PurePath('01_clean_data', 'kairos_3_ls25_clean.csv')
     kairos_3_ls25 = pd.read_csv(kairos_path_3_ls25)
 
-    return cm_1, cm_2, ghg_1, ghg_2, kairos_1_ls23, kairos_1_ls25, kairos_2_ls23, kairos_2_ls25, kairos_3_ls23, \
+    return cm_1, cm_2, cm_3, ghg_1, ghg_2, kairos_1_ls23, kairos_1_ls25, kairos_2_ls23, kairos_2_ls25, kairos_3_ls23, \
         kairos_3_ls25
 
 
