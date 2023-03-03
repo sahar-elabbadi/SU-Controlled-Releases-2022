@@ -256,7 +256,6 @@ def plot_detection_limit(operator, stage, operator_report, operator_meter, n_bin
         "n_data_points": bin_size,
         "n_detected": bin_num_detected})
 
-    # print(detection_prob)
     # Function will output cm_detection and detection_prob
 
     detection_plot = detection_prob.copy()
@@ -324,6 +323,6 @@ def plot_detection_limit(operator, stage, operator_report, operator_meter, n_bin
     plt.show()
 
     # Save data used to make plots
-    operator_detection.to_csv('01_clean_data', 'detect_probability_data', f'{op_ab}_{stage}_detect')
-    detection_prob.to_csv(('01_clean_data', 'detect_probability_data', f'{op_ab}_{stage}_bins'))
+    operator_detection.to_csv(pathlib.PurePath('01_clean_data', 'detect_probability_data', f'{op_ab}_{stage}_detect.csv'))
+    detection_prob.to_csv(pathlib.PurePath('01_clean_data', 'detect_probability_data', f'{op_ab}_{stage}_{threshold}kgh_{n_bins}bins.csv'))
     return
