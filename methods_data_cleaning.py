@@ -1,7 +1,7 @@
 # Script for methods used in data manipulating operator reported data and clean data
 # Author: Sahar H. El Abbadi
 # Date Created: 2023-02-22
-# Date Last Modified: 2023-02-24
+# Date Last Modified: 2023-03-02
 
 # List of methods in this file:
 # > load_clean_data()
@@ -78,15 +78,15 @@ def load_clean_data():
 
 def load_meter_data():
     # Carbon Mapper meter data
-    cm_path_meter = pathlib.PurePath('01_meter_data', 'CM_meter.csv')
+    cm_path_meter = pathlib.PurePath('02_meter_data', 'CM_meter.csv')
     cm_meter = pd.read_csv(cm_path_meter)
 
     # GHGSat Stage 1
-    ghg_path_meter = pathlib.PurePath('01_meter_data', 'GHGSat_meter.csv')
+    ghg_path_meter = pathlib.PurePath('02_meter_data', 'GHGSat_meter.csv')
     ghg_meter = pd.read_csv(ghg_path_meter)
 
     # Kairos Stage 1 Pod LS23
-    kairos_path_meter = pathlib.PurePath('01_meter_data', 'Kairos_meter.csv')
+    kairos_path_meter = pathlib.PurePath('02_meter_data', 'Kairos_meter.csv')
     kairos_1_ls23_meter = pd.read_csv(kairos_path_meter)
 
     return cm_meter, ghg_meter, kairos_1_ls23_meter

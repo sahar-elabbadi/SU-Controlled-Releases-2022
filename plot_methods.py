@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 import datetime
 import math
 
-from data_manipulation_methods import apply_qc_filter
+from methods_data_cleaning import apply_qc_filter
 
 
 # Function: generate jitter for a given array
@@ -28,7 +28,7 @@ def rand_jitter(input_list):
 
 # Inputs:
 # > operator_report: cleaned operator data, loaded from folder 01_clean_data
-# > operator_meter: cleaned metering data, loaded from folder 01_meter_data
+# > operator_meter: cleaned metering data, loaded from folder 02_meter_data
 
 # TODO get rid of this and use apply_qc_filter function instead? This function only has one usage,
 #  and apply_qc_filter will make sure that we're applying both our QC and the operator's quc filters
@@ -57,6 +57,10 @@ def abbreviate_op_name(operator):
         op_abb = 'ghg'
     elif operator == 'Kairos':
         op_abb = 'kairos'
+    elif operator == 'Kairos LS23':
+        op_abb = 'kairos_ls23'
+    elif operator == 'Kairos LS25':
+        op_abb = 'kairos_ls25'
     elif operator == 'Methane Air':
         op_abb = 'mair'
     else:
@@ -78,7 +82,7 @@ def plot_parity(operator, stage, operator_report, operator_meter):
     """Inputs are operator name, stage of analysis, operator_plot dataframe containing all relevant data"""
 
     # Merge the operator report df and meter df
-    operator_plot = select_valid_overpasses(operator_report, operator_meter)
+    operator_plot = apply_qc_filter(operator_report, operator_meter)
 
     y_index = np.isfinite(operator_plot['FacilityEmissionRate'])
 
@@ -326,3 +330,4 @@ def plot_detection_limit(operator, stage, operator_report, operator_meter, n_bin
     operator_detection.to_csv(pathlib.PurePath('01_clean_data', 'detect_probability_data', f'{op_ab}_{stage}_detect.csv'))
     detection_prob.to_csv(pathlib.PurePath('01_clean_data', 'detect_probability_data', f'{op_ab}_{stage}_{threshold}kgh_{n_bins}bins.csv'))
     return
+
