@@ -327,7 +327,9 @@ def plot_detection_limit(operator, stage, operator_report, operator_meter, n_bin
     plt.show()
 
     # Save data used to make plots
-    operator_detection.to_csv(pathlib.PurePath('01_clean_data', 'detect_probability_data', f'{op_ab}_{stage}_detect.csv'))
-    detection_prob.to_csv(pathlib.PurePath('01_clean_data', 'detect_probability_data', f'{op_ab}_{stage}_{threshold}kgh_{n_bins}bins.csv'))
+    operator_detection.to_csv(pathlib.PurePath('03_results', 'detect_probability_data',
+                                               f'{op_ab}_{stage}_detect_{save_time}.csv'))
+    detection_prob.to_csv(pathlib.PurePath('03_results', 'detect_probability_data',
+                                           f'{op_ab}_{stage}_{threshold}kgh_{n_bins}bins_{save_time}.csv'))
     return
 

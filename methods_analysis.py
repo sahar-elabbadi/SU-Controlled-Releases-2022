@@ -56,14 +56,18 @@ def evaluate_qc(operator, stage, operator_report, operator_meter):
     qc_count_both_fail = operator_qc.fail_all_qc.sum()
 
     qc_summary = pd.DataFrame({
+        'operator': op_ab,
+        'stage':stage,
         'total_overpasses': total_overpasses,
         'pass_stanford_qc': qc_count_stanford_pass,
-        f'pass_{op_ab}_qc': qc_count_operator_pass,
+        f'pass_operator_qc': qc_count_operator_pass,
         'pass_all_qc': qc_count_both_pass,
         'fail_stanford_qc': qc_count_stanford_fail,
-        f'fail_{op_ab}_qc': qc_count_operator_fail,
+        f'fail_operator_qc': qc_count_operator_fail,
         'fail_all_qc': qc_count_both_fail,
+        'fail_stanford_only': qc_count_stanford_fail - qc_count_both_fail,
+        'fail_operator_only': qc_count_operator_fail - qc_count_both_fail,
     }, index=[0])
 
-    qc_summary.to_csv(pathlib.PurePath('03_results', 'qc_comparison', f'{op_ab}_{stage}_detect.csv'))
+    qc_summary.to_csv(pathlib.PurePath('03_results', 'qc_comparison', f'{op_ab}_{stage}_qc.csv'))
     return qc_summary
