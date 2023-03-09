@@ -4,8 +4,11 @@
 # Date Last Modified: 2023-02-24
 
 # List of methods in this file:
+# > rand_jitter
 # > plot_parity
-# > select_valid_overpasses
+# > select_stanford_valid_overpasses(operator_report, operator_meter)
+# > abbreviate_op_name(operator)
+# > plot_parity(operator, stage, operator_report, operator_meter)
 
 # Imports
 import numpy as np
@@ -32,7 +35,7 @@ def rand_jitter(input_list):
 
 # TODO get rid of this and use apply_qc_filter function instead? This function only has one usage,
 #  and apply_qc_filter will make sure that we're applying both our QC and the operator's quc filters
-def select_valid_overpasses(operator_report, operator_meter):
+def select_stanford_valid_overpasses(operator_report, operator_meter):
     """Merge operator report and operator meter dataframes and select overpasses which pass Stanford QC criteria.
     Operator report dataframe should already have 'nan' values for quantification estimates that do not meet operator
     QC criteria. Returns: y_index, x_data, y_data"""
@@ -48,9 +51,15 @@ def select_valid_overpasses(operator_report, operator_meter):
 # %% Operator abbreviations for saving
 
 def abbreviate_op_name(operator):
-    """Abbreviate operator name for saving files. Input names: 'Kairos', 'Carbon Mapper', 'GHGSat', 'Methane Air'.
-    Use because input to my functions will often be the operator name spelled out in full for plotting purposes,
-    while for saving I want the abbreviated name."""
+    """Abbreviate operator name for saving files. Use because input to my functions will often be the operator name spelled out in full for plotting purposes,
+    while for saving I want the abbreviated name. Input names and corresponding abbreviations are:
+     - 'Carbon Mapper': 'cm'
+     - 'GHGSat': 'ghg'
+     - 'Kairos': 'kairos'
+     - 'Kairos LS23': 'kairos_ls23'
+     - 'Kairos LS25': 'kairos_ls25'
+     - 'Methane Air': 'mair'
+    """
     if operator == "Carbon Mapper":
         op_abb = 'cm'
     elif operator == "GHGSat":
