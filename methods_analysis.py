@@ -13,6 +13,8 @@ import numpy as np
 import datetime
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
+
+from methods_data_cleaning import combine_datetime
 from plot_methods import abbreviate_op_name
 
 
@@ -33,17 +35,20 @@ def evaluate_overpass_qc(operator, stage, operator_report, operator_meter):
     # Combine operator report and meter data
     combined_df = operator_report.merge(operator_meter, on='PerformerExperimentID')
 
+    # Rename columns to be machine readable
     # Make column with easier name for coding for now.
     combined_df['release_rate_kgh'] = combined_df['Last 60s (kg/h) - from Stanford']
+    combined_df['time_utc'] = combined_df['Time (UTC) - from Stanford']
+    combined_df['date'] = combined_df['Date']
 
     # Philippine reports if we discard or not (discard = 1, keep = 0). Change this to have 1 if we keep, 0 if we discard
     combined_df['stanford_kept'] = (1 - combined_df['QC: discard - from Stanford'])
 
-
-
     # Make dataframe with all relevant info
     operator_qc = pd.DataFrame()
     operator_qc['overpass_id'] = combined_df.PerformerExperimentID
+    operator_qc['overpass_datetime'] = combined_df.apply(lambda combined_df:
+                                                         combine_datetime(combined_df.date, combined_df.time_utc), axis=1)
     operator_qc['zero_release'] = combined_df.release_rate_kgh == 0
     operator_qc['non_zero_release'] = combined_df.release_rate_kgh != 0  # True if we conducted a release
     operator_qc['operator_kept'] = combined_df.OperatorKeep
@@ -260,7 +265,6 @@ def generate_daily_releases(operator_flight_days):
 
 
 # %% Plot release days
-
 
 def plot_daily_releases(operator, flight_days, operator_releases):
     """Function to plot daily releases for operators.

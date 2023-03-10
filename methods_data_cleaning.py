@@ -138,7 +138,7 @@ def convert_to_twentyfour(time):
 # date format: YYYY-MM-DD
 # time format: HH:MM:DD (UTC)
 
-def combine_datetime(test_time, test_date):
+def combine_datetime(test_date, test_time):
     """Combine two strings for date and time into a datetime object.
     Formatting for inputs:
       - test_date: YYYY-MM-DD
