@@ -144,9 +144,12 @@ def plot_parity(operator, stage, operator_report, operator_meter):
                 fmt='o',
                 markersize=5)
 
-    ax.set_xlabel('x-axis')
-    ax.set_ylabel('y-axis')
-    ax.set_title('Line plot with error bars')
+    # I don't think I need this, was it hold over from when I was trying to figure it out?
+    # If something breaks in the code later, check back to this spot
+
+    # ax.set_xlabel('x-axis')
+    # ax.set_ylabel('y-axis')
+    # ax.set_title('Line plot with error bars')
 
     # Set title
     plt.title(f'{operator} Stage {stage} Results ({sample_size} measurements)')
