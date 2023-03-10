@@ -39,6 +39,8 @@ def evaluate_overpass_qc(operator, stage, operator_report, operator_meter):
     # Philippine reports if we discard or not (discard = 1, keep = 0). Change this to have 1 if we keep, 0 if we discard
     combined_df['stanford_kept'] = (1 - combined_df['QC: discard - from Stanford'])
 
+
+
     # Make dataframe with all relevant info
     operator_qc = pd.DataFrame()
     operator_qc['overpass_id'] = combined_df.PerformerExperimentID

@@ -131,3 +131,22 @@ def convert_to_twentyfour(time):
     time_24hr = time_12hr[-8:]
     time_24hr = datetime.datetime.strptime(time_24hr, '%H:%M:%S').time()
     return time_24hr
+
+
+# %% Function to combine date string and time string into one datetime object
+
+# date format: YYYY-MM-DD
+# time format: HH:MM:DD (UTC)
+
+def combine_datetime(test_time, test_date):
+    """Combine two strings for date and time into a datetime object.
+    Formatting for inputs:
+      - test_date: YYYY-MM-DD
+      - test_time: HH:MM:DD
+
+    Use for combing separate columns of date and time in operator report or meter data
+     """
+    my_time = datetime.datetime.strptime(test_time, '%H:%M:%S').time()
+    my_date = datetime.datetime.strptime(test_date, '%Y-%m-%d')
+    my_datetime = datetime.datetime.combine(my_date, my_time)
+    return my_datetime
