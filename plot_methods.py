@@ -118,6 +118,7 @@ def plot_parity(operator, stage, operator_report, operator_meter):
     # largest_kgh = 1200
 
     # Or, determine largest_kgh by calculating largest value in x_data and y_data
+    # Filter out NA because operations with NA returns NA
     if np.isnan(max(y_error)) == 1:
         y_error.iloc[:] = 0
 
@@ -192,7 +193,7 @@ def plot_parity(operator, stage, operator_report, operator_meter):
     plt.savefig(fig_path)
     plt.show()
 
-    # %% Function: plot_detection_limit
+# %% Function: plot_detection_limit
 
 
 # inputs:

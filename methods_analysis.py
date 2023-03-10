@@ -8,11 +8,13 @@
 
 # Imports
 import pathlib
+import math
 import pandas as pd
 import numpy as np
 import datetime
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
+from matplotlib.lines import Line2D
 
 from methods_data_cleaning import combine_datetime
 from plot_methods import abbreviate_op_name
@@ -48,7 +50,8 @@ def evaluate_overpass_qc(operator, stage, operator_report, operator_meter):
     operator_qc = pd.DataFrame()
     operator_qc['overpass_id'] = combined_df.PerformerExperimentID
     operator_qc['overpass_datetime'] = combined_df.apply(lambda combined_df:
-                                                         combine_datetime(combined_df.date, combined_df.time_utc), axis=1)
+                                                         combine_datetime(combined_df.date, combined_df.time_utc),
+                                                         axis=1)
     operator_qc['zero_release'] = combined_df.release_rate_kgh == 0
     operator_qc['non_zero_release'] = combined_df.release_rate_kgh != 0  # True if we conducted a release
     operator_qc['operator_kept'] = combined_df.OperatorKeep
@@ -134,6 +137,30 @@ def load_daily_meter_data(date):
     date_meter.loc[date_meter['meter'] == 'Papa Coriolis', 'meter'] = 'pc'
 
     return date_meter
+
+
+# %% Load overpass summary for a given operator and a given stage
+
+def load_overpass_summary(operator, stage):
+    """Input operator name and stage of analysis. Stage is a number (1, 2, 3). Operator names can be:
+
+      - 'Carbon Mapper'
+      - 'GHGSat'
+      - 'Kairos LS23'
+      - 'Kairos LS25'
+      - 'Methane Air'
+      - 'Scientific Aviation'
+
+      """
+    if operator == 'Kairos':
+        pod = input('Please specify pod: LS23 or LS25')
+        operator = f'{operator} {pod}'
+
+    op = abbreviate_op_name(operator)
+    file_path = pathlib.PurePath('03_results', 'overpass_summary', f'{op}_{stage}_overpasses.csv')
+    overpass_summary = pd.read_csv(file_path, parse_dates=['overpass_datetime'])
+
+    return overpass_summary
 
 
 # %% Load flight days
@@ -266,7 +293,7 @@ def generate_daily_releases(operator_flight_days):
 
 # %% Plot release days
 
-def plot_daily_releases(operator, flight_days, operator_releases):
+def plot_daily_releases(operator, flight_days, operator_releases, stage):
     """Function to plot daily releases for operators.
     Inputs:
       - Operator is the operator name
@@ -276,10 +303,20 @@ def plot_daily_releases(operator, flight_days, operator_releases):
     dates = flight_days.date
     for day in dates:
 
+        # test date and month:
+        month_abb = day[0:2]
+        date_abb = day[3:5]
+        date_string = f'2022-{month_abb}-{date_abb}'
+
+        # Load overpass data:
+        operator_stage_overpasses = load_overpass_summary(operator, stage)
+        daily_overpasses = operator_stage_overpasses[operator_stage_overpasses
+                                                     ['overpass_datetime'].dt.strftime('%Y-%m-%d') == date_string]
+
         # Determine date string for title
-        if day[0:2] == '10':
+        if month_abb == '10':
             test_month = 'October'
-        elif day[0:2] == '11':
+        elif month_abb == '11':
             test_month = 'November'
         else:
             test_month = 'ERROR! DEBUG!'
@@ -290,10 +327,47 @@ def plot_daily_releases(operator, flight_days, operator_releases):
 
         x_data = daily_data['datetime_utc']
         y_data = daily_data['flow_rate']
+        kgh_max = math.ceil(max(y_data) / 100) * 150  # Max kgh rounded to nearest 100
 
         # Initialize Figure
         fig, ax = plt.subplots(1, figsize=(12, 4))
-        plt.plot(x_data, y_data)
+        plt.plot(x_data, y_data, color='black')
+
+        # Set y-axis limits
+        ax.set(ylim=(0, kgh_max))
+
+        # Add vertical lines for overpasses
+
+        # set marker height to be 5% below top line
+        marker_height = 0.95 * kgh_max
+
+        # create array for y data at marker height
+        overpass_y = np.ones(len(daily_overpasses)) * marker_height
+
+        overpass_colors = {'pass_all': '#018571',
+                           'fail_operator': '#a6611a',
+                           'fail_stanford': '#dfc27d',
+                           'fail_all': '#f5f5f5',
+                           }
+
+        overpass_legend = {'Valid Overpass': '#018571',
+                           'Operator Removed': '#a6611a',
+                           'Stanford Removed': '#dfc27d',
+                           'Both Removed': '#f5f5f5',
+                           }
+
+        ax.scatter(x=daily_overpasses['overpass_datetime'],
+                   y=overpass_y,
+                   edgecolor='black',
+                   color=daily_overpasses['qc_summary'].map(overpass_colors),
+                   marker='o')
+
+        # add a legend
+        handles = [
+            Line2D([0], [0], marker='o', color='black', markerfacecolor=v, label=k, markersize=8, linestyle='None') for
+            k, v in
+            overpass_legend.items()]
+        lgd = ax.legend(title='Overpass Key', handles=handles, bbox_to_anchor=(1.05, 1), loc='upper left')
 
         # Title
         plt.title(f'{test_month} {test_date}: {operator} Release Rates and Overpasses')
@@ -315,5 +389,5 @@ def plot_daily_releases(operator, flight_days, operator_releases):
         save_time = now.strftime("%Y%m%d")
         fig_name = f'release_chart_{op_ab}_{day}'
         fig_path = pathlib.PurePath('04_figures', fig_name)
-        plt.savefig(fig_path)
+        plt.savefig(fig_path, bbox_extra_artists=(lgd,), bbox_inches='tight')
         plt.show()
