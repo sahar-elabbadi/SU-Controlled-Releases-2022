@@ -327,11 +327,12 @@ def plot_daily_releases(operator, flight_days, operator_releases, stage):
 
         x_data = daily_data['datetime_utc']
         y_data = daily_data['flow_rate']
-        kgh_max = math.ceil(max(y_data) / 100) * 150  # Max kgh rounded to nearest 100
+        kgh_max = math.ceil(max(y_data) / 100) * 100  # Max kgh rounded to nearest 100
 
         # Initialize Figure
         fig, ax = plt.subplots(1, figsize=(12, 4))
-        plt.plot(x_data, y_data, color='black')
+        plt.plot(x_data, y_data, color='black',
+                 linewidth=0.5)
 
         # Set y-axis limits
         ax.set(ylim=(0, kgh_max))
@@ -339,7 +340,7 @@ def plot_daily_releases(operator, flight_days, operator_releases, stage):
         # Add vertical lines for overpasses
 
         # set marker height to be 5% below top line
-        marker_height = 0.95 * kgh_max
+        marker_height = 0.9 * kgh_max
 
         # create array for y data at marker height
         overpass_y = np.ones(len(daily_overpasses)) * marker_height
@@ -347,24 +348,31 @@ def plot_daily_releases(operator, flight_days, operator_releases, stage):
         overpass_colors = {'pass_all': '#018571',
                            'fail_operator': '#a6611a',
                            'fail_stanford': '#dfc27d',
-                           'fail_all': '#f5f5f5',
+                           'fail_all': '#878787',
                            }
 
         overpass_legend = {'Valid Overpass': '#018571',
                            'Operator Removed': '#a6611a',
                            'Stanford Removed': '#dfc27d',
-                           'Both Removed': '#f5f5f5',
+                           'Both Removed': '#878787',
                            }
 
         ax.scatter(x=daily_overpasses['overpass_datetime'],
-                   y=overpass_y,
-                   edgecolor='black',
+                   y=daily_overpasses['release_rate_kgh'],
+                   # edgecolor='black',
                    color=daily_overpasses['qc_summary'].map(overpass_colors),
-                   marker='o')
+                   marker='|',
+                   s=2000)
 
         # add a legend
+        # handles for circles
+        # handles = [
+        #     Line2D([0], [0], marker='o', markerfacecolor=v, color = 'black', linestyle='None', label=k, markersize=8) for
+        #     k, v in
+        #     overpass_legend.items()]
+
         handles = [
-            Line2D([0], [0], marker='o', color='black', markerfacecolor=v, label=k, markersize=8, linestyle='None') for
+            Line2D([0], [0], marker='|', color=v, linestyle='None', label=k, markersize=8) for
             k, v in
             overpass_legend.items()]
         lgd = ax.legend(title='Overpass Key', handles=handles, bbox_to_anchor=(1.05, 1), loc='upper left')
