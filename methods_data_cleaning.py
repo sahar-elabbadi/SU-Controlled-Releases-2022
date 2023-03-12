@@ -186,7 +186,7 @@ def combine_datetime(test_date, test_time):
 
 # %% Function to import Philippine's meter data, select the FlightRadar columns, and with abrename columns to be more
 # brief and machine-readable
-def make_flightradar_operator_dataset(operator, operator_meter_raw, timekeeper):
+def make_operator_meter_dataset(operator, operator_meter_raw, timekeeper):
     """Function to make a clean dataset for each overpass for a given operator. Input is the full name of operator
     and the operator meter file. Also include the desired timekeeper metric for when the oeprator was overhead: this
     can be one of three options:
