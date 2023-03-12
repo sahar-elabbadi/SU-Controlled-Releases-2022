@@ -249,7 +249,6 @@ def make_flightradar_operator_dataset(operator, operator_meter_raw, timekeeper):
 
     operator_meter = operator_meter.dropna(axis='index')  # axis = 'index' means to drop rows with missing values
 
-    print(f"currently on {operator} and {timekeeper}")
     overpass_datetime = operator_meter.apply(lambda operator_meter: combine_datetime(operator_meter['date'],
                                                                                               operator_meter['time']),
                                                       axis=1)
