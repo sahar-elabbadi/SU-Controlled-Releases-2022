@@ -23,6 +23,37 @@ import pathlib
 
 # Modules
 
+# %% Abbreviate operator name
+
+def abbreviate_op_name(operator):
+    """Abbreviate operator name for saving files. Use because input to my functions will often be the operator name spelled out in full for plotting purposes,
+    while for saving I want the abbreviated name. Input names and corresponding abbreviations are:
+     - 'Carbon Mapper': 'cm'
+     - 'GHGSat': 'ghg'
+     - 'Kairos': 'kairos'
+     - 'Kairos LS23': 'kairos_ls23'
+     - 'Kairos LS25': 'kairos_ls25'
+     - 'Methane Air': 'mair'
+    """
+    if operator == "Carbon Mapper":
+        op_abb = 'cm'
+    elif operator == "GHGSat":
+        op_abb = 'ghg'
+    elif operator == 'Kairos':
+        op_abb = 'kairos'
+    elif operator == 'Kairos LS23':
+        op_abb = 'kairos_ls23'
+    elif operator == 'Kairos LS25':
+        op_abb = 'kairos_ls25'
+    elif operator == 'Methane Air':
+        op_abb = 'mair'
+    else:
+        print('Typo in operator name')
+        return
+
+    return op_abb
+
+
 # %% Load clean data
 
 def load_clean_data():
@@ -146,7 +177,107 @@ def combine_datetime(test_date, test_time):
 
     Use for combing separate columns of date and time in operator report or meter data
      """
+
     my_time = datetime.datetime.strptime(test_time, '%H:%M:%S').time()
     my_date = datetime.datetime.strptime(test_date, '%Y-%m-%d')
     my_datetime = datetime.datetime.combine(my_date, my_time)
     return my_datetime
+
+
+# %% Function to import Philippine's meter data, select the FlightRadar columns, and with abrename columns to be more
+# brief and machine-readable
+def make_flightradar_operator_dataset(operator, operator_meter_raw, timekeeper):
+    """Function to make a clean dataset for each overpass for a given operator. Input is the full name of operator
+    and the operator meter file. Also include the desired timekeeper metric for when the oeprator was overhead: this
+    can be one of three options:
+      - flightradar: used in analysis, timestamp when FlightRadar GPS coordinates are closest to the stack
+      - Stanford: Stanford ground team visual observation of when the airplane was overhead
+      - team: participating operator's report of when they were over the source """
+
+    if timekeeper == 'flightradar':
+        timekeeper = 'Flightradar'
+    elif timekeeper == 'stanford':
+        timekeeper = 'Stanford'
+    elif timekeeper == 'operator':
+        timekeeper = 'team'
+
+    # Relevant columns from Philippine generated meter dataset:
+    date = 'Date'
+    time = f'Time (UTC) - from {timekeeper}'
+
+    if timekeeper == 'Flightradar':
+        overpass_id = 'FlightradarOverpassID'
+    elif timekeeper == 'Stanford':
+        overpass_id = 'StanfordOverpassID'
+    elif timekeeper == 'team':
+        overpass_id = 'PerformerOverpassID'
+
+    phase_iii = 'PhaseIII'  # 0 indicates the overpass was not provided to team in Phase III, 1 indicates it was
+    kgh_gas_30 = f'Last 30s (kg/h) - whole gas measurement - from {timekeeper}'
+    kgh_gas_60 = f'Last 60s (kg/h) - whole gas measurement - from {timekeeper}'
+    kgh_gas_90 = f'Last 90s (kg/h) - whole gas measurement - from {timekeeper}'
+    kgh_ch4_30 = f'Last 30s (kg/h) - from {timekeeper}'
+    kgh_ch4_60 = f'Last 60s (kg/h) - from {timekeeper}'
+    kgh_ch4_90 = f'Last 90s (kg/h) - from {timekeeper}'
+    methane_fraction = 'Percent methane'
+    meter = 'Meter'  # note renaming meter variable used above
+    qc_discard = f'Discarded - using {timekeeper}'
+    qc_discard_strict = f'Discarded - 1% - using {timekeeper}'
+    altitude_meters = 'Average altitude last minute (m)'
+
+    operator_meter = pd.DataFrame()
+    # Populate relevant dataframes
+
+    operator_meter['overpass_id'] = operator_meter_raw[overpass_id]
+    operator_meter['phase_iii'] = operator_meter_raw[phase_iii]
+    operator_meter['kgh_gas_30'] = operator_meter_raw[kgh_gas_30]
+    operator_meter['kgh_gas_60'] = operator_meter_raw[kgh_gas_60]
+    operator_meter['kgh_gas_90'] = operator_meter_raw[kgh_gas_90]
+    operator_meter['kgh_ch4_30'] = operator_meter_raw[kgh_ch4_30]
+    operator_meter['kgh_ch4_60'] = operator_meter_raw[kgh_ch4_60]
+    operator_meter['kgh_ch4_90'] = operator_meter_raw[kgh_ch4_90]
+    operator_meter['methane_fraction'] = operator_meter_raw[methane_fraction]
+    operator_meter['meter'] = operator_meter_raw[meter]
+    operator_meter['qc_discard'] = operator_meter_raw[qc_discard]
+    operator_meter['qc_discard_strict'] = operator_meter_raw[qc_discard_strict]
+    operator_meter['altitude_meters'] = operator_meter_raw[altitude_meters]
+    operator_meter['time'] = operator_meter_raw[time]
+    operator_meter['date'] = operator_meter_raw[date]
+
+    # Drop rows with nan to remove rows with missing values. This is because for some operators, we missed overpasses
+    # and timestamps have nan values, which causes issues with downstream code
+
+    operator_meter = operator_meter.dropna(axis='index')  # axis = 'index' means to drop rows with missing values
+
+    print(f"currently on {operator} and {timekeeper}")
+    overpass_datetime = operator_meter.apply(lambda operator_meter: combine_datetime(operator_meter['date'],
+                                                                                              operator_meter['time']),
+                                                      axis=1)
+
+    operator_meter.insert(loc=0, column='datetime_utc', value=overpass_datetime)
+
+    # Now that we have removed NA values in time, we can remove date and time columns from operator_meter
+    operator_meter = operator_meter.drop(columns=['time', 'date'])
+
+    # Abbreviate meter names in raw meter file
+    names = ['Baby Coriolis', 'Mama Coriolis', 'Papa Coriolis']
+    nicknames = ['bc', 'mc', 'pc']
+
+    for meter_name, meter_nickname in zip(names, nicknames):
+        operator_meter.loc[operator_meter['meter'] == meter_name, 'meter'] = meter_nickname
+
+    op_ab = abbreviate_op_name(operator)
+
+    # Set save folder
+    if timekeeper == 'Flightradar':
+        save_folder = 'flightradar_timestamp'
+    elif timekeeper == 'Stanford':
+        save_folder = 'stanford_timestamp'
+    elif timekeeper == 'team':
+        save_folder = 'operator_timestamp'
+
+    # Save CSV file
+    operator_meter.to_csv(pathlib.PurePath('02_meter_data', 'operator_meter_data',
+                                           save_folder, f'{op_ab}_meter.csv'))
+
+    return operator_meter

@@ -18,7 +18,7 @@ import matplotlib.pyplot as plt
 import datetime
 import math
 
-from methods_data_cleaning import apply_qc_filter
+from methods_data_cleaning import apply_qc_filter, abbreviate_op_name
 
 
 # Function: generate jitter for a given array
@@ -46,37 +46,6 @@ def select_stanford_valid_overpasses(operator_report, operator_meter):
     operator_plot = operator_plot[(operator_plot['QC: discard - from Stanford'] == 0)]
 
     return operator_plot
-
-
-# %% Operator abbreviations for saving
-
-def abbreviate_op_name(operator):
-    """Abbreviate operator name for saving files. Use because input to my functions will often be the operator name spelled out in full for plotting purposes,
-    while for saving I want the abbreviated name. Input names and corresponding abbreviations are:
-     - 'Carbon Mapper': 'cm'
-     - 'GHGSat': 'ghg'
-     - 'Kairos': 'kairos'
-     - 'Kairos LS23': 'kairos_ls23'
-     - 'Kairos LS25': 'kairos_ls25'
-     - 'Methane Air': 'mair'
-    """
-    if operator == "Carbon Mapper":
-        op_abb = 'cm'
-    elif operator == "GHGSat":
-        op_abb = 'ghg'
-    elif operator == 'Kairos':
-        op_abb = 'kairos'
-    elif operator == 'Kairos LS23':
-        op_abb = 'kairos_ls23'
-    elif operator == 'Kairos LS25':
-        op_abb = 'kairos_ls25'
-    elif operator == 'Methane Air':
-        op_abb = 'mair'
-    else:
-        print('Typo in operator name')
-        return
-
-    return op_abb
 
 
 # %% Function: plot_parity
