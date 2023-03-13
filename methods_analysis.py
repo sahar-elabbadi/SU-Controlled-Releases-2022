@@ -61,6 +61,7 @@ def generate_overpass_summary(operator, stage, operator_report, operator_meter, 
     operator_qc['non_zero_release'] = combined_df.release_rate_kgh != 0  # True if we conducted a release
     operator_qc['operator_kept'] = combined_df.OperatorKeep
     operator_qc['stanford_kept'] = combined_df.stanford_kept == 1
+    operator_qc['phase_iii'] = combined_df.phase_iii
     operator_qc['pass_all_qc'] = operator_qc.stanford_kept * operator_qc.operator_kept
 
     # check if overpass failed both stanford and operator
@@ -71,9 +72,8 @@ def generate_overpass_summary(operator, stage, operator_report, operator_meter, 
     operator_qc['operator_detected'] = combined_df.Detected
     operator_qc['release_rate_kgh'] = combined_df.release_rate_kgh
     operator_qc['operator_quantification'] = combined_df.FacilityEmissionRate
-    operator_qc['operator_lower']= combined_df.FacilityEmissionRateLower
+    operator_qc['operator_lower'] = combined_df.FacilityEmissionRateLower
     operator_qc['operator_upper'] = combined_df.FacilityEmissionRateUpper
-
 
     # Summarize QC results
     # Here is the list of different QC options based on the current QC boolean columns
@@ -103,9 +103,9 @@ def generate_overpass_summary(operator, stage, operator_report, operator_meter, 
 
     return operator_qc
 
-#
-def load_overpass_summary(operator, stage, strict_discard):
 
+#%%
+def load_overpass_summary(operator, stage, strict_discard):
     op_ab = abbreviate_op_name(operator)
 
     if strict_discard is True:

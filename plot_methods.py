@@ -35,18 +35,45 @@ def rand_jitter(input_list):
 # > operator_report
 # > operator_meter
 
-def plot_parity(operator, stage, operator_report, operator_meter, strict_discard):
+def plot_parity(operator, stage, strict_discard):
     """Inputs are operator name, stage of analysis, operator_plot dataframe containing all relevant data"""
 
-    # Merge the operator report df and meter df
-    operator_plot = apply_qc_filter(operator_report, operator_meter, strict_discard)
+    op_ab = abbreviate_op_name(operator)
 
-    y_index = np.isfinite(operator_plot['FacilityEmissionRate'])
+    # Select appropriate path based on whether or not we are using strict QC criteria
+    if strict_discard is True:
+        path = pathlib.PurePath('03_results', 'overpass_summary', f'{op_ab}_{stage}_overpasses_strict.csv')
+    else:
+        path = pathlib.PurePath('03_results', 'overpass_summary', f'{op_ab}_{stage}_overpasses.csv')
+
+    # Load overpass summary csv file
+    operator_plot = pd.read_csv(path, index_col=0)
+
+    # Apply the following filters to overpass data :
+
+    # Must pass all QC filters
+    operator_plot = operator_plot[(operator_plot.qc_summary == 'pass_all')]
+
+    # For parity plots:
+    # All data entries must be a non-zero release
+    operator_plot = operator_plot.query('non_zero_release == True')
+
+    # Operator must have quantified the release as non-zero:
+    operator_plot = operator_plot.query('operator_quantification > 0')
+
+
+    # Apply filter for Stage 3 data: remove points for which we gave the team's quantification estimates
+    # if phase_iii == 1, then we gave them this release in Phase III dataset
+    if stage == 3:
+        operator_plot = operator_plot[(operator_plot.phase_iii == 0)]
+
+    # Select values for which operator provided a quantification estimate
+    y_index = np.isfinite(operator_plot['operator_quantification'])
 
     # Select x data
-    x_data = operator_plot['kgh_ch4_60']
-    y_data = operator_plot['FacilityEmissionRate']
-    y_error = operator_plot['FacilityEmissionRateUpper'] - operator_plot['FacilityEmissionRate']
+    x_data = operator_plot['release_rate_kgh']
+    y_data = operator_plot['operator_quantification']
+    y_error = operator_plot['operator_upper'] - operator_plot['operator_quantification']
 
     # Fit linear regression via least squares with numpy.polyfit
     # m is slope, intercept is b
@@ -136,10 +163,20 @@ def plot_parity(operator, stage, operator_report, operator_meter, strict_discard
     now = datetime.datetime.now()
     op_ab = abbreviate_op_name(operator)
     save_time = now.strftime("%Y%m%d")
-    fig_name = f'parity_{op_ab}_stage{stage}_{save_time}'
-    fig_path = pathlib.PurePath('04_figures', fig_name)
+    fig_name = f'parity_{op_ab}_stage{stage}_{save_time}_test'
+    fig_path = pathlib.PurePath('04_figures', 'parity_plots', fig_name)
     plt.savefig(fig_path)
     plt.show()
+
+    # Save data used to make figure
+    save_parity_data = pd.DataFrame()
+    save_parity_data['release_rate'] = x_data
+    save_parity_data['operator_report'] = y_data
+    save_parity_data['operator_sigma'] = y_error
+
+    save_path = pathlib.PurePath('03_results', 'parity_plot_data', f'{operator}_{stage}_parity_{save_time}.csv')
+    save_parity_data.to_csv(save_path)
+
 
 # %% Function: plot_detection_limit
 
@@ -293,4 +330,3 @@ def plot_detection_limit(operator, stage, operator_report, operator_meter, n_bin
     detection_prob.to_csv(pathlib.PurePath('03_results', 'detect_probability_data',
                                            f'{op_ab}_{stage}_{threshold}kgh_{n_bins}bins_{save_time}.csv'))
     return
-

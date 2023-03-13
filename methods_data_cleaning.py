@@ -58,51 +58,55 @@ def abbreviate_op_name(operator):
 
 def load_clean_operator_reports():
     # Carbon Mapper Stage 1
-    cm_path_1 = pathlib.PurePath('01_clean_data', 'cm_1_clean.csv')
+    cm_path_1 = pathlib.PurePath('01_clean_reports', 'cm_1_clean.csv')
     cm_1 = pd.read_csv(cm_path_1, index_col=0)
 
     # Carbon Mapper Stage 2
-    cm_path_2 = pathlib.PurePath('01_clean_data', 'cm_2_clean.csv')
+    cm_path_2 = pathlib.PurePath('01_clean_reports', 'cm_2_clean.csv')
     cm_2 = pd.read_csv(cm_path_2, index_col=0)
 
     # Carbon Mapper Stage 3
-    cm_path_3 = pathlib.PurePath('01_clean_data', 'cm_3_clean.csv')
+    cm_path_3 = pathlib.PurePath('01_clean_reports', 'cm_3_clean.csv')
     cm_3 = pd.read_csv(cm_path_3, index_col=0)
 
     # GHGSat Stage 1
-    ghg_path_1 = pathlib.PurePath('01_clean_data', 'ghg_1_clean.csv')
+    ghg_path_1 = pathlib.PurePath('01_clean_reports', 'ghg_1_clean.csv')
     ghg_1 = pd.read_csv(ghg_path_1, index_col=0)
 
     # GHGSat Stage 2
-    ghg_path_2 = pathlib.PurePath('01_clean_data', 'ghg_2_clean.csv')
+    ghg_path_2 = pathlib.PurePath('01_clean_reports', 'ghg_2_clean.csv')
     ghg_2 = pd.read_csv(ghg_path_2, index_col=0)
 
+    # GHGSat Stage 3 (same operator report as Phase II)
+    ghg_path_2 = pathlib.PurePath('01_clean_reports', 'ghg_2_clean.csv')
+    ghg_3 = pd.read_csv(ghg_path_2, index_col=0)
+
     # Kairos Stage 1 Pod LS23
-    kairos_path_1_ls23 = pathlib.PurePath('01_clean_data', 'kairos_1_ls23_clean.csv')
+    kairos_path_1_ls23 = pathlib.PurePath('01_clean_reports', 'kairos_1_ls23_clean.csv')
     kairos_1_ls23 = pd.read_csv(kairos_path_1_ls23, index_col=0)
 
     # Kairos Stage 1 Pod LS25
-    kairos_path_1_ls25 = pathlib.PurePath('01_clean_data', 'kairos_1_ls25_clean.csv')
+    kairos_path_1_ls25 = pathlib.PurePath('01_clean_reports', 'kairos_1_ls25_clean.csv')
     kairos_1_ls25 = pd.read_csv(kairos_path_1_ls25, index_col=0)
 
     # Kairos Stage 2 Pod LS23
-    kairos_path_2_ls23 = pathlib.PurePath('01_clean_data', 'kairos_2_ls23_clean.csv')
+    kairos_path_2_ls23 = pathlib.PurePath('01_clean_reports', 'kairos_2_ls23_clean.csv')
     kairos_2_ls23 = pd.read_csv(kairos_path_2_ls23, index_col=0)
 
     # Kairos Stage 2 Pod LS25
-    kairos_path_2_ls25 = pathlib.PurePath('01_clean_data', 'kairos_2_ls25_clean.csv')
+    kairos_path_2_ls25 = pathlib.PurePath('01_clean_reports', 'kairos_2_ls25_clean.csv')
     kairos_2_ls25 = pd.read_csv(kairos_path_2_ls25, index_col=0)
 
     # Kairos Stage 3 Pod LS23
-    kairos_path_3_ls23 = pathlib.PurePath('01_clean_data', 'kairos_3_ls23_clean.csv')
+    kairos_path_3_ls23 = pathlib.PurePath('01_clean_reports', 'kairos_3_ls23_clean.csv')
     kairos_3_ls23 = pd.read_csv(kairos_path_3_ls23, index_col=0)
 
     # Kairos Stage 3 Pod LS25
-    kairos_path_3_ls25 = pathlib.PurePath('01_clean_data', 'kairos_3_ls25_clean.csv')
+    kairos_path_3_ls25 = pathlib.PurePath('01_clean_reports', 'kairos_3_ls25_clean.csv')
     kairos_3_ls25 = pd.read_csv(kairos_path_3_ls25, index_col=0)
 
-    return cm_1, cm_2, cm_3, ghg_1, ghg_2, kairos_1_ls23, kairos_1_ls25, kairos_2_ls23, kairos_2_ls25, kairos_3_ls23, \
-        kairos_3_ls25
+    return cm_1, cm_2, cm_3, ghg_1, ghg_2, ghg_3, kairos_1_ls23, kairos_1_ls25, kairos_2_ls23, kairos_2_ls25, \
+        kairos_3_ls23, kairos_3_ls25
 
 
 # %% Load meter data
@@ -134,7 +138,7 @@ def load_meter_data(timekeeper):
 # %% Function: select_valid_overpasses
 
 # Inputs:
-# > operator_report: cleaned operator data, loaded from folder 01_clean_data
+# > operator_report: cleaned operator data, loaded from folder 01_clean_reports
 # > operator_meter: cleaned metering data, loaded from folder 02_meter_data
 
 def select_stanford_valid_overpasses(operator_report, operator_meter, strict_discard):
@@ -250,13 +254,15 @@ def make_operator_meter_dataset(operator, operator_meter_raw, timekeeper):
     date = 'Date'
     time = f'Time (UTC) - from {timekeeper}'
 
-    if timekeeper == 'Flightradar':
-        overpass_id = 'FlightradarOverpassID'
-    elif timekeeper == 'Stanford':
-        overpass_id = 'StanfordOverpassID'
-    elif timekeeper == 'team':
-        overpass_id = 'PerformerOverpassID'
+    # if timekeeper == 'Flightradar':
+    #     overpass_id = 'FlightradarOverpassID'
+    # elif timekeeper == 'Stanford':
+    #     overpass_id = 'StanfordOverpassID'
+    # elif timekeeper == 'team':
+    #     overpass_id = 'PerformerOverpassID'
 
+    # use PerformerOverpassID for consistency
+    overpass_id = 'PerformerOverpassID'
     phase_iii = 'PhaseIII'  # 0 indicates the overpass was not provided to team in Phase III, 1 indicates it was
     kgh_gas_30 = f'Last 30s (kg/h) - whole gas measurement - from {timekeeper}'
     kgh_gas_60 = f'Last 60s (kg/h) - whole gas measurement - from {timekeeper}'
