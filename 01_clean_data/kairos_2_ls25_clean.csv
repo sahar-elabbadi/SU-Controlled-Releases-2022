@@ -1,4 +1,4 @@
-,Operator,Stage,PerformerExperimentID,DateOfSurvey,TimestampUTC,Detected,QuantifiedPlume,FacilityEmissionRate,FacilityEmissionRateUpper,FacilityEmissionRateLower,UncertaintyType,OperatorWindspeed,QCFlag,OperatorKeep
+,Operator,Stage,overpass_id,DateOfSurvey,TimestampUTC,Detected,QuantifiedPlume,FacilityEmissionRate,FacilityEmissionRateUpper,FacilityEmissionRateLower,UncertaintyType,OperatorWindspeed,QCFlag,OperatorKeep
 0,Kairos - LS23,2,1.0,10/24/22,16:46:16,False,True,0,,,nan,3.53,clear,True
 1,Kairos - LS23,2,2.0,10/24/22,16:49:22,False,True,0,,,nan,3.18,clear,True
 2,Kairos - LS23,2,3.0,10/24/22,16:52:33,True,True,20.07188437,,,nan,3.34,clear,True

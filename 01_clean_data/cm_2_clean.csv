@@ -1,4 +1,4 @@
-,Operator,Stage,PerformerExperimentID,DateOfSurvey,TimestampUTC,Detected,QuantifiedPlume,FacilityEmissionRate,FacilityEmissionRateUpper,FacilityEmissionRateLower,UncertaintyType,OperatorWindspeed,QCFlag,OperatorKeep
+,Operator,Stage,overpass_id,DateOfSurvey,TimestampUTC,Detected,QuantifiedPlume,FacilityEmissionRate,FacilityEmissionRateUpper,FacilityEmissionRateLower,UncertaintyType,OperatorWindspeed,QCFlag,OperatorKeep
 0,CarbonMapper,2,1.0,2022-10-10,17:00:41,True,True,13.1654166,21.540548312,4.790284888,1-sigma,0.276521919,clear,True
 1,CarbonMapper,2,2.0,2022-10-10,17:14:21,False,False,,,,1-sigma,,clear,True
 2,CarbonMapper,2,3.0,2022-10-10,17:28:38,True,False,,,,1-sigma,0.727260552,CM-1,False

@@ -27,27 +27,6 @@ def rand_jitter(input_list):
     return input_list + np.random.randn(len(input_list)) * delta
 
 
-# %% Function: select_valid_overpasses
-
-# Inputs:
-# > operator_report: cleaned operator data, loaded from folder 01_clean_data
-# > operator_meter: cleaned metering data, loaded from folder 02_meter_data
-
-# TODO get rid of this and use apply_qc_filter function instead? This function only has one usage,
-#  and apply_qc_filter will make sure that we're applying both our QC and the operator's quc filters
-def select_stanford_valid_overpasses(operator_report, operator_meter):
-    """Merge operator report and operator meter dataframes and select overpasses which pass Stanford QC criteria.
-    Operator report dataframe should already have 'nan' values for quantification estimates that do not meet operator
-    QC criteria. Returns: y_index, x_data, y_data"""
-    # Merge the two data frames
-    operator_plot = operator_report.merge(operator_meter, on='PerformerExperimentID')
-
-    # Filter based on overpasses that meet Stanford's QC criteria
-    operator_plot = operator_plot[(operator_plot['QC: discard - from Stanford'] == 0)]
-
-    return operator_plot
-
-
 # %% Function: plot_parity
 
 # Inputs:
@@ -56,16 +35,16 @@ def select_stanford_valid_overpasses(operator_report, operator_meter):
 # > operator_report
 # > operator_meter
 
-def plot_parity(operator, stage, operator_report, operator_meter):
+def plot_parity(operator, stage, operator_report, operator_meter, strict_discard):
     """Inputs are operator name, stage of analysis, operator_plot dataframe containing all relevant data"""
 
     # Merge the operator report df and meter df
-    operator_plot = apply_qc_filter(operator_report, operator_meter)
+    operator_plot = apply_qc_filter(operator_report, operator_meter, strict_discard)
 
     y_index = np.isfinite(operator_plot['FacilityEmissionRate'])
 
     # Select x data
-    x_data = operator_plot['Last 60s (kg/h) - from Stanford']
+    x_data = operator_plot['kgh_ch4_60']
     y_data = operator_plot['FacilityEmissionRate']
     y_error = operator_plot['FacilityEmissionRateUpper'] - operator_plot['FacilityEmissionRate']
 
@@ -172,9 +151,9 @@ def plot_parity(operator, stage, operator_report, operator_meter):
 # n_bins: number of bins desired in plot
 # threshold: highest release rate in kgh to show in detection threshold graph
 
-def plot_detection_limit(operator, stage, operator_report, operator_meter, n_bins, threshold):
+def plot_detection_limit(operator, stage, operator_report, operator_meter, n_bins, threshold, strict_discard):
     # merge meter and operator reports and apply Stanford QC filter
-    operator_df = apply_qc_filter(operator_report, operator_meter)
+    operator_df = apply_qc_filter(operator_report, operator_meter, strict_discard)
 
     # Make column with easier name for coding for now.
     operator_df['release_rate_kgh'] = operator_df['Last 60s (kg/h) - from Stanford']

@@ -1,4 +1,4 @@
-,Operator,Stage,PerformerExperimentID,DateOfSurvey,TimestampUTC,Detected,QuantifiedPlume,FacilityEmissionRate,FacilityEmissionRateUpper,FacilityEmissionRateLower,UncertaintyType,OperatorWindspeed,QCFlag,OperatorKeep
+,Operator,Stage,overpass_id,DateOfSurvey,TimestampUTC,Detected,QuantifiedPlume,FacilityEmissionRate,FacilityEmissionRateUpper,FacilityEmissionRateLower,UncertaintyType,OperatorWindspeed,QCFlag,OperatorKeep
 0,GHGSat-AV,2,1.0,2022-10-31,17:03:54,True,True,281.0,338.0,225.0,1-sigma,3.563,GH-1,True
 1,GHGSat-AV,2,2.0,2022-10-31,17:06:59,True,True,210.0,252.0,168.0,1-sigma,2.964,GH-1,True
 2,GHGSat-AV,2,3.0,2022-10-31,17:10:46,True,True,297.0,356.0,237.0,1-sigma,2.514,GH-1,True

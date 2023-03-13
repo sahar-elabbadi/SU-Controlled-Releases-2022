@@ -21,7 +21,7 @@ from plot_methods import abbreviate_op_name
 
 
 # %% method summarize_qc
-def evaluate_overpass_qc(operator, stage, operator_report, operator_meter):
+def generate_overpass_summary(operator, stage, operator_report, operator_meter, strict_discard):
     """Generate clean dataframe for each overpass with columns indicating QC status.
 
     Columns are:
@@ -32,26 +32,31 @@ def evaluate_overpass_qc(operator, stage, operator_report, operator_meter):
       - stanford_kept
       - pass_all_qc
     """
+
+    if strict_discard is True:
+        discard_column = 'qc_su_discard_strict'
+    else:
+        discard_column = 'qc_su_discard'
+
     op_ab = abbreviate_op_name(operator)
 
     # Combine operator report and meter data
-    combined_df = operator_report.merge(operator_meter, on='PerformerExperimentID')
+    combined_df = operator_report.merge(operator_meter, on='overpass_id')
 
-    # Rename columns to be machine readable
+    # Rename columns to be machine-readable
     # Make column with easier name for coding for now.
-    combined_df['release_rate_kgh'] = combined_df['Last 60s (kg/h) - from Stanford']
-    combined_df['time_utc'] = combined_df['Time (UTC) - from Stanford']
-    combined_df['date'] = combined_df['Date']
+    combined_df['release_rate_kgh'] = combined_df['kgh_ch4_60']
+
+    # combined_df['time_utc'] = combined_df['Time (UTC) - from Stanford']
+    # combined_df['date'] = combined_df['Date']
 
     # Philippine reports if we discard or not (discard = 1, keep = 0). Change this to have 1 if we keep, 0 if we discard
-    combined_df['stanford_kept'] = (1 - combined_df['QC: discard - from Stanford'])
+    combined_df['stanford_kept'] = (1 - combined_df[discard_column])
 
     # Make dataframe with all relevant info
     operator_qc = pd.DataFrame()
-    operator_qc['overpass_id'] = combined_df.PerformerExperimentID
-    operator_qc['overpass_datetime'] = combined_df.apply(lambda combined_df:
-                                                         combine_datetime(combined_df.date, combined_df.time_utc),
-                                                         axis=1)
+    operator_qc['overpass_id'] = combined_df.overpass_id
+    operator_qc['overpass_datetime'] = combined_df.datetime_utc
     operator_qc['zero_release'] = combined_df.release_rate_kgh == 0
     operator_qc['non_zero_release'] = combined_df.release_rate_kgh != 0  # True if we conducted a release
     operator_qc['operator_kept'] = combined_df.OperatorKeep
@@ -66,7 +71,12 @@ def evaluate_overpass_qc(operator, stage, operator_report, operator_meter):
     operator_qc['operator_detected'] = combined_df.Detected
     operator_qc['release_rate_kgh'] = combined_df.release_rate_kgh
     operator_qc['operator_quantification'] = combined_df.FacilityEmissionRate
+    operator_qc['operator_lower']= combined_df.FacilityEmissionRateLower
+    operator_qc['operator_upper'] = combined_df.FacilityEmissionRateUpper
 
+
+    # Summarize QC results
+    # Here is the list of different QC options based on the current QC boolean columns
     qc_conditions = [
         operator_qc['pass_all_qc'] == 1,  # pass all
         operator_qc['fail_all_qc'] == 1,  # fail all
@@ -74,6 +84,7 @@ def evaluate_overpass_qc(operator, stage, operator_report, operator_meter):
         (operator_qc['stanford_kept'] == 0) & (operator_qc['operator_kept'] == 1)  # stanford_fail
     ]
 
+    # Based on the above conditions, the final QC evalation will be one of the following:
     qc_choices = [
         'pass_all',
         'fail_all',
@@ -81,9 +92,30 @@ def evaluate_overpass_qc(operator, stage, operator_report, operator_meter):
         'fail_stanford',
     ]
 
+    # Apply the conditions to generate a new column for 'qc_summary'
     operator_qc['qc_summary'] = np.select(qc_conditions, qc_choices, 'ERROR')
-    operator_qc.to_csv(pathlib.PurePath('03_results', 'overpass_summary', f'{op_ab}_{stage}_overpasses.csv'))
+
+    # Create save path based on whether or not a strict QC criteria was applied
+    if strict_discard is True:
+        operator_qc.to_csv(pathlib.PurePath('03_results', 'overpass_summary', f'{op_ab}_{stage}_overpasses_strict.csv'))
+    else:
+        operator_qc.to_csv(pathlib.PurePath('03_results', 'overpass_summary', f'{op_ab}_{stage}_overpasses.csv'))
+
     return operator_qc
+
+#
+def load_overpass_summary(operator, stage, strict_discard):
+
+    op_ab = abbreviate_op_name(operator)
+
+    if strict_discard is True:
+        path = pathlib.PurePath('03_results', 'overpass_summary', f'{op_ab}_{stage}_overpasses_strict.csv')
+    else:
+        path = pathlib.PurePath('03_results', 'overpass_summary', f'{op_ab}_{stage}_overpasses.csv')
+
+    overpass_summary = pd.read_csv(path, index_col=0)
+
+    return overpass_summary
 
 
 def summarize_qc(operator, stage, operator_report, operator_meter):
@@ -92,7 +124,7 @@ def summarize_qc(operator, stage, operator_report, operator_meter):
     op_ab = abbreviate_op_name(operator)
 
     # Generate dataframe with all relevant QC information
-    operator_qc = evaluate_overpass_qc(operator, stage, operator_report, operator_meter)
+    operator_qc = load_overpass_summary(operator, stage, operator_report, operator_meter)
 
     # Determine how many were QC'ed by Stanford
     total_overpasses = len(operator_qc)

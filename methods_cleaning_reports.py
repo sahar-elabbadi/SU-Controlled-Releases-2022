@@ -69,7 +69,7 @@ def clean_cm(cm_report, cm_overpasses, cm_stage):
         new_row = {
             'Operator': 'CarbonMapper',
             'Stage': cm_stage,
-            'PerformerExperimentID': overpass,
+            'overpass_id': overpass,
             'DateOfSurvey': cm_report.loc[overpass - 1, "DateOfSurvey"].strftime('%Y-%m-%d'),
             'TimestampUTC': utc_time,
             'Detected': detected,
@@ -171,7 +171,7 @@ def clean_ghgsat(ghg_report, ghg_overpasses, ghg_stage):
         new_row = {
             'Operator': 'GHGSat-AV',
             'Stage': ghg_stage,
-            'PerformerExperimentID': overpass,
+            'overpass_id': overpass,
             'DateOfSurvey': ghg_report.loc[overpass - 1, "DateOfSurvey"],
             'TimestampUTC': utc_time,
             'Detected': detected,
@@ -260,7 +260,7 @@ def clean_kairos(kairos_report, kairos_overpasses, kairos_stage):
         new_row = {
             'Operator': 'Kairos - LS23',
             'Stage': kairos_stage,
-            'PerformerExperimentID': overpass,
+            'overpass_id': overpass,
             'DateOfSurvey': kairos_report.loc[overpass - 1, "DateOfSurvey"],
             'TimestampUTC': utc_time,
             'Detected': detected,

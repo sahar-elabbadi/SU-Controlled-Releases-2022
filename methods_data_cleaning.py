@@ -4,7 +4,7 @@
 # Date Last Modified: 2023-03-02
 
 # List of methods in this file:
-# > load_clean_data()
+# > load_clean_operator_reports()
 # > load_meter_data()
 # > apply_qc_filter(operator_report, operator_meter)
 # > convert_utc(dt, delta_t)
@@ -56,50 +56,50 @@ def abbreviate_op_name(operator):
 
 # %% Load clean data
 
-def load_clean_data():
+def load_clean_operator_reports():
     # Carbon Mapper Stage 1
     cm_path_1 = pathlib.PurePath('01_clean_data', 'cm_1_clean.csv')
-    cm_1 = pd.read_csv(cm_path_1)
+    cm_1 = pd.read_csv(cm_path_1, index_col=0)
 
     # Carbon Mapper Stage 2
     cm_path_2 = pathlib.PurePath('01_clean_data', 'cm_2_clean.csv')
-    cm_2 = pd.read_csv(cm_path_2)
+    cm_2 = pd.read_csv(cm_path_2, index_col=0)
 
     # Carbon Mapper Stage 3
     cm_path_3 = pathlib.PurePath('01_clean_data', 'cm_3_clean.csv')
-    cm_3 = pd.read_csv(cm_path_3)
+    cm_3 = pd.read_csv(cm_path_3, index_col=0)
 
     # GHGSat Stage 1
     ghg_path_1 = pathlib.PurePath('01_clean_data', 'ghg_1_clean.csv')
-    ghg_1 = pd.read_csv(ghg_path_1)
+    ghg_1 = pd.read_csv(ghg_path_1, index_col=0)
 
     # GHGSat Stage 2
     ghg_path_2 = pathlib.PurePath('01_clean_data', 'ghg_2_clean.csv')
-    ghg_2 = pd.read_csv(ghg_path_2)
+    ghg_2 = pd.read_csv(ghg_path_2, index_col=0)
 
     # Kairos Stage 1 Pod LS23
     kairos_path_1_ls23 = pathlib.PurePath('01_clean_data', 'kairos_1_ls23_clean.csv')
-    kairos_1_ls23 = pd.read_csv(kairos_path_1_ls23)
+    kairos_1_ls23 = pd.read_csv(kairos_path_1_ls23, index_col=0)
 
     # Kairos Stage 1 Pod LS25
     kairos_path_1_ls25 = pathlib.PurePath('01_clean_data', 'kairos_1_ls25_clean.csv')
-    kairos_1_ls25 = pd.read_csv(kairos_path_1_ls25)
+    kairos_1_ls25 = pd.read_csv(kairos_path_1_ls25, index_col=0)
 
     # Kairos Stage 2 Pod LS23
     kairos_path_2_ls23 = pathlib.PurePath('01_clean_data', 'kairos_2_ls23_clean.csv')
-    kairos_2_ls23 = pd.read_csv(kairos_path_2_ls23)
+    kairos_2_ls23 = pd.read_csv(kairos_path_2_ls23, index_col=0)
 
     # Kairos Stage 2 Pod LS25
     kairos_path_2_ls25 = pathlib.PurePath('01_clean_data', 'kairos_2_ls25_clean.csv')
-    kairos_2_ls25 = pd.read_csv(kairos_path_2_ls25)
+    kairos_2_ls25 = pd.read_csv(kairos_path_2_ls25, index_col=0)
 
     # Kairos Stage 3 Pod LS23
     kairos_path_3_ls23 = pathlib.PurePath('01_clean_data', 'kairos_3_ls23_clean.csv')
-    kairos_3_ls23 = pd.read_csv(kairos_path_3_ls23)
+    kairos_3_ls23 = pd.read_csv(kairos_path_3_ls23, index_col=0)
 
     # Kairos Stage 3 Pod LS25
     kairos_path_3_ls25 = pathlib.PurePath('01_clean_data', 'kairos_3_ls25_clean.csv')
-    kairos_3_ls25 = pd.read_csv(kairos_path_3_ls25)
+    kairos_3_ls25 = pd.read_csv(kairos_path_3_ls25, index_col=0)
 
     return cm_1, cm_2, cm_3, ghg_1, ghg_2, kairos_1_ls23, kairos_1_ls25, kairos_2_ls23, kairos_2_ls25, kairos_3_ls23, \
         kairos_3_ls25
@@ -107,33 +107,72 @@ def load_clean_data():
 
 # %% Load meter data
 
-def load_meter_data():
+def load_meter_data(timekeeper):
+    """Input timekeeper. Must be string, all lower case: flightradar, operator, stanford"""
     # Carbon Mapper meter data
-    cm_path_meter = pathlib.PurePath('02_meter_data', 'CM_meter.csv')
-    cm_meter = pd.read_csv(cm_path_meter)
+    cm_path_meter = pathlib.PurePath('02_meter_data', 'operator_meter_data', f'{timekeeper}_timestamp', 'cm_meter.csv')
+    cm_meter = pd.read_csv(cm_path_meter, index_col=0)
 
     # GHGSat Stage 1
-    ghg_path_meter = pathlib.PurePath('02_meter_data', 'GHGSat_meter.csv')
-    ghg_meter = pd.read_csv(ghg_path_meter)
+    ghg_path_meter = pathlib.PurePath('02_meter_data', 'operator_meter_data', f'{timekeeper}_timestamp',
+                                      'ghg_meter.csv')
+    ghg_meter = pd.read_csv(ghg_path_meter, index_col=0)
 
-    # Kairos Stage 1 Pod LS23
-    kairos_path_meter = pathlib.PurePath('02_meter_data', 'Kairos_meter.csv')
-    kairos_1_ls23_meter = pd.read_csv(kairos_path_meter)
+    # Kairos Stage 1
+    kairos_path_meter = pathlib.PurePath('02_meter_data', 'operator_meter_data', f'{timekeeper}_timestamp',
+                                         'kairos_meter.csv')
+    kairos_meter = pd.read_csv(kairos_path_meter, index_col=0)
 
-    return cm_meter, ghg_meter, kairos_1_ls23_meter
+    # MAIR
+    mair_path_meter = pathlib.PurePath('02_meter_data', 'operator_meter_data', f'{timekeeper}_timestamp',
+                                       'mair_meter.csv')
+    mair_meter = pd.read_csv(mair_path_meter, index_col=0)
+
+    return cm_meter, ghg_meter, kairos_meter, mair_meter
+
+
+# %% Function: select_valid_overpasses
+
+# Inputs:
+# > operator_report: cleaned operator data, loaded from folder 01_clean_data
+# > operator_meter: cleaned metering data, loaded from folder 02_meter_data
+
+def select_stanford_valid_overpasses(operator_report, operator_meter, strict_discard):
+    """Merge operator report and operator meter dataframes and select overpasses which pass Stanford QC criteria.
+    strict_discard is True or False
+
+    Old notes: Operator report dataframe should already have 'nan' values for quantification estimates that do not meet operator
+    QC criteria. Returns: y_index, x_data, y_data"""
+    # Merge the two data frames
+    operator_plot = operator_report.merge(operator_meter, on='overpass_id')
+
+    if strict_discard is True:
+        discard_column = 'qc_su_discard_strict'
+    else:
+        discard_column = 'qc_su_discard'
+
+    # Filter based on overpasses that meet Stanford's QC criteria
+    operator_plot = operator_plot[(operator_plot[discard_column] == 0)]
+
+    return operator_plot
 
 
 # %%
-def apply_qc_filter(operator_report, operator_meter):
+def apply_qc_filter(operator_report, operator_meter, strict_discard):
     """Merge operator report and operator meter dataframes and select overpasses which pass Stanford QC criteria.
     Operator report dataframe should already have 'nan' values for quantification estimates that do not meet operator
     QC criteria. Returns a combined dataframe matched by PerformerExperimentID"""
 
     # Merge the two data frames
-    combined_df = operator_report.merge(operator_meter, on='PerformerExperimentID')
+    combined_df = operator_report.merge(operator_meter, on='overpass_id')
+
+    if strict_discard is True:
+        discard_column = 'qc_su_discard_strict'
+    else:
+        discard_column = 'qc_su_discard'
 
     # Filter based on overpasses that meet Stanford's QC criteria
-    combined_df = combined_df[(combined_df['QC: discard - from Stanford'] == 0)]
+    combined_df = combined_df[(combined_df[discard_column] == 0)]
 
     # Filter based on operator QC criteria
     combined_df = combined_df[(combined_df['OperatorKeep'] == 1)]
@@ -179,7 +218,13 @@ def combine_datetime(test_date, test_time):
      """
 
     my_time = datetime.datetime.strptime(test_time, '%H:%M:%S').time()
-    my_date = datetime.datetime.strptime(test_date, '%Y-%m-%d')
+
+    for fmt in ('%Y-%m-%d', '%Y/%m/%d'):
+        try:
+            my_date = datetime.datetime.strptime(test_date, fmt)
+        except ValueError:
+            pass
+
     my_datetime = datetime.datetime.combine(my_date, my_time)
     return my_datetime
 
@@ -238,8 +283,8 @@ def make_operator_meter_dataset(operator, operator_meter_raw, timekeeper):
     operator_meter['kgh_ch4_90'] = operator_meter_raw[kgh_ch4_90]
     operator_meter['methane_fraction'] = operator_meter_raw[methane_fraction]
     operator_meter['meter'] = operator_meter_raw[meter]
-    operator_meter['qc_discard'] = operator_meter_raw[qc_discard]
-    operator_meter['qc_discard_strict'] = operator_meter_raw[qc_discard_strict]
+    operator_meter['qc_su_discard'] = operator_meter_raw[qc_discard]
+    operator_meter['qc_su_discard_strict'] = operator_meter_raw[qc_discard_strict]
     operator_meter['altitude_meters'] = operator_meter_raw[altitude_meters]
     operator_meter['time'] = operator_meter_raw[time]
     operator_meter['date'] = operator_meter_raw[date]
@@ -249,9 +294,7 @@ def make_operator_meter_dataset(operator, operator_meter_raw, timekeeper):
 
     operator_meter = operator_meter.dropna(axis='index')  # axis = 'index' means to drop rows with missing values
 
-    overpass_datetime = operator_meter.apply(lambda operator_meter: combine_datetime(operator_meter['date'],
-                                                                                              operator_meter['time']),
-                                                      axis=1)
+    overpass_datetime = operator_meter.apply(lambda x: combine_datetime(x['date'], x['time']), axis=1)
 
     operator_meter.insert(loc=0, column='datetime_utc', value=overpass_datetime)
 
