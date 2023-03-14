@@ -329,159 +329,89 @@ def plot_detection_limit(operator, stage, operator_report, operator_meter, n_bin
     return
 
 
-# %% Function: plot_detection_limit
+#%%
 
+def plot_qc_summary():
 
-# inputs:
-# operator: name of operator
-# operator_report: operator data report
-# operator_meter: operator meter data
-# n_bins: number of bins desired in plot
-# threshold: highest release rate in kgh to show in detection threshold graph
+    # Load saved QC dataframe
+    all_qc = pd.read_csv(pathlib.PurePath('03_results', 'qc_comparison', 'all_qc.csv'), index_col=0)
+    # Plot
 
-def plot_detection_limit_new(operator, stage, strict_discard, n_bins, threshold):
+    category = ['fail_stanford_only', 'fail_all_qc', 'fail_operator_only']
+    stage = 1
+    n_operators = 4 # number of operators
+    operators = ['Carbon Mapper', 'GHGSat', 'Kairos LS23', 'Kairos LS25']
+    # Determine values for each group, alphabetical order of operators: "Carbon Mapper, GHGSat, Kairos"
 
-    # Load overpass summary for operator, stage, and discard criteria:
-    operator_df = load_overpass_summary(operator, stage, strict_discard)
+    fail_operator = np.zeros(n_operators)
+    fail_stanford = np.zeros(n_operators)
+    fail_all = np.zeros(n_operators)
+    pass_all = np.zeros(n_operators)
 
-    # Apply QC filter
-    operator_df = operator_df[(operator_df.qc_summary == 'pass_all')]
+    # Height of bars
 
-    # Must be non-zero values
-    operator_df = operator_df.query('non_zero_release == True')
+    for i in range(len(operators)): # for go through fail stanford only
+        op_ab = abbreviate_op_name(operators[i])
+        operator_qc = all_qc.loc[all_qc.operator == op_ab]
+        operator_stage_qc = operator_qc.loc[operator_qc.stage == stage]
+        fail_operator[i] = operator_stage_qc.fail_operator_only
+        fail_stanford[i] = operator_stage_qc.fail_stanford_only
+        fail_all[i] = operator_stage_qc.fail_all_qc
+        pass_all[i] = operator_stage_qc.pass_all_qc
 
-    # Select release under threshold value
-    operator_df = operator_df.query('release_rate_kgh <= @threshold')
+    barWidth = 1
+    # Set height of all sets of bars
+    # Height of stanford_fail is height of pass_all
+    # Height of fail_all is height of fail_stanford and pass_all
+    all_fail_height = np.add(fail_stanford, pass_all).tolist()
+    # height of fail_operator + fail_all
+    operator_height = np.add(all_fail_height, fail_all).tolist()
 
-    # Select overpasses that are below the threshold of interest AND where release is non-zero
-    # #TODO make this code cleaner, for now just seeing that it runs
-    # operator_df = operator_df.loc[operator_df.release_rate_kgh <= threshold].loc[
-    #     operator_df.non_zero_release == True]
+    # Set color scheme
+    pass_color = '#018571'
+    fail_op_color = '#a6611a'
+    fail_stanford_color = '#dfc27d'
+    fail_both_color = '#f5f5f5'
 
+    # pass_color = '#87C27E'
+    # fail_op_color = '#FCEFA9'
+    # fail_stanford_color = '#B9B5D6'
+    # fail_both_color = '#B8ADAA'
 
-    # Create bins for plot
-    bins = np.linspace(0, threshold, n_bins + 1)
-    detection_probability = np.zeros(n_bins)
+    # The position of the bars on the x-axis
+    r = [0,1.5,3,4.5]
 
-    # These variables are for keeping track of values as I iterate through the bins in the for loop below:
-    bin_size, bin_num_detected = np.zeros(n_bins).astype('int'), np.zeros(n_bins).astype('int')
-    bin_median = np.zeros(n_bins)
-    bin_two_sigma = np.zeros(n_bins)
-    two_sigma_upper, two_sigma_lower = np.zeros(n_bins), np.zeros(n_bins)
+    # Bars for fail operator QC (on top of failing Stanford and both)
+    plt.bar(r, fail_operator, bottom=operator_height, color=fail_op_color, edgecolor='black', width=barWidth, label = 'Removed by Operator QC')
+    # Create bars for failing both QC criteria
+    plt.bar(r, fail_all, bottom=all_fail_height, color=fail_both_color, edgecolor='black', width=barWidth,  label = "Removed by Both QC")
+    # Create failing Stanford QC only
+    plt.bar(r, fail_stanford, bottom=pass_all, color=fail_stanford_color, edgecolor='black', width=barWidth, label = "Removed by Stanford QC")
+    # Creat bars for passing all QC
+    plt.bar(r, pass_all, color=pass_color, edgecolor='black', width=barWidth, label = 'Passed all QC')
 
-    # For each bin, find number of data points and detection probability
+    # Custom X axis
+    plt.xticks(r, operators, fontweight='bold')
+    plt.xlabel("Operator", fontsize = 14)
+    plt.ylabel("Number of Overpasses", fontsize = 14)
+    plt.title("Summary of Quality Control Filtering")
+    plt.tick_params(direction='in', right=True, top=True)
+    plt.tick_params(labelsize=12)
+    plt.minorticks_on()
+    plt.tick_params(labelbottom=True, labeltop=False, labelright=False, labelleft=True)
+    plt.tick_params(direction='in', which='minor', length=3, bottom=False, top=False, left=True, right=True)
+    plt.tick_params(direction='in', which='major', length=6, bottom=False, top=False, left=True, right=True)
 
-    for i in range(n_bins):
-
-        # Set boundary of bin
-        bin_min = bins[i]
-        bin_max = bins[i + 1]
-        bin_median[i] = (bin_min + bin_max) / 2
-
-        # Select data within the bin range
-        binned_data = operator_df.loc[operator_df.release_rate_kgh < bin_max].loc[
-            operator_df.release_rate_kgh >= bin_min]
-
-        # Count the total number of overpasses detected within each bin
-        bin_num_detected[i] = binned_data.operator_detected.sum()
-
-        n = len(binned_data)
-        bin_size[i] = n  # this is the y-value for the bin in the plot
-        p = binned_data.operator_detected.sum() / binned_data.shape[0]  # df.shape[0] gives number of rows
-        detection_probability[i] = p
-
-        # Standard Deviation of a binomial distribution
-        sigma = np.sqrt(p * (1 - p) / n)
-        bin_two_sigma[i] = 2 * sigma
-
-        # Find the lower and upper bound defined by two sigma
-        two_sigma_lower[i] = 2 * sigma
-        two_sigma_upper[i] = 2 * sigma
-        if 2 * sigma + p > 1:
-            two_sigma_upper[i] = 1 - p  # probability cannot exceed 1
-        if p - 2 * sigma < 0:
-            two_sigma_lower[i] = p  # if error bar includes zero, set lower bound to p?
-
-    detection_prob = pd.DataFrame({
-        "bin_median": bin_median,
-        "detection_prob_mean": detection_probability,
-        "detection_prob_two_sigma_upper": two_sigma_upper,
-        "detection_prob_two_sigma_lower": two_sigma_lower,
-        "n_data_points": bin_size,
-        "n_detected": bin_num_detected})
-
-    # Function will output cm_detection and detection_prob
-
-    detection_plot = detection_prob.copy()
-    fig, ax = plt.subplots(1, figsize=(6, 6))
-
-    # Set bin width:
-    w = threshold / n_bins / 2.5
-
-    # Use n_bins set above
-    for i in range(n_bins):
-        ax.annotate(f'{detection_plot.n_detected[i]} / {detection_plot.n_data_points[i]}',
-                    [detection_plot.bin_median[i] - w / 1.8, 0.03], fontsize=10)
-
-    # for plotting purpose, we don't want a small hyphen indicating zero uncertainty interval
-    detection_plot.loc[detection_plot['detection_prob_two_sigma_lower'] == 0, 'detection_prob_two_sigma_lower'] = np.nan
-    detection_plot.loc[detection_plot.detection_prob_two_sigma_upper == 0, 'detection_prob_two_sigma_upper'] = np.nan
-    detection_plot.loc[detection_plot.detection_prob_mean == 0, 'detection_prob_mean'] = np.nan
-
-    # Plot bars and detection points
-    ax.bar(detection_plot.bin_median,
-           detection_plot.detection_prob_mean,
-           yerr=[detection_plot.detection_prob_two_sigma_lower, detection_plot.detection_prob_two_sigma_upper],
-           error_kw=dict(lw=2, capsize=3, capthick=1, alpha=0.3),
-           width=threshold / n_bins - 0.5, alpha=0.6, color='#9ecae1', ecolor='black', capsize=2)
-
-    # yulia's color: edgecolor="black",facecolors='none'
-    x_data = rand_jitter(operator_df.release_rate_kgh)
-
-    ax.scatter(x_data, np.multiply(operator_df.operator_detected, 1),
-               facecolors='black',
-               marker='|')
-
-    # Add more room on top and bottom
-    ax.set_ylim([-0.05, 1.05])
-    ax.set_xlim([0, threshold + 0.5])
-
-    # Axes formatting and labels
-    ax.set_yticks([0.0, 0.2, 0.4, 0.6, 0.8, 1.0])
-    ax.set_yticklabels([0.0, 0.2, 0.4, 0.6, 0.8, 1.0], fontsize=11)
-    ax.set_xlabel('Methane Release Rate (kgh)', fontsize=14)
-    ax.set_ylabel('Proportion detected', fontsize=14)
-    ax.tick_params(direction='in', right=True, top=True)
-    ax.tick_params(labelsize=12)
-    ax.minorticks_on()
-    ax.tick_params(labelbottom=True, labeltop=False, labelright=False, labelleft=True)
-    ax.tick_params(direction='in', which='minor', length=3, bottom=False, top=False, left=True, right=True)
-    ax.tick_params(direction='in', which='major', length=6, bottom=True, top=True, left=True, right=True)
-
-    # Set axes and background color to white
-    ax.set_facecolor('white')
-    ax.spines['top'].set_color('black')
-    ax.spines['left'].set_color('black')
-    ax.spines['right'].set_color('black')
-    ax.spines['bottom'].set_color('black')
-
-    plt.title(f'{operator} Probability of Detection - Stage {stage}')
+    plt.legend()
 
     # Save figure
     now = datetime.datetime.now()
     save_time = now.strftime("%Y%m%d")
-    op_ab = abbreviate_op_name(operator)
-    fig_name = f'detect_limit_{op_ab}_stage{stage}_{save_time}'
-    fig_path = pathlib.PurePath('04_figures', fig_name)
+    fig_name = f'qc_stage_{stage}_{save_time}'
+    fig_path = pathlib.PurePath('04_figures', 'qc_summary', fig_name)
     plt.savefig(fig_path)
     plt.show()
 
-    # Save data used to make plots
-    operator_df.to_csv(pathlib.PurePath('03_results', 'detect_probability_data',
-                                               f'{op_ab}_{stage}_detect_{save_time}.csv'))
-    detection_prob.to_csv(pathlib.PurePath('03_results', 'detect_probability_data',
-                                           f'{op_ab}_{stage}_{threshold}kgh_{n_bins}bins_{save_time}.csv'))
-    return
 
 
 #%% Plot daily releases function

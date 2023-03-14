@@ -1,2 +1,2 @@
 ,operator,stage,total_overpasses,pass_stanford_qc,pass_operator_qc,pass_all_qc,fail_stanford_qc,fail_operator_qc,fail_all_qc,fail_stanford_only,fail_operator_only
-0,kairos_ls23,1,349,229,274,185,120,75,31,89,44
+0,kairos_ls23,1,349,230,274,186,119,75,31,88,44
