@@ -1,82 +1,30 @@
-# Script for methods used plotting figures
+# Script for methods for generating figures
 # Author: Sahar H. El Abbadi
 # Date Created: 2023-02-24
-# Date Last Modified: 2023-02-24
+# Date Last Modified: 2023-03-13
 
 # List of methods in this file:
 # > rand_jitter
 # > plot_parity
-# > select_stanford_valid_overpasses(operator_report, operator_meter)
-# > abbreviate_op_name(operator)
 # > plot_parity(operator, stage, operator_report, operator_meter)
 
 # Imports
 import numpy as np
 import pandas as pd
 import pathlib
-import matplotlib.pyplot as plt
 import datetime
 import math
+import matplotlib.pyplot as plt
+from matplotlib.lines import Line2D
+import matplotlib.dates as mdates
 
-from methods_data_cleaning import apply_qc_filter
+from methods_source import load_overpass_summary, abbreviate_op_name
 
 
 # Function: generate jitter for a given array
 def rand_jitter(input_list):
     delta = 0.2
     return input_list + np.random.randn(len(input_list)) * delta
-
-
-# %% Function: select_valid_overpasses
-
-# Inputs:
-# > operator_report: cleaned operator data, loaded from folder 01_clean_data
-# > operator_meter: cleaned metering data, loaded from folder 02_meter_data
-
-# TODO get rid of this and use apply_qc_filter function instead? This function only has one usage,
-#  and apply_qc_filter will make sure that we're applying both our QC and the operator's quc filters
-def select_stanford_valid_overpasses(operator_report, operator_meter):
-    """Merge operator report and operator meter dataframes and select overpasses which pass Stanford QC criteria.
-    Operator report dataframe should already have 'nan' values for quantification estimates that do not meet operator
-    QC criteria. Returns: y_index, x_data, y_data"""
-    # Merge the two data frames
-    operator_plot = operator_report.merge(operator_meter, on='PerformerExperimentID')
-
-    # Filter based on overpasses that meet Stanford's QC criteria
-    operator_plot = operator_plot[(operator_plot['QC: discard - from Stanford'] == 0)]
-
-    return operator_plot
-
-
-# %% Operator abbreviations for saving
-
-def abbreviate_op_name(operator):
-    """Abbreviate operator name for saving files. Use because input to my functions will often be the operator name spelled out in full for plotting purposes,
-    while for saving I want the abbreviated name. Input names and corresponding abbreviations are:
-     - 'Carbon Mapper': 'cm'
-     - 'GHGSat': 'ghg'
-     - 'Kairos': 'kairos'
-     - 'Kairos LS23': 'kairos_ls23'
-     - 'Kairos LS25': 'kairos_ls25'
-     - 'Methane Air': 'mair'
-    """
-    if operator == "Carbon Mapper":
-        op_abb = 'cm'
-    elif operator == "GHGSat":
-        op_abb = 'ghg'
-    elif operator == 'Kairos':
-        op_abb = 'kairos'
-    elif operator == 'Kairos LS23':
-        op_abb = 'kairos_ls23'
-    elif operator == 'Kairos LS25':
-        op_abb = 'kairos_ls25'
-    elif operator == 'Methane Air':
-        op_abb = 'mair'
-    else:
-        print('Typo in operator name')
-        return
-
-    return op_abb
 
 
 # %% Function: plot_parity
@@ -86,19 +34,43 @@ def abbreviate_op_name(operator):
 # > stage
 # > operator_report
 # > operator_meter
-
-def plot_parity(operator, stage, operator_report, operator_meter):
+def plot_parity(operator, stage, strict_discard):
     """Inputs are operator name, stage of analysis, operator_plot dataframe containing all relevant data"""
+    op_ab = abbreviate_op_name(operator)
 
-    # Merge the operator report df and meter df
-    operator_plot = apply_qc_filter(operator_report, operator_meter)
+    # # Select appropriate path based on whether or not we are using strict QC criteria
+    # if strict_discard is True:
+    #     path = pathlib.PurePath('03_results', 'overpass_summary', f'{op_ab}_{stage}_overpasses_strict.csv')
+    # else:
+    #     path = pathlib.PurePath('03_results', 'overpass_summary', f'{op_ab}_{stage}_overpasses.csv')
 
-    y_index = np.isfinite(operator_plot['FacilityEmissionRate'])
+    # Load overpass summary csv file
+    operator_plot = load_overpass_summary(operator, stage, strict_discard)
+
+    # Apply the following filters to overpass data :
+
+    # Must pass all QC filters
+    operator_plot = operator_plot[(operator_plot.qc_summary == 'pass_all')]
+
+    # For parity plots:
+    # All data entries must be a non-zero release
+    operator_plot = operator_plot.query('non_zero_release == True')
+
+    # Operator must have quantified the release as non-zero:
+    operator_plot = operator_plot.query('operator_quantification > 0')
+
+    # Apply filter for Stage 3 data: remove points for which we gave the team's quantification estimates
+    # if phase_iii == 1, then we gave them this release in Phase III dataset
+    if stage == 3:
+        operator_plot = operator_plot[(operator_plot.phase_iii == 0)]
+
+    # Select values for which operator provided a quantification estimate
+    y_index = np.isfinite(operator_plot['operator_quantification'])
 
     # Select x data
-    x_data = operator_plot['Last 60s (kg/h) - from Stanford']
-    y_data = operator_plot['FacilityEmissionRate']
-    y_error = operator_plot['FacilityEmissionRateUpper'] - operator_plot['FacilityEmissionRate']
+    x_data = operator_plot['release_rate_kgh']
+    y_data = operator_plot['operator_quantification']
+    y_error = operator_plot['operator_upper'] - operator_plot['operator_quantification']
 
     # Fit linear regression via least squares with numpy.polyfit
     # m is slope, intercept is b
@@ -188,10 +160,20 @@ def plot_parity(operator, stage, operator_report, operator_meter):
     now = datetime.datetime.now()
     op_ab = abbreviate_op_name(operator)
     save_time = now.strftime("%Y%m%d")
-    fig_name = f'parity_{op_ab}_stage{stage}_{save_time}'
-    fig_path = pathlib.PurePath('04_figures', fig_name)
+    fig_name = f'parity_{op_ab}_stage{stage}_{save_time}_test'
+    fig_path = pathlib.PurePath('04_figures', 'parity_plots', fig_name)
     plt.savefig(fig_path)
     plt.show()
+
+    # Save data used to make figure
+    save_parity_data = pd.DataFrame()
+    save_parity_data['release_rate'] = x_data
+    save_parity_data['operator_report'] = y_data
+    save_parity_data['operator_sigma'] = y_error
+
+    save_path = pathlib.PurePath('03_results', 'parity_plot_data', f'{operator}_{stage}_parity_{save_time}.csv')
+    save_parity_data.to_csv(save_path)
+
 
 # %% Function: plot_detection_limit
 
@@ -203,9 +185,9 @@ def plot_parity(operator, stage, operator_report, operator_meter):
 # n_bins: number of bins desired in plot
 # threshold: highest release rate in kgh to show in detection threshold graph
 
-def plot_detection_limit(operator, stage, operator_report, operator_meter, n_bins, threshold):
+def plot_detection_limit(operator, stage, operator_report, operator_meter, n_bins, threshold, strict_discard):
     # merge meter and operator reports and apply Stanford QC filter
-    operator_df = apply_qc_filter(operator_report, operator_meter)
+    operator_df = apply_qc_filter(operator_report, operator_meter, strict_discard)
 
     # Make column with easier name for coding for now.
     operator_df['release_rate_kgh'] = operator_df['Last 60s (kg/h) - from Stanford']
@@ -346,3 +328,196 @@ def plot_detection_limit(operator, stage, operator_report, operator_meter, n_bin
                                            f'{op_ab}_{stage}_{threshold}kgh_{n_bins}bins_{save_time}.csv'))
     return
 
+
+#%%
+
+def plot_qc_summary():
+
+    # Load saved QC dataframe
+    all_qc = pd.read_csv(pathlib.PurePath('03_results', 'qc_comparison', 'all_qc.csv'), index_col=0)
+    # Plot
+
+    category = ['fail_stanford_only', 'fail_all_qc', 'fail_operator_only']
+    stage = 1
+    n_operators = 4 # number of operators
+    operators = ['Carbon Mapper', 'GHGSat', 'Kairos LS23', 'Kairos LS25']
+    # Determine values for each group, alphabetical order of operators: "Carbon Mapper, GHGSat, Kairos"
+
+    fail_operator = np.zeros(n_operators)
+    fail_stanford = np.zeros(n_operators)
+    fail_all = np.zeros(n_operators)
+    pass_all = np.zeros(n_operators)
+
+    # Height of bars
+
+    for i in range(len(operators)): # for go through fail stanford only
+        op_ab = abbreviate_op_name(operators[i])
+        operator_qc = all_qc.loc[all_qc.operator == op_ab]
+        operator_stage_qc = operator_qc.loc[operator_qc.stage == stage]
+        fail_operator[i] = operator_stage_qc.fail_operator_only
+        fail_stanford[i] = operator_stage_qc.fail_stanford_only
+        fail_all[i] = operator_stage_qc.fail_all_qc
+        pass_all[i] = operator_stage_qc.pass_all_qc
+
+    barWidth = 1
+    # Set height of all sets of bars
+    # Height of stanford_fail is height of pass_all
+    # Height of fail_all is height of fail_stanford and pass_all
+    all_fail_height = np.add(fail_stanford, pass_all).tolist()
+    # height of fail_operator + fail_all
+    operator_height = np.add(all_fail_height, fail_all).tolist()
+
+    # Set color scheme
+    pass_color = '#018571'
+    fail_op_color = '#a6611a'
+    fail_stanford_color = '#dfc27d'
+    fail_both_color = '#f5f5f5'
+
+    # pass_color = '#87C27E'
+    # fail_op_color = '#FCEFA9'
+    # fail_stanford_color = '#B9B5D6'
+    # fail_both_color = '#B8ADAA'
+
+    # The position of the bars on the x-axis
+    r = [0,1.5,3,4.5]
+
+    # Bars for fail operator QC (on top of failing Stanford and both)
+    plt.bar(r, fail_operator, bottom=operator_height, color=fail_op_color, edgecolor='black', width=barWidth, label = 'Removed by Operator QC')
+    # Create bars for failing both QC criteria
+    plt.bar(r, fail_all, bottom=all_fail_height, color=fail_both_color, edgecolor='black', width=barWidth,  label = "Removed by Both QC")
+    # Create failing Stanford QC only
+    plt.bar(r, fail_stanford, bottom=pass_all, color=fail_stanford_color, edgecolor='black', width=barWidth, label = "Removed by Stanford QC")
+    # Creat bars for passing all QC
+    plt.bar(r, pass_all, color=pass_color, edgecolor='black', width=barWidth, label = 'Passed all QC')
+
+    # Custom X axis
+    plt.xticks(r, operators, fontweight='bold')
+    plt.xlabel("Operator", fontsize = 14)
+    plt.ylabel("Number of Overpasses", fontsize = 14)
+    plt.title("Summary of Quality Control Filtering")
+    plt.tick_params(direction='in', right=True, top=True)
+    plt.tick_params(labelsize=12)
+    plt.minorticks_on()
+    plt.tick_params(labelbottom=True, labeltop=False, labelright=False, labelleft=True)
+    plt.tick_params(direction='in', which='minor', length=3, bottom=False, top=False, left=True, right=True)
+    plt.tick_params(direction='in', which='major', length=6, bottom=False, top=False, left=True, right=True)
+
+    plt.legend()
+
+    # Save figure
+    now = datetime.datetime.now()
+    save_time = now.strftime("%Y%m%d")
+    fig_name = f'qc_stage_{stage}_{save_time}'
+    fig_path = pathlib.PurePath('04_figures', 'qc_summary', fig_name)
+    plt.savefig(fig_path)
+    plt.show()
+
+
+
+#%% Plot daily releases function
+def plot_daily_releases(operator, flight_days, operator_releases, stage, strict_discard):
+    """Function to plot daily releases for operators.
+    Inputs:
+      - Operator is the operator name
+      - flight_days is a dataframe with column dates that stores a string for test date of format mm_dd (this can be the operator_flight_days dataframe stored in results
+      - operator_releases is a dictionary with a key for each release date (format mm_dd) where corresponding value is a dataframe of Stanford metered flow rates. """
+
+    dates = flight_days.date
+    for day in dates:
+
+        # test date and month:
+        month_abb = day[0:2]
+        date_abb = day[3:5]
+        date_string = f'2022-{month_abb}-{date_abb}'
+
+        # Load overpass data:
+        operator_stage_overpasses = load_overpass_summary(operator, stage, strict_discard)
+        daily_overpasses = operator_stage_overpasses[operator_stage_overpasses
+                                                     ['overpass_datetime'].dt.strftime('%Y-%m-%d') == date_string]
+
+        # Determine date string for title
+        if month_abb == '10':
+            test_month = 'October'
+        elif month_abb == '11':
+            test_month = 'November'
+        else:
+            test_month = 'ERROR! DEBUG!'
+
+        test_date = day[3:5]
+
+        daily_data = operator_releases[day]
+
+        x_data = daily_data['datetime_utc']
+        y_data = daily_data['flow_rate']
+        kgh_max = math.ceil(max(y_data) / 100) * 100  # Max kgh rounded to nearest 100
+
+        # Initialize Figure
+        fig, ax = plt.subplots(1, figsize=(12, 4))
+        plt.plot(x_data, y_data, color='black',
+                 linewidth=0.5)
+
+        # Set y-axis limits
+        ax.set(ylim=(0, kgh_max))
+
+        # Add vertical lines for overpasses
+
+        # set marker height to be 5% below top line
+        marker_height = 0.9 * kgh_max
+
+        # create array for y data at marker height
+        overpass_y = np.ones(len(daily_overpasses)) * marker_height
+
+        overpass_colors = {'pass_all': '#018571',
+                           'fail_operator': '#a6611a',
+                           'fail_stanford': '#dfc27d',
+                           'fail_all': '#878787',
+                           }
+
+        overpass_legend = {'Valid Overpass': '#018571',
+                           'Operator Removed': '#a6611a',
+                           'Stanford Removed': '#dfc27d',
+                           'Both Removed': '#878787',
+                           }
+
+        ax.scatter(x=daily_overpasses['overpass_datetime'],
+                   y=daily_overpasses['release_rate_kgh'],
+                   # edgecolor='black',
+                   color=daily_overpasses['qc_summary'].map(overpass_colors),
+                   marker='|',
+                   s=2000)
+
+        # add a legend
+        # handles for circles
+        # handles = [
+        #     Line2D([0], [0], marker='o', markerfacecolor=v, color = 'black', linestyle='None', label=k, markersize=8) for
+        #     k, v in
+        #     overpass_legend.items()]
+
+        handles = [
+            Line2D([0], [0], marker='|', color=v, linestyle='None', label=k, markersize=8) for
+            k, v in
+            overpass_legend.items()]
+        lgd = ax.legend(title='Overpass Key', handles=handles, bbox_to_anchor=(1.05, 1), loc='upper left')
+
+        # Title
+        plt.title(f'{test_month} {test_date}: {operator} Release Rates and Overpasses')
+
+        # Format axes
+        ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
+        plt.xlabel('Time (UTC)', fontsize=14)
+        plt.ylabel('Metered Release Rate (kgh)', fontsize=14)
+        plt.tick_params(direction='in', right=True, top=True)
+        plt.tick_params(labelsize=12)
+        plt.minorticks_on()
+        plt.tick_params(labelbottom=True, labeltop=False, labelright=False, labelleft=True)
+        plt.tick_params(direction='in', which='minor', length=3, bottom=True, top=True, left=True, right=True)
+        plt.tick_params(direction='in', which='major', length=6, bottom=True, top=True, left=True, right=True)
+
+        # Save figure
+        now = datetime.datetime.now()
+        op_ab = abbreviate_op_name(operator)
+        save_time = now.strftime("%Y%m%d")
+        fig_name = f'release_chart_{op_ab}_{day}'
+        fig_path = pathlib.PurePath('04_figures', fig_name)
+        plt.savefig(fig_path, bbox_extra_artists=(lgd,), bbox_inches='tight')
+        plt.show()
