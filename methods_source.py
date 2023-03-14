@@ -521,6 +521,7 @@ def combine_datetime(test_date, test_time):
 # %%
 
 def check_timekeep_capitalization(timekeeper):
+    """Check if timekeeper is recorded using all lower-case letters, if so return the corrected value"""
     if timekeeper == 'flightradar':
         timekeeper = 'Flightradar'
     elif timekeeper == 'stanford':
@@ -533,7 +534,6 @@ def check_timekeep_capitalization(timekeeper):
 
 # %%
 def clean_meter_column_names(operator_meter_raw, overpass_id, timekeeper):
-
     timekeeper = check_timekeep_capitalization(timekeeper)
 
     # Relevant columns from Philippine generated meter dataset:
@@ -579,18 +579,6 @@ def clean_meter_column_names(operator_meter_raw, overpass_id, timekeeper):
     for meter_name, meter_nickname in zip(names, nicknames):
         operator_meter.loc[operator_meter['meter'] == meter_name, 'meter'] = meter_nickname
 
-    # Drop rows with nan to remove rows with missing values. This is because for some operators, we missed overpasses
-    # and timestamps have nan values, which causes issues with downstream code
-    #
-    # operator_meter = operator_meter.dropna(axis='index')  # axis = 'index' means to drop rows with missing values
-    #
-    # overpass_datetime = operator_meter.apply(lambda x: combine_datetime(x['date'], x['time']), axis=1)
-    #
-    # operator_meter.insert(loc=0, column='datetime_utc', value=overpass_datetime)
-    #
-    # # Now that we have removed NA values in time, we can remove date and time columns from operator_meter
-    # operator_meter = operator_meter.drop(columns=['time', 'date'])
-
     return operator_meter
 
 
@@ -604,67 +592,8 @@ def make_operator_meter_dataset(operator, operator_meter_raw, timekeeper):
       - Stanford: Stanford ground team visual observation of when the airplane was overhead
       - team: participating operator's report of when they were over the source """
 
-    # if timekeeper == 'flightradar':
-    #     timekeeper = 'Flightradar'
-    # elif timekeeper == 'stanford':
-    #     timekeeper = 'Stanford'
-    # elif timekeeper == 'operator':
-    #     timekeeper = 'team'
-
     timekeeper = check_timekeep_capitalization(timekeeper)
-
-
-    # Relevant columns from Philippine generated meter dataset:
-    date = 'Date'
-    time = f'Time (UTC) - from {timekeeper}'
-
-    # if timekeeper == 'Flightradar':
-    #     overpass_id = 'FlightradarOverpassID'
-    # elif timekeeper == 'Stanford':
-    #     overpass_id = 'StanfordOverpassID'
-    # elif timekeeper == 'team':
-    #     overpass_id = 'PerformerOverpassID'
-    #
-    # # use PerformerOverpassID for consistency
     overpass_id = 'PerformerOverpassID'
-    # phase_iii = 'PhaseIII'  # 0 indicates the overpass was not provided to team in Phase III, 1 indicates it was
-    # kgh_gas_30 = f'Last 30s (kg/h) - whole gas measurement - from {timekeeper}'
-    # kgh_gas_60 = f'Last 60s (kg/h) - whole gas measurement - from {timekeeper}'
-    # kgh_gas_90 = f'Last 90s (kg/h) - whole gas measurement - from {timekeeper}'
-    # kgh_ch4_30 = f'Last 30s (kg/h) - from {timekeeper}'
-    # kgh_ch4_60 = f'Last 60s (kg/h) - from {timekeeper}'
-    # kgh_ch4_90 = f'Last 90s (kg/h) - from {timekeeper}'
-    # methane_fraction = 'Percent methane'
-    # meter = 'Meter'  # note renaming meter variable used above
-    # qc_discard = f'Discarded - using {timekeeper}'
-    # qc_discard_strict = f'Discarded - 1% - using {timekeeper}'
-    # altitude_meters = 'Average altitude last minute (m)'
-    #
-    # operator_meter = pd.DataFrame()
-    # # Populate relevant dataframes
-    #
-    # operator_meter['overpass_id'] = operator_meter_raw[overpass_id]
-    # operator_meter['phase_iii'] = operator_meter_raw[phase_iii]
-    # operator_meter['kgh_gas_30'] = operator_meter_raw[kgh_gas_30]
-    # operator_meter['kgh_gas_60'] = operator_meter_raw[kgh_gas_60]
-    # operator_meter['kgh_gas_90'] = operator_meter_raw[kgh_gas_90]
-    # operator_meter['kgh_ch4_30'] = operator_meter_raw[kgh_ch4_30]
-    # operator_meter['kgh_ch4_60'] = operator_meter_raw[kgh_ch4_60]
-    # operator_meter['kgh_ch4_90'] = operator_meter_raw[kgh_ch4_90]
-    # operator_meter['methane_fraction'] = operator_meter_raw[methane_fraction]
-    # operator_meter['meter'] = operator_meter_raw[meter]
-    # operator_meter['qc_su_discard'] = operator_meter_raw[qc_discard]
-    # operator_meter['qc_su_discard_strict'] = operator_meter_raw[qc_discard_strict]
-    # operator_meter['altitude_meters'] = operator_meter_raw[altitude_meters]
-    # operator_meter['time'] = operator_meter_raw[time]
-    # operator_meter['date'] = operator_meter_raw[date]
-    #
-    # # Abbreviate meter names in raw meter file
-    # names = ['Baby Coriolis', 'Mama Coriolis', 'Papa Coriolis']
-    # nicknames = ['bc', 'mc', 'pc']
-    #
-    # for meter_name, meter_nickname in zip(names, nicknames):
-    #     operator_meter.loc[operator_meter['meter'] == meter_name, 'meter'] = meter_nickname
 
     operator_meter = clean_meter_column_names(operator_meter_raw, overpass_id, timekeeper)
 
@@ -673,8 +602,8 @@ def make_operator_meter_dataset(operator, operator_meter_raw, timekeeper):
 
     operator_meter = operator_meter.dropna(axis='index')  # axis = 'index' means to drop rows with missing values
 
+    # Combine date and time
     overpass_datetime = operator_meter.apply(lambda x: combine_datetime(x['date'], x['time']), axis=1)
-
     operator_meter.insert(loc=0, column='datetime_utc', value=overpass_datetime)
 
     # Now that we have removed NA values in time, we can remove date and time columns from operator_meter
@@ -698,7 +627,8 @@ def make_operator_meter_dataset(operator, operator_meter_raw, timekeeper):
 
     return operator_meter
 
-#%%
+
+# %%
 def classify_confusion_categories(overpass_summary):
     """Takes input that is an overpass summary dataframe and outputs counts of true positive, false positive, true negative, false negative"""
 
@@ -720,7 +650,6 @@ def make_histogram_bins(df, threshold, n_bins):
     # For each bin, find number of data points and detection probability
 
     for i in range(n_bins):
-
         # Set boundary of bin
         bin_min = bins[i]
         bin_max = bins[i + 1]
@@ -730,8 +659,8 @@ def make_histogram_bins(df, threshold, n_bins):
         bin_count[i] = len(binned_data)
 
     detection_prob = pd.DataFrame({
-    "bin_median": bin_median,
-    "n_data_points": bin_count,
+        "bin_median": bin_median,
+        "n_data_points": bin_count,
     })
 
     return detection_prob
@@ -740,9 +669,10 @@ def make_histogram_bins(df, threshold, n_bins):
 def find_missing_data(meter_raw):
     """ Missing data refers to overpasses documented by Stanford that are not reported by the operator"""
 
-    operator_missing_raw = meter_raw.query('PerformerOverpassID.isnull() == True & StanfordOverpassID.isnull() == False')
+    operator_missing_raw = meter_raw.query(
+        'PerformerOverpassID.isnull() == True & StanfordOverpassID.isnull() == False')
     operator_missing = clean_meter_column_names(operator_missing_raw, 'FlightradarOverpassID', 'flightradar')
 
-    operator_missing.rename(columns = {'kgh_ch4_60':'release_rate_kgh'}, inplace = True)
+    operator_missing.rename(columns={'kgh_ch4_60': 'release_rate_kgh'}, inplace=True)
 
     return operator_missing

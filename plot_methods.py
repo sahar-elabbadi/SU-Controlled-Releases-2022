@@ -38,18 +38,11 @@ def plot_parity(operator, stage, strict_discard):
     """Inputs are operator name, stage of analysis, operator_plot dataframe containing all relevant data"""
     op_ab = abbreviate_op_name(operator)
 
-    # # Select appropriate path based on whether or not we are using strict QC criteria
-    # if strict_discard is True:
-    #     path = pathlib.PurePath('03_results', 'overpass_summary', f'{op_ab}_{stage}_overpasses_strict.csv')
-    # else:
-    #     path = pathlib.PurePath('03_results', 'overpass_summary', f'{op_ab}_{stage}_overpasses.csv')
-
     # Load overpass summary csv file
     operator_plot = load_overpass_summary(operator, stage, strict_discard)
 
     # Apply the following filters to overpass data :
-
-    # Must pass all QC filters
+    # Must pass all QC filters:
     operator_plot = operator_plot[(operator_plot.qc_summary == 'pass_all')]
 
     # For parity plots:
@@ -116,13 +109,6 @@ def plot_parity(operator, stage, strict_discard):
                 label=f'{operator} Stage {stage} data',
                 fmt='o',
                 markersize=5)
-
-    # I don't think I need this, was it hold over from when I was trying to figure it out?
-    # If something breaks in the code later, check back to this spot
-
-    # ax.set_xlabel('x-axis')
-    # ax.set_ylabel('y-axis')
-    # ax.set_title('Line plot with error bars')
 
     # Set title
     plt.title(f'{operator} Stage {stage} Results ({sample_size} measurements)')
