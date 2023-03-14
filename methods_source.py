@@ -1,7 +1,11 @@
-# Script for methods analyzing results
+# Script methods for analysis
 # Author: Sahar H. El Abbadi
 # Date Created: 2023-03-03
 # Date Last Modified: 2023-03-03
+
+# Any general function used throughout in any of the notebooks. However, the following are explicitly NOT included:  
+# > Any file that specifically outputs a figure will be saved in plot_methods
+# > Methods for specifically cleaning the operator reports 
 
 # List of methods in this file:
 # > summarize_qc
@@ -12,7 +16,6 @@ import math
 import pandas as pd
 import numpy as np
 import datetime
-
 
 
 # %% Abbreviate operator name
@@ -43,6 +46,8 @@ def abbreviate_op_name(operator):
         return
 
     return op_abb
+
+
 # %% method summarize_qc
 def generate_overpass_summary(operator, stage, operator_report, operator_meter, strict_discard):
     """Generate clean dataframe for each overpass with columns indicating QC status.
@@ -127,7 +132,7 @@ def generate_overpass_summary(operator, stage, operator_report, operator_meter, 
     return operator_qc
 
 
-#%%
+# %%
 def load_overpass_summary(operator, stage, strict_discard):
     """Load overpass summary as a dataframe. Stage is a number (1, 2, 3). Input of "True" for strict_discard sets
     Stanford QC to use strict QC criteria, typical input is False. Operator names can be:
@@ -203,6 +208,7 @@ def load_daily_meter_data(date):
     date_meter.loc[date_meter['meter'] == 'Papa Coriolis', 'meter'] = 'pc'
 
     return date_meter
+
 
 # %% Load flight days
 
@@ -335,7 +341,6 @@ def generate_daily_releases(operator_flight_days):
 # %% Plot release days
 
 
-
 # %% Load clean data
 
 def load_clean_operator_reports():
@@ -430,7 +435,7 @@ def select_stanford_valid_overpasses(operator_report, operator_meter, strict_dis
     Old notes: Operator report dataframe should already have 'nan' values for quantification estimates that do not meet operator
     QC criteria. Returns: y_index, x_data, y_data"""
     # Merge the two data frames
-    operator_plot = operator_report.merge(operator_meter, on='overpass_id')
+    operator_df = operator_report.merge(operator_meter, on='overpass_id')
 
     if strict_discard is True:
         discard_column = 'qc_su_discard_strict'
@@ -438,32 +443,9 @@ def select_stanford_valid_overpasses(operator_report, operator_meter, strict_dis
         discard_column = 'qc_su_discard'
 
     # Filter based on overpasses that meet Stanford's QC criteria
-    operator_plot = operator_plot[(operator_plot[discard_column] == 0)]
+    operator_df = operator_df[(operator_df[discard_column] == 0)]
 
-    return operator_plot
-
-
-# %%
-def apply_qc_filter(operator_report, operator_meter, strict_discard):
-    """Merge operator report and operator meter dataframes and select overpasses which pass Stanford QC criteria.
-    Operator report dataframe should already have 'nan' values for quantification estimates that do not meet operator
-    QC criteria. Returns a combined dataframe matched by PerformerExperimentID"""
-
-    # Merge the two data frames
-    combined_df = operator_report.merge(operator_meter, on='overpass_id')
-
-    if strict_discard is True:
-        discard_column = 'qc_su_discard_strict'
-    else:
-        discard_column = 'qc_su_discard'
-
-    # Filter based on overpasses that meet Stanford's QC criteria
-    combined_df = combined_df[(combined_df[discard_column] == 0)]
-
-    # Filter based on operator QC criteria
-    combined_df = combined_df[(combined_df['OperatorKeep'] == 1)]
-
-    return combined_df
+    return operator_df
 
 
 # %% Function to convert 24 hour datetime in AZ local time to 24 hour time in UTC

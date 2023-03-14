@@ -18,13 +18,14 @@ import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 import matplotlib.dates as mdates
 
-from methods_source import load_overpass_summary, apply_qc_filter, abbreviate_op_name
+from methods_source import load_overpass_summary, abbreviate_op_name
 
 
 # Function: generate jitter for a given array
 def rand_jitter(input_list):
     delta = 0.2
     return input_list + np.random.randn(len(input_list)) * delta
+
 
 # %% Function: plot_parity
 
@@ -33,10 +34,8 @@ def rand_jitter(input_list):
 # > stage
 # > operator_report
 # > operator_meter
-
 def plot_parity(operator, stage, strict_discard):
     """Inputs are operator name, stage of analysis, operator_plot dataframe containing all relevant data"""
-
     op_ab = abbreviate_op_name(operator)
 
     # # Select appropriate path based on whether or not we are using strict QC criteria
@@ -59,7 +58,6 @@ def plot_parity(operator, stage, strict_discard):
 
     # Operator must have quantified the release as non-zero:
     operator_plot = operator_plot.query('operator_quantification > 0')
-
 
     # Apply filter for Stage 3 data: remove points for which we gave the team's quantification estimates
     # if phase_iii == 1, then we gave them this release in Phase III dataset
@@ -331,8 +329,6 @@ def plot_detection_limit(operator, stage, operator_report, operator_meter, n_bin
     return
 
 
-
-
 # %% Function: plot_detection_limit
 
 
@@ -343,24 +339,25 @@ def plot_detection_limit(operator, stage, operator_report, operator_meter, n_bin
 # n_bins: number of bins desired in plot
 # threshold: highest release rate in kgh to show in detection threshold graph
 
-def plot_detection_limit_new(operator, stage, operator_report, operator_meter, n_bins, threshold, strict_discard):
-    # merge meter and operator reports and apply Stanford QC filter
-    operator_df = apply_qc_filter(operator_report, operator_meter, strict_discard)
+def plot_detection_limit_new(operator, stage, strict_discard, n_bins, threshold):
 
-    # Make column with easier name for coding for now.
-    operator_df['release_rate_kgh'] = operator_df['Last 60s (kg/h) - from Stanford']
+    # Load overpass summary for operator, stage, and discard criteria:
+    operator_df = load_overpass_summary(operator, stage, strict_discard)
 
-    # Determine whether each overpass below the threshold value was detected
-    operator_detection = pd.DataFrame()
-    operator_detection['overpass_id'] = operator_df.PerformerExperimentID
-    operator_detection['non_zero_release'] = operator_df.release_rate_kgh != 0  # True if we conducted a release
-    operator_detection['operator_detected'] = operator_df.Detected
-    operator_detection['release_rate_kgh'] = operator_df.release_rate_kgh
-    operator_detection['operator_quantification'] = operator_df.FacilityEmissionRate
+    # Apply QC filter
+    operator_df = operator_df[(operator_df.qc_summary == 'pass_all')]
+
+    # Must be non-zero values
+    operator_df = operator_df.query('non_zero_release == True')
+
+    # Select release under threshold value
+    operator_df = operator_df.query('release_rate_kgh <= @threshold')
 
     # Select overpasses that are below the threshold of interest AND where release is non-zero
-    operator_detection = operator_detection.loc[operator_detection.release_rate_kgh <= threshold].loc[
-        operator_detection.non_zero_release == True]
+    # #TODO make this code cleaner, for now just seeing that it runs
+    # operator_df = operator_df.loc[operator_df.release_rate_kgh <= threshold].loc[
+    #     operator_df.non_zero_release == True]
+
 
     # Create bins for plot
     bins = np.linspace(0, threshold, n_bins + 1)
@@ -382,8 +379,8 @@ def plot_detection_limit_new(operator, stage, operator_report, operator_meter, n
         bin_median[i] = (bin_min + bin_max) / 2
 
         # Select data within the bin range
-        binned_data = operator_detection.loc[operator_detection.release_rate_kgh < bin_max].loc[
-            operator_detection.release_rate_kgh >= bin_min]
+        binned_data = operator_df.loc[operator_df.release_rate_kgh < bin_max].loc[
+            operator_df.release_rate_kgh >= bin_min]
 
         # Count the total number of overpasses detected within each bin
         bin_num_detected[i] = binned_data.operator_detected.sum()
@@ -439,9 +436,9 @@ def plot_detection_limit_new(operator, stage, operator_report, operator_meter, n
            width=threshold / n_bins - 0.5, alpha=0.6, color='#9ecae1', ecolor='black', capsize=2)
 
     # yulia's color: edgecolor="black",facecolors='none'
-    x_data = rand_jitter(operator_detection.release_rate_kgh)
+    x_data = rand_jitter(operator_df.release_rate_kgh)
 
-    ax.scatter(x_data, np.multiply(operator_detection.operator_detected, 1),
+    ax.scatter(x_data, np.multiply(operator_df.operator_detected, 1),
                facecolors='black',
                marker='|')
 
@@ -480,13 +477,14 @@ def plot_detection_limit_new(operator, stage, operator_report, operator_meter, n
     plt.show()
 
     # Save data used to make plots
-    operator_detection.to_csv(pathlib.PurePath('03_results', 'detect_probability_data',
+    operator_df.to_csv(pathlib.PurePath('03_results', 'detect_probability_data',
                                                f'{op_ab}_{stage}_detect_{save_time}.csv'))
     detection_prob.to_csv(pathlib.PurePath('03_results', 'detect_probability_data',
                                            f'{op_ab}_{stage}_{threshold}kgh_{n_bins}bins_{save_time}.csv'))
     return
 
 
+#%% Plot daily releases function
 def plot_daily_releases(operator, flight_days, operator_releases, stage, strict_discard):
     """Function to plot daily releases for operators.
     Inputs:
