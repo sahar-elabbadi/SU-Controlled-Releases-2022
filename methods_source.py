@@ -12,9 +12,7 @@ import math
 import pandas as pd
 import numpy as np
 import datetime
-import matplotlib.pyplot as plt
-import matplotlib.dates as mdates
-from matplotlib.lines import Line2D
+
 
 
 # %% Abbreviate operator name
@@ -336,112 +334,6 @@ def generate_daily_releases(operator_flight_days):
 
 # %% Plot release days
 
-def plot_daily_releases(operator, flight_days, operator_releases, stage, strict_discard):
-    """Function to plot daily releases for operators.
-    Inputs:
-      - Operator is the operator name
-      - flight_days is a dataframe with column dates that stores a string for test date of format mm_dd (this can be the operator_flight_days dataframe stored in results
-      - operator_releases is a dictionary with a key for each release date (format mm_dd) where corresponding value is a dataframe of Stanford metered flow rates. """
-
-    dates = flight_days.date
-    for day in dates:
-
-        # test date and month:
-        month_abb = day[0:2]
-        date_abb = day[3:5]
-        date_string = f'2022-{month_abb}-{date_abb}'
-
-        # Load overpass data:
-        operator_stage_overpasses = load_overpass_summary(operator, stage, strict_discard)
-        daily_overpasses = operator_stage_overpasses[operator_stage_overpasses
-                                                     ['overpass_datetime'].dt.strftime('%Y-%m-%d') == date_string]
-
-        # Determine date string for title
-        if month_abb == '10':
-            test_month = 'October'
-        elif month_abb == '11':
-            test_month = 'November'
-        else:
-            test_month = 'ERROR! DEBUG!'
-
-        test_date = day[3:5]
-
-        daily_data = operator_releases[day]
-
-        x_data = daily_data['datetime_utc']
-        y_data = daily_data['flow_rate']
-        kgh_max = math.ceil(max(y_data) / 100) * 100  # Max kgh rounded to nearest 100
-
-        # Initialize Figure
-        fig, ax = plt.subplots(1, figsize=(12, 4))
-        plt.plot(x_data, y_data, color='black',
-                 linewidth=0.5)
-
-        # Set y-axis limits
-        ax.set(ylim=(0, kgh_max))
-
-        # Add vertical lines for overpasses
-
-        # set marker height to be 5% below top line
-        marker_height = 0.9 * kgh_max
-
-        # create array for y data at marker height
-        overpass_y = np.ones(len(daily_overpasses)) * marker_height
-
-        overpass_colors = {'pass_all': '#018571',
-                           'fail_operator': '#a6611a',
-                           'fail_stanford': '#dfc27d',
-                           'fail_all': '#878787',
-                           }
-
-        overpass_legend = {'Valid Overpass': '#018571',
-                           'Operator Removed': '#a6611a',
-                           'Stanford Removed': '#dfc27d',
-                           'Both Removed': '#878787',
-                           }
-
-        ax.scatter(x=daily_overpasses['overpass_datetime'],
-                   y=daily_overpasses['release_rate_kgh'],
-                   # edgecolor='black',
-                   color=daily_overpasses['qc_summary'].map(overpass_colors),
-                   marker='|',
-                   s=2000)
-
-        # add a legend
-        # handles for circles
-        # handles = [
-        #     Line2D([0], [0], marker='o', markerfacecolor=v, color = 'black', linestyle='None', label=k, markersize=8) for
-        #     k, v in
-        #     overpass_legend.items()]
-
-        handles = [
-            Line2D([0], [0], marker='|', color=v, linestyle='None', label=k, markersize=8) for
-            k, v in
-            overpass_legend.items()]
-        lgd = ax.legend(title='Overpass Key', handles=handles, bbox_to_anchor=(1.05, 1), loc='upper left')
-
-        # Title
-        plt.title(f'{test_month} {test_date}: {operator} Release Rates and Overpasses')
-
-        # Format axes
-        ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
-        plt.xlabel('Time (UTC)', fontsize=14)
-        plt.ylabel('Metered Release Rate (kgh)', fontsize=14)
-        plt.tick_params(direction='in', right=True, top=True)
-        plt.tick_params(labelsize=12)
-        plt.minorticks_on()
-        plt.tick_params(labelbottom=True, labeltop=False, labelright=False, labelleft=True)
-        plt.tick_params(direction='in', which='minor', length=3, bottom=True, top=True, left=True, right=True)
-        plt.tick_params(direction='in', which='major', length=6, bottom=True, top=True, left=True, right=True)
-
-        # Save figure
-        now = datetime.datetime.now()
-        op_ab = abbreviate_op_name(operator)
-        save_time = now.strftime("%Y%m%d")
-        fig_name = f'release_chart_{op_ab}_{day}'
-        fig_path = pathlib.PurePath('04_figures', fig_name)
-        plt.savefig(fig_path, bbox_extra_artists=(lgd,), bbox_inches='tight')
-        plt.show()
 
 
 # %% Load clean data
