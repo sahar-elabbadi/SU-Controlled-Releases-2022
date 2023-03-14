@@ -1,7 +1,7 @@
 # Script for methods for generating figures
 # Author: Sahar H. El Abbadi
 # Date Created: 2023-02-24
-# Date Last Modified: 2023-02-24
+# Date Last Modified: 2023-03-13
 
 # List of methods in this file:
 # > rand_jitter
