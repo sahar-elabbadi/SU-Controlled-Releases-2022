@@ -13,7 +13,7 @@
 import numpy as np
 import pandas as pd
 import datetime
-from methods_data_cleaning import convert_utc, convert_to_twentyfour
+from methods_source import convert_utc, convert_to_twentyfour
 
 
 # %% Carbon Mapper Data Cleaning
