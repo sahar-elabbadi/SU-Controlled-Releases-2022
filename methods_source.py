@@ -727,6 +727,10 @@ def classify_histogram_data(operator, stage, strict_discard, threshold_lower, th
         missing = find_missing_data(ghg_meter_raw)
     elif operator == 'Kairos':
         missing = find_missing_data(kairos_meter_raw)
+    elif operator == 'Kairos LS23':
+        missing = find_missing_data(kairos_meter_raw)
+    elif operator == 'Kairos LS25':
+        missing = find_missing_data(kairos_meter_raw)
     elif operator == 'Methane Air':
         missing = find_missing_data(mair_meter_raw)
 
@@ -753,9 +757,11 @@ def classify_histogram_data(operator, stage, strict_discard, threshold_lower, th
         'zero_filter_op': count_zero_op_fail,
         'zero_missing': count_missing_zero,
     })
+
+    # Determine max bin height for plotting:
+    # exclude zeros, zero releases were targeted at 10% of all other releases
     col_for_summing = ['true_positive',
                        'false_positive',
-                       'true_negative',
                        'false_negative',
                        'filter_stanford',
                        'filter_operator',

@@ -17,8 +17,9 @@ import math
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 import matplotlib.dates as mdates
+from matplotlib.patches import Patch
 
-from methods_source import load_overpass_summary, abbreviate_op_name
+from methods_source import load_overpass_summary, abbreviate_op_name, classify_histogram_data
 
 
 # Function: generate jitter for a given array
@@ -172,7 +173,6 @@ def plot_parity(operator, stage, strict_discard):
 # threshold: highest release rate in kgh to show in detection threshold graph
 
 def plot_detection_limit(operator, stage, strict_discard, n_bins, threshold):
-
     # Load overpass summary for operator, stage, and discard criteria:
     operator_df = load_overpass_summary(operator, stage, strict_discard)
 
@@ -304,23 +304,22 @@ def plot_detection_limit(operator, stage, strict_discard, n_bins, threshold):
 
     # Save data used to make plots
     operator_df.to_csv(pathlib.PurePath('03_results', 'detect_probability_data',
-                                               f'{op_ab}_{stage}_detect_{save_time}.csv'))
+                                        f'{op_ab}_{stage}_detect_{save_time}.csv'))
     detection_prob.to_csv(pathlib.PurePath('03_results', 'detect_probability_data',
                                            f'{op_ab}_{stage}_{threshold}kgh_{n_bins}bins_{save_time}.csv'))
     return
 
 
-#%%
+# %%
 
 def plot_qc_summary():
-
     # Load saved QC dataframe
     all_qc = pd.read_csv(pathlib.PurePath('03_results', 'qc_comparison', 'all_qc.csv'), index_col=0)
     # Plot
 
     category = ['fail_stanford_only', 'fail_all_qc', 'fail_operator_only']
     stage = 1
-    n_operators = 4 # number of operators
+    n_operators = 4  # number of operators
     operators = ['Carbon Mapper', 'GHGSat', 'Kairos LS23', 'Kairos LS25']
     # Determine values for each group, alphabetical order of operators: "Carbon Mapper, GHGSat, Kairos"
 
@@ -331,7 +330,7 @@ def plot_qc_summary():
 
     # Height of bars
 
-    for i in range(len(operators)): # for go through fail stanford only
+    for i in range(len(operators)):  # for go through fail stanford only
         op_ab = abbreviate_op_name(operators[i])
         operator_qc = all_qc.loc[all_qc.operator == op_ab]
         operator_stage_qc = operator_qc.loc[operator_qc.stage == stage]
@@ -360,21 +359,24 @@ def plot_qc_summary():
     # fail_both_color = '#B8ADAA'
 
     # The position of the bars on the x-axis
-    r = [0,1.5,3,4.5]
+    r = [0, 1.5, 3, 4.5]
 
     # Bars for fail operator QC (on top of failing Stanford and both)
-    plt.bar(r, fail_operator, bottom=operator_height, color=fail_op_color, edgecolor='black', width=barWidth, label = 'Removed by Operator QC')
+    plt.bar(r, fail_operator, bottom=operator_height, color=fail_op_color, edgecolor='black', width=barWidth,
+            label='Removed by Operator QC')
     # Create bars for failing both QC criteria
-    plt.bar(r, fail_all, bottom=all_fail_height, color=fail_both_color, edgecolor='black', width=barWidth,  label = "Removed by Both QC")
+    plt.bar(r, fail_all, bottom=all_fail_height, color=fail_both_color, edgecolor='black', width=barWidth,
+            label="Removed by Both QC")
     # Create failing Stanford QC only
-    plt.bar(r, fail_stanford, bottom=pass_all, color=fail_stanford_color, edgecolor='black', width=barWidth, label = "Removed by Stanford QC")
+    plt.bar(r, fail_stanford, bottom=pass_all, color=fail_stanford_color, edgecolor='black', width=barWidth,
+            label="Removed by Stanford QC")
     # Creat bars for passing all QC
-    plt.bar(r, pass_all, color=pass_color, edgecolor='black', width=barWidth, label = 'Passed all QC')
+    plt.bar(r, pass_all, color=pass_color, edgecolor='black', width=barWidth, label='Passed all QC')
 
     # Custom X axis
     plt.xticks(r, operators, fontweight='bold')
-    plt.xlabel("Operator", fontsize = 14)
-    plt.ylabel("Number of Overpasses", fontsize = 14)
+    plt.xlabel("Operator", fontsize=14)
+    plt.ylabel("Number of Overpasses", fontsize=14)
     plt.title("Summary of Quality Control Filtering")
     plt.tick_params(direction='in', right=True, top=True)
     plt.tick_params(labelsize=12)
@@ -394,8 +396,7 @@ def plot_qc_summary():
     plt.show()
 
 
-
-#%% Plot daily releases function
+# %% Plot daily releases function
 def plot_daily_releases(operator, flight_days, operator_releases, stage, strict_discard):
     """Function to plot daily releases for operators.
     Inputs:
@@ -497,3 +498,234 @@ def plot_daily_releases(operator, flight_days, operator_releases, stage, strict_
         fig_path = pathlib.PurePath('04_figures', 'release_rates', fig_name)
         plt.savefig(fig_path, bbox_extra_artists=(lgd,), bbox_inches='tight')
         plt.show()
+
+
+# %%
+
+def make_releases_histogram(operator, stage, strict_discard):
+    ############## Setup Data ##############
+
+    # Create bins for middle histogram plot
+    threshold_lower = 0
+    threshold_upper = 50
+    n_bins = 10
+    op_histogram_low = classify_histogram_data(operator, stage, strict_discard,
+                                               threshold_lower, threshold_upper, n_bins)
+
+    # Create bins for right histogram plot
+    threshold_lower = 50
+    threshold_upper = 1500
+    n_bins = 30
+    op_histogram_high = classify_histogram_data(operator, stage, strict_discard,
+                                                threshold_lower, threshold_upper, n_bins)
+
+    ############## Figure ##############
+    fig, [ax1, ax2, ax3] = plt.subplots(1, 3,
+                                        figsize=(10, 3),
+                                        gridspec_kw={'width_ratios': [0.6, 3, 4]})
+
+    plt.subplots_adjust(left=0.1,
+                        bottom=0.1,
+                        right=0.9,
+                        top=0.9,
+                        wspace=0.05,
+                        hspace=0.05)
+
+    # Determine max value for the y-axis
+    low_height = op_histogram_low.bin_height.max()
+    high_height = op_histogram_high.bin_height.max()
+    y_height = max(low_height, high_height)
+    y_height = math.ceil(y_height / 5) * 5
+
+    # Ram's colors:
+    seshadri = ['#c3121e', '#0348a1', '#ffb01c', '#027608', '#0193b0', '#9c5300', '#949c01', '#7104b5']
+    #           0sangre,    1neptune,  2pumpkin,  3clover,  4denim,     5cocoa,     6cumin  7berry
+
+    # Color scheme
+    tp_color = seshadri[3]
+    tn_color = seshadri[1]
+    fp_color = seshadri[2]
+    fn_color = seshadri[0]
+    su_color = seshadri[4]
+    op_color = seshadri[5]
+    missing_color = seshadri[6]
+
+    ####### Left histogram #######
+    bar_width = 0.2
+    # add true negatives
+    ax1.bar(0, op_histogram_low.true_negative, width=bar_width, edgecolor='black', color=tn_color)
+
+    # Zero release discarded by SU
+    su_filter_height0 = op_histogram_low.true_negative
+    ax1.bar(0, op_histogram_low.zero_filter_su, bottom=su_filter_height0, width=bar_width, label='Stanford Filtered',
+            edgecolor='black', color=su_color)
+
+    # Zero release discarded by operator
+    op_filter_height0 = np.add(su_filter_height0, op_histogram_low.zero_filter_su).tolist()
+    ax1.bar(0, op_histogram_low.zero_filter_op, bottom=op_filter_height0, width=bar_width, label='Operator Filtered',
+            edgecolor='black', color=op_color)
+
+    # Missing data zero release
+    missing_height = np.add(op_filter_height0, op_histogram_low.zero_filter_op).tolist()
+    ax1.bar(0, op_histogram_low.zero_missing, bottom=op_filter_height0, width=bar_width, label='Operator Filtered',
+            edgecolor='black', color=missing_color)
+
+    ####### Middle histogram #######
+    bar_width = 4.2
+    # Middle plot
+
+    # Add True Positives
+    ax2.bar(op_histogram_low.bin_median, op_histogram_low.true_positive, width=bar_width,
+            label='True positive', edgecolor='black', color=tp_color)
+
+    # Add False Positives
+    ax2.bar(op_histogram_low.bin_median, op_histogram_low.false_positive, bottom=op_histogram_low.true_positive,
+            width=bar_width, label='False positive', edgecolor='black', color=fp_color)
+
+    # Add False Negatives
+    fn_height = np.add(op_histogram_low.true_positive, op_histogram_low.false_positive).tolist()
+    ax2.bar(op_histogram_low.bin_median, op_histogram_low.false_negative, bottom=op_histogram_low.true_positive,
+            width=bar_width, label='False Negative', edgecolor='black', color=fn_color)
+
+    # Add Stanford QC
+    su_filter_height = np.add(fn_height, op_histogram_low.false_negative).tolist()
+    ax2.bar(op_histogram_low.bin_median, op_histogram_low.filter_stanford, bottom=su_filter_height, width=bar_width,
+            label='Stanford Filtered', edgecolor='black', color=su_color)
+
+    # Add Carbon Mapper QC
+    op_filter_height = np.add(su_filter_height, op_histogram_low.filter_stanford).tolist()
+    ax2.bar(op_histogram_low.bin_median, op_histogram_low.filter_operator, bottom=op_filter_height, width=bar_width,
+            label='Stanford Filtered', edgecolor='black', color=op_color)
+
+    # Add missing data
+    missing_height = np.add(op_filter_height, op_histogram_low.filter_operator).tolist()
+    ax2.bar(op_histogram_low.bin_median, op_histogram_low.missing_data, bottom=missing_height, width=bar_width,
+            label='Stanford Filtered', edgecolor='black', color=missing_color)
+
+    ####### Right plot #######
+
+    # reset bin width
+    bar_width = 40
+    # Add True Positives
+    ax3.bar(op_histogram_high.bin_median, op_histogram_high.true_positive, width=bar_width, label='True positive',
+            edgecolor='black', color=tp_color)
+
+    # Add False Positives
+    ax3.bar(op_histogram_high.bin_median, op_histogram_high.false_positive, bottom=op_histogram_high.true_positive,
+            width=bar_width, label='False positive', edgecolor='black', color=fp_color)
+
+    # Add False Negatives
+    fn_height = np.add(op_histogram_high.true_positive, op_histogram_high.false_positive).tolist()
+    ax3.bar(op_histogram_high.bin_median, op_histogram_high.false_negative, bottom=op_histogram_high.true_positive,
+            width=bar_width, label='False Negative', edgecolor='black', color=fn_color)
+
+    # Add Stanford QC
+    su_filter_height = np.add(fn_height, op_histogram_high.false_negative).tolist()
+    ax3.bar(op_histogram_high.bin_median, op_histogram_high.filter_stanford, bottom=su_filter_height, width=bar_width,
+            label='Stanford Filtered', edgecolor='black', color=su_color)
+
+    # Add Carbon Mapper QC
+    op_filter_height = np.add(su_filter_height, op_histogram_high.filter_stanford).tolist()
+    ax3.bar(op_histogram_high.bin_median, op_histogram_high.filter_operator, bottom=op_filter_height, width=bar_width,
+            label='Stanford Filtered', edgecolor='black', color=op_color)
+
+    # Add missing data
+    missing_height = np.add(op_filter_height, op_histogram_high.filter_operator).tolist()
+    ax3.bar(op_histogram_high.bin_median, op_histogram_high.missing_data, bottom=missing_height, width=bar_width,
+            label='Stanford Filtered', edgecolor='black', color=missing_color)
+
+    ############ Plot formatting ############
+    # Set height of x and y axis limits
+    # Left plot only shows zero
+    ax1.set_ylim(bottom=0, top=y_height)
+    ax1.set_xlim([-0.25, 0.25])
+
+    # Middle plot shows >0 to 50 kgh
+    ax2.set_ylim(bottom=0, top=y_height)
+    ax2.set_xlim(left=-0.5, right=51)
+
+    # Right plot shows 50 to 1500
+    ax3.set_ylim(bottom=0, top=y_height)
+    ax3.set_xlim(left=30, right=1500)
+
+    # Common label for x-axis on all suplots
+    txt_x_label = fig.text(0.5, -0.08, 'Release Rate (kgh)', ha='center', va='bottom', fontsize=14)
+
+    # Plot title
+    txt_title = fig.text(0.5, 1, f'{operator} Stage {stage} Results Classification', ha='center', va='top', fontsize=15)
+
+    # Axes formatting and labels
+    ax1.set_xticks([0])  # only have a tick at 0
+    ax1.set_ylabel('Number of Releases', fontsize=14)
+    ax1.tick_params(labelsize=12)
+    ax1.minorticks_on()
+    ax1.tick_params(labelbottom=True, labeltop=False, labelright=False, labelleft=True)  # only label left & bottom axis
+    ax1.tick_params(direction='in', which='major', axis='y', length=4, left=True, right=True)  # y-axis major
+    ax1.tick_params(direction='in', which='minor', length=2, left=True, right=True)  # y-axis minor
+    ax1.tick_params(direction='out', axis='x', which='major', length=4, bottom=True, top=False)  # x-axis major
+
+    # Format axes on middle plot
+    ax2.tick_params(labelsize=12)
+    ax2.minorticks_on()
+    ax2.tick_params(labelbottom=True, labeltop=False, labelright=False, labelleft=False)  # only label bottom axis
+    ax2.tick_params(direction='in', which='major', axis='y', length=4, left=True, right=True)  # y-axis major
+    ax2.tick_params(direction='in', which='minor', length=2, left=True, right=True)  # y-axis minor
+    ax2.tick_params(direction='out', axis='x', which='major', length=4, bottom=True, top=False)  # x-axis major
+    ax2.tick_params(which='minor', axis='x', bottom=False, top=False)
+    x_ticks = ax2.xaxis.get_major_ticks()
+    x_ticks[1].label1.set_visible(False)  # remove label on x=0
+    x_ticks[1].set_visible(False)
+
+    # Format axes on right plot
+    ax3.tick_params(labelsize=12)
+    ax3.minorticks_on()
+    ax3.tick_params(labelbottom=True, labeltop=False, labelright=False, labelleft=False)  # only label on bottom
+    ax3.tick_params(axis='y', which='major', direction='in', length=4, left=True, right=True)  # y-axis major
+    ax3.tick_params(axis='y', which='minor', direction='in', length=2, left=True, right=True)  # y-axis minor
+    ax3.tick_params(direction='out', axis='x', which='major', length=4, bottom=True, top=False)  # x-axis major
+    ax3.tick_params(which='minor', axis='x', bottom=False, top=False)
+
+    # Set axes and background color to white
+    ax1.set_facecolor('white')
+    ax1.spines['top'].set_color('black')
+    ax1.spines['left'].set_color('black')
+    ax1.spines['right'].set_color('black')
+    ax1.spines['bottom'].set_color('black')
+
+    # Add legend
+
+    histogram_legend = {
+        'True Positive': tp_color,
+        'True Negative': tn_color,
+        # 'False Positive': fp_color,
+        'False Negative': fn_color,
+        'Stanford Filtered': su_color,
+        'Operator Filtered': op_color,
+        'Missing data': missing_color,
+    }
+
+    legend_elements = [Patch(facecolor=v, edgecolor='black', label=k) for k, v in histogram_legend.items()]
+    # lgd = ax3.legend(title='Overpass Key', handles=legend_elements, bbox_to_anchor=(1.05, 1), loc='upper left')
+    lgd = ax3.legend(title='Overpass Key', handles=legend_elements, loc='upper right')
+
+    ############ Save Data ############
+
+    op_ab = abbreviate_op_name(operator)
+    now = datetime.datetime.now()
+    save_time = now.strftime("%Y%m%d")
+
+    # Save figure
+    fig_name = f'histogram_{op_ab}_{save_time}'
+    fig_path = pathlib.PurePath('04_figures', 'histogram', fig_name)
+    plt.savefig(fig_path, bbox_extra_artists=(txt_x_label, txt_title), bbox_inches='tight')
+
+    # Save histogram low kgh inputs
+    table_name = f'histogram_low_{op_ab}_{save_time}.csv'
+    table_path = pathlib.PurePath('03_results', 'histogram', table_name)
+    op_histogram_low.to_csv(table_path)
+
+    # Save histogram high kgh inputs
+    table_name = f'histogram_high_{op_ab}_{save_time}.csv'
+    table_path = pathlib.PurePath('03_results', 'histogram', table_name)
+    op_histogram_high.to_csv(table_path)
+
