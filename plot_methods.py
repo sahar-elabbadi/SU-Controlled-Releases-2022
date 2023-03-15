@@ -298,7 +298,7 @@ def plot_detection_limit(operator, stage, strict_discard, n_bins, threshold):
     save_time = now.strftime("%Y%m%d")
     op_ab = abbreviate_op_name(operator)
     fig_name = f'detect_limit_{op_ab}_stage{stage}_{save_time}'
-    fig_path = pathlib.PurePath('04_figures', fig_name)
+    fig_path = pathlib.PurePath('04_figures', 'detection_limit', fig_name)
     plt.savefig(fig_path)
     plt.show()
 
@@ -467,12 +467,7 @@ def plot_daily_releases(operator, flight_days, operator_releases, stage, strict_
                    marker='|',
                    s=2000)
 
-        # add a legend
-        # handles for circles
-        # handles = [
-        #     Line2D([0], [0], marker='o', markerfacecolor=v, color = 'black', linestyle='None', label=k, markersize=8) for
-        #     k, v in
-        #     overpass_legend.items()]
+        # Add a legend
 
         handles = [
             Line2D([0], [0], marker='|', color=v, linestyle='None', label=k, markersize=8) for
@@ -498,7 +493,7 @@ def plot_daily_releases(operator, flight_days, operator_releases, stage, strict_
         now = datetime.datetime.now()
         op_ab = abbreviate_op_name(operator)
         save_time = now.strftime("%Y%m%d")
-        fig_name = f'release_chart_{op_ab}_{day}'
-        fig_path = pathlib.PurePath('04_figures', fig_name)
+        fig_name = f'release_chart_{op_ab}_{day}_{save_time}'
+        fig_path = pathlib.PurePath('04_figures', 'release_rates', fig_name)
         plt.savefig(fig_path, bbox_extra_artists=(lgd,), bbox_inches='tight')
         plt.show()

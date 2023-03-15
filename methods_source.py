@@ -698,13 +698,23 @@ def classify_histogram_data(operator, stage, strict_discard, threshold_lower, th
     count_tn = make_histogram_bins(tn, threshold_lower, threshold_upper, n_bins).n_data_points
 
     # Filtered by Stanford
-    su_qc_fail = op_reported.query('stanford_kept == False')
+    # Non-zero SU QC fails
+    su_qc_fail = op_reported.query('stanford_kept == False & non_zero_release == True')
     count_su_fail = make_histogram_bins(su_qc_fail, threshold_lower, threshold_upper, n_bins).n_data_points
+
+    # Zero SU QC fails
+    zero_su_qc_fail = op_reported.query('stanford_kept == False & non_zero_release == False')
+    count_zero_su_fail = make_histogram_bins(zero_su_qc_fail, threshold_lower, threshold_upper, n_bins).n_data_points
 
     # Filtered by Carbon Mapper
     # if qc_summary is 'fail_operator', this means it passed Stanford QC but not operator QC
-    op_qc_fail = op_reported.query('qc_summary == "fail_operator"')
+    # Non-zero
+    op_qc_fail = op_reported.query('qc_summary == "fail_operator" & non_zero_release == True')
     count_op_fail = make_histogram_bins(op_qc_fail, threshold_lower, threshold_upper, n_bins).n_data_points
+
+    # Zero
+    zero_op_qc_fail = op_reported.query('qc_summary == "fail_operator" & non_zero_release == False')
+    count_zero_op_fail = make_histogram_bins(zero_op_qc_fail, threshold_lower, threshold_upper, n_bins).n_data_points
 
     # Identify data points where Stanford conducted a release
     # Find data points where we have a flightradar overpass but we do not have an operator overpass
@@ -720,7 +730,13 @@ def classify_histogram_data(operator, stage, strict_discard, threshold_lower, th
     elif operator == 'Methane Air':
         missing = find_missing_data(mair_meter_raw)
 
-    count_missing = make_histogram_bins(missing, threshold_lower, threshold_upper, n_bins).n_data_points
+    # Filter missing for non-zero values
+    missing_non_zero = missing.query('release_rate_kgh > 0')
+    count_missing = make_histogram_bins(missing_non_zero, threshold_lower, threshold_upper, n_bins).n_data_points
+
+    # Filter missing for zero values
+    missing_zero = missing.query('release_rate_kgh == 0')
+    count_missing_zero = make_histogram_bins(missing_zero, threshold_lower, threshold_upper, n_bins).n_data_points
 
     ################## store data #########################
 
@@ -733,6 +749,9 @@ def classify_histogram_data(operator, stage, strict_discard, threshold_lower, th
         'filter_stanford': count_su_fail,
         'filter_operator': count_op_fail,
         'missing_data': count_missing,
+        'zero_filter_su': count_zero_su_fail,
+        'zero_filter_op': count_zero_op_fail,
+        'zero_missing': count_missing_zero,
     })
     col_for_summing = ['true_positive',
                        'false_positive',
