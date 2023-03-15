@@ -637,11 +637,13 @@ def classify_confusion_categories(overpass_summary):
     false_negatives = overpass_summary.query('non_zero_release == True & operator_detected == False')
     true_negatives = overpass_summary.query('non_zero_release == False & operator_detected == False')
 
+    # Filtered zeros:
+
     return true_positives, false_positives, true_negatives, false_negatives
 
 
-def make_histogram_bins(df, threshold, n_bins):
-    bins = np.linspace(0, threshold, n_bins + 1)
+def make_histogram_bins(df, threshold_lower, threshold_upper, n_bins):
+    bins = np.linspace(threshold_lower, threshold_upper, n_bins + 1)
 
     # These variables are for keeping track of values as I iterate through the bins in the for loop below:
     bin_count, bin_num_detected = np.zeros(n_bins).astype('int'), np.zeros(n_bins).astype('int')
@@ -676,3 +678,70 @@ def find_missing_data(meter_raw):
     operator_missing.rename(columns={'kgh_ch4_60': 'release_rate_kgh'}, inplace=True)
 
     return operator_missing
+
+
+# %%
+def classify_histogram_data(operator, stage, strict_discard, threshold_lower, threshold_upper, n_bins):
+    # Load operator overpass data
+    op_reported = load_overpass_summary(operator=operator, stage=stage, strict_discard=strict_discard)
+
+    # Pass all QC filter
+    op_qc_pass = op_reported.query('qc_summary == "pass_all"')
+
+    # Select non-zero releases detected by operator
+    tp, fp, tn, fn = classify_confusion_categories(op_qc_pass)
+
+    bin_median = make_histogram_bins(tp, threshold_lower, threshold_upper, n_bins).bin_median
+    count_tp = make_histogram_bins(tp, threshold_lower, threshold_upper, n_bins).n_data_points
+    count_fp = make_histogram_bins(fp, threshold_lower, threshold_upper, n_bins).n_data_points
+    count_fn = make_histogram_bins(fn, threshold_lower, threshold_upper, n_bins).n_data_points
+    count_tn = make_histogram_bins(tn, threshold_lower, threshold_upper, n_bins).n_data_points
+
+    # Filtered by Stanford
+    su_qc_fail = op_reported.query('stanford_kept == False')
+    count_su_fail = make_histogram_bins(su_qc_fail, threshold_lower, threshold_upper, n_bins).n_data_points
+
+    # Filtered by Carbon Mapper
+    # if qc_summary is 'fail_operator', this means it passed Stanford QC but not operator QC
+    op_qc_fail = op_reported.query('qc_summary == "fail_operator"')
+    count_op_fail = make_histogram_bins(op_qc_fail, threshold_lower, threshold_upper, n_bins).n_data_points
+
+    # Identify data points where Stanford conducted a release
+    # Find data points where we have a flightradar overpass but we do not have an operator overpass
+
+    cm_meter_raw, ghg_meter_raw, kairos_meter_raw, mair_meter_raw = load_summary_files()
+
+    if operator == 'Carbon Mapper':
+        missing = find_missing_data(cm_meter_raw)
+    elif operator == 'GHGSat':
+        missing = find_missing_data(ghg_meter_raw)
+    elif operator == 'Kairos':
+        missing = find_missing_data(kairos_meter_raw)
+    elif operator == 'Methane Air':
+        missing = find_missing_data(mair_meter_raw)
+
+    count_missing = make_histogram_bins(missing, threshold_lower, threshold_upper, n_bins).n_data_points
+
+    ################## store data #########################
+
+    summary = pd.DataFrame({
+        'bin_median': bin_median,
+        'true_positive': count_tp,
+        'false_positive': count_fp,
+        'true_negative': count_tn,
+        'false_negative': count_fn,
+        'filter_stanford': count_su_fail,
+        'filter_operator': count_op_fail,
+        'missing_data': count_missing,
+    })
+    col_for_summing = ['true_positive',
+                       'false_positive',
+                       'true_negative',
+                       'false_negative',
+                       'filter_stanford',
+                       'filter_operator',
+                       'missing_data']
+
+    summary['bin_height'] = summary[col_for_summing].sum(axis=1)
+
+    return summary
