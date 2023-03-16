@@ -387,6 +387,18 @@ def load_clean_operator_reports():
     ghg_path_2 = pathlib.PurePath('01_clean_reports', 'ghg_2_clean.csv')
     ghg_3 = pd.read_csv(ghg_path_2, index_col=0)
 
+    # Kairos Stage 1 combo
+    kairos_path_1 = pathlib.PurePath('01_clean_reports', 'kairos_1_clean.csv')
+    kairos_1 = pd.read_csv(kairos_path_1, index_col=0)
+
+    # Kairos Stage 2 combo
+    kairos_path_2 = pathlib.PurePath('01_clean_reports', 'kairos_2_clean.csv')
+    kairos_2 = pd.read_csv(kairos_path_2, index_col=0)
+
+    # Kairos Stage 3 combo
+    kairos_path_3 = pathlib.PurePath('01_clean_reports', 'kairos_3_clean.csv')
+    kairos_3 = pd.read_csv(kairos_path_3, index_col=0)
+
     # Kairos Stage 1 Pod LS23
     kairos_path_1_ls23 = pathlib.PurePath('01_clean_reports', 'kairos_1_ls23_clean.csv')
     kairos_1_ls23 = pd.read_csv(kairos_path_1_ls23, index_col=0)
@@ -411,7 +423,7 @@ def load_clean_operator_reports():
     kairos_path_3_ls25 = pathlib.PurePath('01_clean_reports', 'kairos_3_ls25_clean.csv')
     kairos_3_ls25 = pd.read_csv(kairos_path_3_ls25, index_col=0)
 
-    return cm_1, cm_2, cm_3, ghg_1, ghg_2, ghg_3, kairos_1_ls23, kairos_1_ls25, kairos_2_ls23, kairos_2_ls25, \
+    return cm_1, cm_2, cm_3, ghg_1, ghg_2, ghg_3, kairos_1, kairos_2, kairos_3, kairos_1_ls23, kairos_1_ls25, kairos_2_ls23, kairos_2_ls25, \
         kairos_3_ls23, kairos_3_ls25
 
 
