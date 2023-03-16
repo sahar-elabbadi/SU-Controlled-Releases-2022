@@ -254,10 +254,23 @@ def plot_detection_limit(operator, stage, strict_discard, n_bins, threshold):
     detection_plot.loc[detection_plot.detection_prob_two_sigma_upper == 0, 'detection_prob_two_sigma_upper'] = np.nan
     detection_plot.loc[detection_plot.detection_prob_mean == 0, 'detection_prob_mean'] = np.nan
 
+    # To avoid RuntimeWarning: All-NaN axis encountered, set yerr to None if all values are np.nan in sigma values
+    # (this is the case for Carbon Mapper)
+
+    sigma_lower = detection_plot.detection_prob_two_sigma_lower
+    sigma_upper = detection_plot.detection_prob_two_sigma_upper
+
+    if sigma_lower.isnull().all() or sigma_upper.isnull().all():
+        y_error = None
+    else:
+        y_error = [sigma_lower, sigma_upper]
+
+
     # Plot bars and detection points
     ax.bar(detection_plot.bin_median,
            detection_plot.detection_prob_mean,
-           yerr=[detection_plot.detection_prob_two_sigma_lower, detection_plot.detection_prob_two_sigma_upper],
+           # yerr=[detection_plot.detection_prob_two_sigma_lower, detection_plot.detection_prob_two_sigma_upper],
+           yerr = y_error,
            error_kw=dict(lw=2, capsize=3, capthick=1, alpha=0.3),
            width=threshold / n_bins - 0.5, alpha=0.6, color='#9ecae1', ecolor='black', capsize=2)
 

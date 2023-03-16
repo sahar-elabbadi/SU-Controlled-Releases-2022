@@ -518,7 +518,7 @@ def combine_datetime(test_date, test_time):
 
     my_time = datetime.datetime.strptime(test_time, '%H:%M:%S').time()
 
-    for fmt in ('%Y-%m-%d', '%Y/%m/%d'):
+    for fmt in ('%Y-%m-%d', '%m/%d/%y'):
         try:
             my_date = datetime.datetime.strptime(test_date, fmt)
         except ValueError:
