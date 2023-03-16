@@ -330,8 +330,10 @@ def make_kairos_combo(kairos_overpass, kairos_stage):
 
     path = pathlib.PurePath('01_clean_reports', f'kairos_{kairos_stage}_combined_data.csv')
     kairos_summary.to_csv(path)
+
+    # Pandas loading pod_average as type "object" instead of "float", convert here as a check
     kairos_summary['pod_average'] = kairos_summary['pod_average'].astype(float)
-    print(kairos_summary.dtypes)
+
 
     # Populate summary data into a new dataframe. Use Kairos raw data from LS23 Stage 1
     if kairos_stage == 1:
@@ -341,6 +343,8 @@ def make_kairos_combo(kairos_overpass, kairos_stage):
     elif kairos_stage == 3:
         kairos_path = pathlib.PurePath('00_raw_reports', 'Kairos_Stage3_podLS23_submitted-2023-02-23.csv')
 
+    # I have was having issues with pandas changing dtype from float to object, reload CSV file here as a precaution
+    # against this issue. Alternatively can use "astype"
     kairos_combo = pd.read_csv(kairos_path)
 
     # Reset the following columns to be re-populated

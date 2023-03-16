@@ -37,6 +37,7 @@ def rand_jitter(input_list):
 # > operator_meter
 def plot_parity(operator, stage, strict_discard):
     """Inputs are operator name, stage of analysis, operator_plot dataframe containing all relevant data"""
+
     op_ab = abbreviate_op_name(operator)
 
     # Load overpass summary csv file
@@ -158,7 +159,7 @@ def plot_parity(operator, stage, strict_discard):
     save_parity_data['operator_report'] = y_data
     save_parity_data['operator_sigma'] = y_error
 
-    save_path = pathlib.PurePath('03_results', 'parity_plot_data', f'{operator}_{stage}_parity_{save_time}.csv')
+    save_path = pathlib.PurePath('03_results', 'parity_plot_data', f'{op_ab}_{stage}_parity_{save_time}.csv')
     save_parity_data.to_csv(save_path)
 
 

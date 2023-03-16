@@ -40,6 +40,8 @@ def abbreviate_op_name(operator):
         op_abb = 'kairos_ls25'
     elif operator == 'Methane Air':
         op_abb = 'mair'
+    elif operator == 'Scientific Aviation':
+        op_abb = 'sciav'
     else:
         print('Typo in operator name')
         return
@@ -66,7 +68,15 @@ def load_summary_files():
     mair_path = pathlib.PurePath('02_meter_data', 'summary_files', 'MAIR.csv')
     mair_meter_raw = pd.read_csv(mair_path)
 
-    return cm_meter_raw, ghg_meter_raw, kairos_meter_raw, mair_meter_raw
+    # Scientific Aviation meter data
+    sciav_path = pathlib.PurePath('02_meter_data', 'summary_files', 'SciAv.csv')
+
+    date_columns = ['start_using_sciav', 'end_using_sciav', 'start_using_flightradar', 'end_using_flightradar',
+                    'start_using_release_times', 'end_using_release_times']
+
+    sciav_meter_raw = pd.read_csv(sciav_path, index_col=0, parse_dates=date_columns)
+
+    return cm_meter_raw, ghg_meter_raw, kairos_meter_raw, mair_meter_raw, sciav_meter_raw
 
 
 # %% method summarize_qc
@@ -359,7 +369,6 @@ def generate_daily_releases(operator_flight_days):
     return operator_releases
 
 
-
 # %% Load clean data
 
 def load_clean_operator_reports():
@@ -423,8 +432,12 @@ def load_clean_operator_reports():
     kairos_path_3_ls25 = pathlib.PurePath('01_clean_reports', 'kairos_3_ls25_clean.csv')
     kairos_3_ls25 = pd.read_csv(kairos_path_3_ls25, index_col=0)
 
+    # Scientific Aviation Stage 1
+    sciav_clean_path = pathlib.PurePath('01_clean_reports', 'sciav_1_clean.csv')
+    sciav_1 = pd.read_csv(sciav_clean_path) # do not set index_col to 0, there is none
+
     return cm_1, cm_2, cm_3, ghg_1, ghg_2, ghg_3, kairos_1, kairos_2, kairos_3, kairos_1_ls23, kairos_1_ls25, kairos_2_ls23, kairos_2_ls25, \
-        kairos_3_ls23, kairos_3_ls25
+        kairos_3_ls23, kairos_3_ls25, sciav_1
 
 
 # %% Load meter data
@@ -602,39 +615,42 @@ def make_operator_meter_dataset(operator, operator_meter_raw, timekeeper):
       - Stanford: Stanford ground team visual observation of when the airplane was overhead
       - team: participating operator's report of when they were over the source """
 
-    timekeeper = check_timekeep_capitalization(timekeeper)
-    overpass_id = 'PerformerOverpassID'
+    # This function is not meant to clean Scientific Aviation data
+    if operator == "Scientific Aviation":
+        pass
+    else:
+        timekeeper = check_timekeep_capitalization(timekeeper)
+        overpass_id = 'PerformerOverpassID'
 
-    operator_meter = clean_meter_column_names(operator_meter_raw, overpass_id, timekeeper)
+        operator_meter = clean_meter_column_names(operator_meter_raw, overpass_id, timekeeper)
 
-    # Drop rows with nan to remove rows with missing values. This is because for some operators, we missed overpasses
-    # and timestamps have nan values, which causes issues with downstream code
+        # Drop rows with nan to remove rows with missing values. This is because for some operators, we missed overpasses
+        # and timestamps have nan values, which causes issues with downstream code
 
-    operator_meter = operator_meter.dropna(axis='index')  # axis = 'index' means to drop rows with missing values
+        operator_meter = operator_meter.dropna(axis='index')  # axis = 'index' means to drop rows with missing values
 
-    # Combine date and time
-    overpass_datetime = operator_meter.apply(lambda x: combine_datetime(x['date'], x['time']), axis=1)
-    operator_meter.insert(loc=0, column='datetime_utc', value=overpass_datetime)
+        # Combine date and time
+        overpass_datetime = operator_meter.apply(lambda x: combine_datetime(x['date'], x['time']), axis=1)
+        operator_meter.insert(loc=0, column='datetime_utc', value=overpass_datetime)
 
-    # Now that we have removed NA values in time, we can remove date and time columns from operator_meter
-    operator_meter = operator_meter.drop(columns=['time', 'date'])
+        # Now that we have removed NA values in time, we can remove date and time columns from operator_meter
+        operator_meter = operator_meter.drop(columns=['time', 'date'])
 
-    # Everything from here down should stay in this function
+        # Everything from here down should stay in this function
 
-    op_ab = abbreviate_op_name(operator)
+        op_ab = abbreviate_op_name(operator)
 
-    # Set save folder
-    if timekeeper == 'Flightradar':
-        save_folder = 'flightradar_timestamp'
-    elif timekeeper == 'Stanford':
-        save_folder = 'stanford_timestamp'
-    elif timekeeper == 'team':
-        save_folder = 'operator_timestamp'
+        # Set save folder
+        if timekeeper == 'Flightradar':
+            save_folder = 'flightradar_timestamp'
+        elif timekeeper == 'Stanford':
+            save_folder = 'stanford_timestamp'
+        elif timekeeper == 'team':
+            save_folder = 'operator_timestamp'
 
-
-    # Save CSV file
-    operator_meter.to_csv(pathlib.PurePath('02_meter_data', 'operator_meter_data',
-                                           save_folder, f'{op_ab}_meter.csv'))
+        # Save CSV file
+        operator_meter.to_csv(pathlib.PurePath('02_meter_data', 'operator_meter_data',
+                                               save_folder, f'{op_ab}_meter.csv'))
 
     return operator_meter
 
