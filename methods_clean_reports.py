@@ -3,6 +3,7 @@
 # Author: Sahar H. El Abbadi
 # Date Created: 2023-02-22
 # Date Last Modified: 2023-02-27
+import pathlib
 
 # Methods in this file:
 # > clean_cm: clean Carbon Mapper data reports
@@ -284,3 +285,73 @@ def clean_kairos(kairos_report, kairos_overpasses, kairos_stage):
 
     kairos_clean = pd.DataFrame(overpass_list)
     return kairos_clean
+
+
+def make_kairos_combo(kairos_overpass, kairos_stage):
+    # Generate combined Kairos dataframe
+    # Kairos Stage 1 Pod LS23
+    ls23_path = pathlib.PurePath('01_clean_reports', f'kairos_{kairos_stage}_ls23_clean.csv')
+    ls23 = pd.read_csv(ls23_path, index_col=0)
+
+    # Kairos Stage 1 Pod LS25
+    ls25_path = pathlib.PurePath('01_clean_reports', f'kairos_{kairos_stage}_ls25_clean.csv')
+    ls25 = pd.read_csv(ls25_path, index_col=0)
+
+    kairos_summary = pd.DataFrame({
+        'ls23': ls23.FacilityEmissionRate,
+        'ls25': ls25.FacilityEmissionRate,
+        'qc_ls23': ls23.QCFlag,
+        'qc_ls25': ls25.QCFlag,
+    })
+
+    kairos_summary['qc'] = np.where((kairos_summary['qc_ls23'] == 'clear') |
+                                    (kairos_summary['qc_ls25'] == 'clear'), 'clear', 'fail_both_qc')
+
+    pod_conditions = [
+        (kairos_summary.ls23.notnull() & kairos_summary.ls25.notnull()),  # both pods report data
+        (kairos_summary.ls23.notnull() & kairos_summary.ls25.isnull()),  # LS23 reports only
+        (kairos_summary.ls23.isnull() & kairos_summary.ls25.notnull()),  # LS25 reports only
+        (kairos_summary.ls23.isnull() & kairos_summary.ls25.isnull()),  # both are null
+    ]
+
+    pod_choices = [
+        (kairos_summary.ls23 + kairos_summary.ls25) / 2,
+        kairos_summary.ls23,
+        kairos_summary.ls25,
+        np.nan
+
+    ]
+
+    kairos_summary['pod_average'] = np.select(pod_conditions, pod_choices, 'ERROR')
+    kairos_summary['lower_bound'] = kairos_summary[['ls23', 'ls25']].min(axis=1)
+    kairos_summary['upper_bound'] = kairos_summary[['ls23', 'ls25']].max(axis=1)
+
+    kairos_summary.to_csv(pathlib.PurePath('01_clean_reports', f'kairos_{kairos_stage}_combined_data.csv'))
+
+    # Populate summary data into a new dataframe. Use Kairos raw data from LS23 Stage 1
+
+    if kairos_stage == 1:
+        kairos_path = pathlib.PurePath('00_raw_reports', 'Kairos_Stage1_podLS23_submitted-2022-11-17.csv')
+    elif kairos_stage == 2:
+        kairos_path = pathlib.PurePath('00_raw_reports', 'Kairos_Stage2_podLS23_submitted-2022-12-20.csv')
+    elif kairos_stage == 3:
+        kairos_path = pathlib.PurePath('00_raw_reports', 'Kairos_Stage3_podLS23_submitted-2023-02-23.csv')
+
+    kairos_combo = pd.read_csv(kairos_path)
+
+    # Reset the following columns to be re-populated
+    kairos_combo['FacilityEmissionRate'] = np.nan
+    kairos_combo['Kairos Flag for Dropped Passes or Uncertain Rate Quantification'] = np.nan
+    kairos_combo['OperatorKeep'] = np.nan
+
+    # Set columns to the summary values
+    kairos_combo['FacilityEmissionRate'] = kairos_summary['pod_average']
+    kairos_combo['FacilityEmissionRateUpper'] = kairos_summary['upper_bound']
+    kairos_combo['FacilityEmissionRateLower'] = kairos_summary['lower_bound']
+    kairos_combo['Kairos Flag for Dropped Passes or Uncertain Rate Quantification'] = kairos_summary['qc']
+    kairos_combo_clean = clean_kairos(kairos_report=kairos_combo, kairos_overpasses=kairos_overpass,
+                                      kairos_stage=kairos_stage)
+
+    kairos_combo_clean.to_csv(pathlib.PurePath('01_clean_reports', f'kairos_{kairos_stage}_clean.csv'))
+
+    return kairos_combo_clean
