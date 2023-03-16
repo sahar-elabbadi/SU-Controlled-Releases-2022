@@ -250,8 +250,10 @@ def clean_kairos(kairos_report, kairos_overpasses, kairos_stage):
         # quantification column. FacilityEmissionRate is blank if there is a QC Flag. In some instances, there is a
         # qnatification estimate with QC Flag KA-3 (cutoff, low confidence in quantification)
 
+
         if qc_flag == 'clear':
-            if kairos_report.loc[overpass - 1, "FacilityEmissionRate"] == '0':
+            if (kairos_report.loc[overpass - 1, "FacilityEmissionRate"] == '0') or \
+                    (kairos_report.loc[overpass - 1, "FacilityEmissionRate"] == 0):
                 detected = False
             else:
                 detected = True
@@ -318,7 +320,7 @@ def make_kairos_combo(kairos_overpass, kairos_stage):
         (kairos_summary.ls23 + kairos_summary.ls25) / 2,
         kairos_summary.ls23,
         kairos_summary.ls25,
-        np.nan
+        np.nan,
 
     ]
 
@@ -326,10 +328,12 @@ def make_kairos_combo(kairos_overpass, kairos_stage):
     kairos_summary['lower_bound'] = kairos_summary[['ls23', 'ls25']].min(axis=1)
     kairos_summary['upper_bound'] = kairos_summary[['ls23', 'ls25']].max(axis=1)
 
-    kairos_summary.to_csv(pathlib.PurePath('01_clean_reports', f'kairos_{kairos_stage}_combined_data.csv'))
+    path = pathlib.PurePath('01_clean_reports', f'kairos_{kairos_stage}_combined_data.csv')
+    kairos_summary.to_csv(path)
+    kairos_summary['pod_average'] = kairos_summary['pod_average'].astype(float)
+    print(kairos_summary.dtypes)
 
     # Populate summary data into a new dataframe. Use Kairos raw data from LS23 Stage 1
-
     if kairos_stage == 1:
         kairos_path = pathlib.PurePath('00_raw_reports', 'Kairos_Stage1_podLS23_submitted-2022-11-17.csv')
     elif kairos_stage == 2:
@@ -349,6 +353,7 @@ def make_kairos_combo(kairos_overpass, kairos_stage):
     kairos_combo['FacilityEmissionRateUpper'] = kairos_summary['upper_bound']
     kairos_combo['FacilityEmissionRateLower'] = kairos_summary['lower_bound']
     kairos_combo['Kairos Flag for Dropped Passes or Uncertain Rate Quantification'] = kairos_summary['qc']
+
     kairos_combo_clean = clean_kairos(kairos_report=kairos_combo, kairos_overpasses=kairos_overpass,
                                       kairos_stage=kairos_stage)
 
