@@ -265,12 +265,11 @@ def plot_detection_limit(operator, stage, strict_discard, n_bins, threshold):
     else:
         y_error = [sigma_lower, sigma_upper]
 
-
     # Plot bars and detection points
     ax.bar(detection_plot.bin_median,
            detection_plot.detection_prob_mean,
            # yerr=[detection_plot.detection_prob_two_sigma_lower, detection_plot.detection_prob_two_sigma_upper],
-           yerr = y_error,
+           yerr=y_error,
            error_kw=dict(lw=2, capsize=3, capthick=1, alpha=0.3),
            width=threshold / n_bins - 0.5, alpha=0.6, color='#9ecae1', ecolor='black', capsize=2)
 
@@ -325,15 +324,14 @@ def plot_detection_limit(operator, stage, strict_discard, n_bins, threshold):
 
 # %%
 
-def plot_qc_summary():
+def plot_qc_summary(operators, stage):
     # Load saved QC dataframe
     all_qc = pd.read_csv(pathlib.PurePath('03_results', 'qc_comparison', 'all_qc.csv'), index_col=0)
     # Plot
 
     category = ['fail_stanford_only', 'fail_all_qc', 'fail_operator_only']
-    stage = 1
-    n_operators = 4  # number of operators
-    operators = ['Carbon Mapper', 'GHGSat', 'Kairos LS23', 'Kairos LS25']
+    n_operators = len(operators)  # number of operators
+
     # Determine values for each group, alphabetical order of operators: "Carbon Mapper, GHGSat, Kairos"
 
     fail_operator = np.zeros(n_operators)
@@ -361,10 +359,10 @@ def plot_qc_summary():
     operator_height = np.add(all_fail_height, fail_all).tolist()
 
     # Set color scheme
-    pass_color = '#018571'
-    fail_op_color = '#a6611a'
-    fail_stanford_color = '#dfc27d'
-    fail_both_color = '#f5f5f5'
+    pass_color = '#027608'
+    fail_op_color = '#0348a1'
+    fail_stanford_color = '#c3121e'
+    fail_both_color = '#9c5300'
 
     # pass_color = '#87C27E'
     # fail_op_color = '#FCEFA9'
@@ -372,7 +370,7 @@ def plot_qc_summary():
     # fail_both_color = '#B8ADAA'
 
     # The position of the bars on the x-axis
-    r = [0, 1.5, 3, 4.5]
+    r = np.linspace(0, n_operators, num=n_operators)
 
     # Bars for fail operator QC (on top of failing Stanford and both)
     plt.bar(r, fail_operator, bottom=operator_height, color=fail_op_color, edgecolor='black', width=barWidth,
@@ -462,16 +460,22 @@ def plot_daily_releases(operator, flight_days, operator_releases, stage, strict_
         # create array for y data at marker height
         overpass_y = np.ones(len(daily_overpasses)) * marker_height
 
-        overpass_colors = {'pass_all': '#018571',
-                           'fail_operator': '#a6611a',
-                           'fail_stanford': '#dfc27d',
-                           'fail_all': '#878787',
+        # Set color scheme
+        pass_color = '#027608'
+        fail_stanford_color = '#c3121e'
+        fail_op_color = '#0348a1'
+        fail_both_color = '#9c5300'
+
+        overpass_colors = {'pass_all': pass_color,
+                           'fail_stanford': fail_stanford_color,
+                           'fail_operator': fail_op_color,
+                           'fail_all': fail_both_color,
                            }
 
-        overpass_legend = {'Valid Overpass': '#018571',
-                           'Operator Removed': '#a6611a',
-                           'Stanford Removed': '#dfc27d',
-                           'Both Removed': '#878787',
+        overpass_legend = {'Valid Overpass': pass_color,
+                           'Stanford Filtered': fail_stanford_color,
+                           'Operator Filtered': fail_op_color,
+                           'Both Removed': fail_both_color,
                            }
 
         ax.scatter(x=daily_overpasses['overpass_datetime'],
@@ -741,4 +745,3 @@ def make_releases_histogram(operator, stage, strict_discard):
     table_name = f'histogram_high_{op_ab}_{save_time}.csv'
     table_path = pathlib.PurePath('03_results', 'histogram', table_name)
     op_histogram_high.to_csv(table_path)
-
