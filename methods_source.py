@@ -631,6 +631,7 @@ def make_operator_meter_dataset(operator, operator_meter_raw, timekeeper):
     elif timekeeper == 'team':
         save_folder = 'operator_timestamp'
 
+
     # Save CSV file
     operator_meter.to_csv(pathlib.PurePath('02_meter_data', 'operator_meter_data',
                                            save_folder, f'{op_ab}_meter.csv'))
