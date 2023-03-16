@@ -359,8 +359,6 @@ def generate_daily_releases(operator_flight_days):
     return operator_releases
 
 
-# %% Plot release days
-
 
 # %% Load clean data
 

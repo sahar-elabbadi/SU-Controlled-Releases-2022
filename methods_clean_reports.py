@@ -211,7 +211,7 @@ def clean_kairos(kairos_report, kairos_overpasses, kairos_stage):
         # Kairos
         kairos_quantified = kairos_report.loc[
             overpass - 1, "Kairos Flag for Dropped Passes or Uncertain Rate Quantification"]
-        if pd.isna(kairos_quantified):
+        if pd.isna(kairos_quantified) or kairos_quantified == 'clear':
             quantified = True
             emission_rate = kairos_report.loc[overpass - 1, "FacilityEmissionRate"]
             emission_upper = kairos_report.loc[overpass - 1, "FacilityEmissionRateUpper"]
