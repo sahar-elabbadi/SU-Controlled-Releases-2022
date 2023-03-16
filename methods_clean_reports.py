@@ -224,6 +224,7 @@ def clean_kairos(kairos_report, kairos_overpasses, kairos_stage):
 
         # Set QC flag:
         kairos_flag = kairos_report.loc[overpass - 1, "Kairos Flag for Dropped Passes or Uncertain Rate Quantification"]
+        # check Kairos' QC flags
         if pd.isna(kairos_flag):
             qc_flag = 'clear'
         elif kairos_flag[:5] == 'Plane':
@@ -236,6 +237,11 @@ def clean_kairos(kairos_report, kairos_overpasses, kairos_stage):
             qc_flag = 'KA-4'
         elif kairos_flag[:5] == 'Glare':
             qc_flag = 'KA-5'
+        # Check QC flags from combined Kairos LS23 and LS25 dataset
+        elif kairos_flag == 'clear':
+            qc_flag = 'clear'
+        elif kairos_flag == 'fail_both_qc':
+            qc_flag = 'KA-Combo'
         else:
             qc_flag = 'ERROR! Identify misclassified QC'
 
