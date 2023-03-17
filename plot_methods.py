@@ -38,8 +38,6 @@ def rand_jitter(input_list):
 def plot_parity(operator, stage, strict_discard):
     """Inputs are operator name, stage of analysis, operator_plot dataframe containing all relevant data"""
 
-    op_ab = abbreviate_op_name(operator)
-
     # Load overpass summary csv file
     operator_plot = load_overpass_summary(operator, stage, strict_discard)
 
@@ -715,7 +713,7 @@ def make_releases_histogram(operator, stage, strict_discard):
     histogram_legend = {
         'True Positive': tp_color,
         'True Negative': tn_color,
-        # 'False Positive': fp_color,
+        'False Positive': fp_color,
         'False Negative': fn_color,
         'Stanford Filtered': su_color,
         'Operator Filtered': op_color,

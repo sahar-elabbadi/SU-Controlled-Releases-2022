@@ -746,7 +746,7 @@ def classify_histogram_data(operator, stage, strict_discard, threshold_lower, th
     # Identify data points where Stanford conducted a release
     # Find data points where we have a flightradar overpass but we do not have an operator overpass
 
-    cm_meter_raw, ghg_meter_raw, kairos_meter_raw, mair_meter_raw = load_summary_files()
+    cm_meter_raw, ghg_meter_raw, kairos_meter_raw, mair_meter_raw, sciav_meter_raw = load_summary_files()
 
     if operator == 'Carbon Mapper':
         missing = find_missing_data(cm_meter_raw)
@@ -760,14 +760,20 @@ def classify_histogram_data(operator, stage, strict_discard, threshold_lower, th
         missing = find_missing_data(kairos_meter_raw)
     elif operator == 'Methane Air':
         missing = find_missing_data(mair_meter_raw)
+    elif operator == 'Scientific Aviation':
+        missing = []
 
-    # Filter missing for non-zero values
-    missing_non_zero = missing.query('release_rate_kgh > 0')
-    count_missing = make_histogram_bins(missing_non_zero, threshold_lower, threshold_upper, n_bins).n_data_points
+    if operator == 'Scientific Aviation':
+        count_missing = 0
+        count_missing_zero = 0
+    else:
+        # Filter missing for non-zero values
+        missing_non_zero = missing.query('release_rate_kgh > 0')
+        count_missing = make_histogram_bins(missing_non_zero, threshold_lower, threshold_upper, n_bins).n_data_points
 
-    # Filter missing for zero values
-    missing_zero = missing.query('release_rate_kgh == 0')
-    count_missing_zero = make_histogram_bins(missing_zero, threshold_lower, threshold_upper, n_bins).n_data_points
+        # Filter missing for zero values
+        missing_zero = missing.query('release_rate_kgh == 0')
+        count_missing_zero = make_histogram_bins(missing_zero, threshold_lower, threshold_upper, n_bins).n_data_points
 
     ################## store data #########################
 
