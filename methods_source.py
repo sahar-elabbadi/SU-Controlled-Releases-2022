@@ -223,6 +223,51 @@ def summarize_qc(operator, stage, strict_discard):
     return qc_summary
 
 
+# %%
+
+def make_qc_table(strict_discard):
+    """Make a summary table all QC results. Input if strict_discard should be True or False."""
+
+    cm_1_qc = summarize_qc(operator="Carbon Mapper", stage=1, strict_discard=strict_discard)
+    cm_2_qc = summarize_qc(operator="Carbon Mapper", stage=2, strict_discard=strict_discard)
+    cm_3_qc = summarize_qc(operator="Carbon Mapper", stage=3, strict_discard=strict_discard)
+
+    # GHGSat QC
+    ghg_1_qc = summarize_qc(operator="GHGSat", stage=1, strict_discard=strict_discard)
+    ghg_2_qc = summarize_qc(operator="GHGSat", stage=2, strict_discard=strict_discard)
+    ghg_3_qc = summarize_qc(operator="GHGSat", stage=3, strict_discard=strict_discard)
+
+    # Kairos
+    kairos_1_qc = summarize_qc(operator="Kairos", stage=1, strict_discard=strict_discard)
+    kairos_2_qc = summarize_qc(operator="Kairos", stage=2, strict_discard=strict_discard)
+    kairos_3_qc = summarize_qc(operator="Kairos", stage=3, strict_discard=strict_discard)
+
+    # Kairos LS23
+    kairos_ls23_1_qc = summarize_qc(operator="Kairos LS23", stage=1, strict_discard=strict_discard)
+    kairos_ls23_2_qc = summarize_qc(operator="Kairos LS23", stage=2, strict_discard=strict_discard)
+    kairos_ls23_3_qc = summarize_qc(operator="Kairos LS23", stage=3, strict_discard=strict_discard)
+
+    # Kairos LS25
+    kairos_ls25_1_qc = summarize_qc(operator="Kairos LS25", stage=1, strict_discard=strict_discard)
+    kairos_ls25_2_qc = summarize_qc(operator="Kairos LS25", stage=2, strict_discard=strict_discard)
+    kairos_ls25_3_qc = summarize_qc(operator="Kairos LS25", stage=3, strict_discard=strict_discard)
+
+    # Combine all individual QC dataframes
+
+    all_qc = [cm_1_qc, cm_2_qc, cm_3_qc, ghg_1_qc, ghg_2_qc, ghg_3_qc, kairos_1_qc, kairos_2_qc, kairos_3_qc,
+              kairos_ls23_1_qc, kairos_ls23_2_qc, kairos_ls23_3_qc, kairos_ls25_1_qc, kairos_ls25_2_qc,
+              kairos_ls25_3_qc]
+
+    all_qc = pd.concat(all_qc)
+
+    if strict_discard:
+        save_name = 'all_qc_strict.csv'
+    else:
+        save_name = 'all_qc.csv'
+    all_qc.to_csv(pathlib.PurePath('03_results', 'qc_comparison', save_name))
+    return all_qc
+
+
 # %% Load daily meter data
 
 def load_daily_meter_data(date):
@@ -434,7 +479,7 @@ def load_clean_operator_reports():
 
     # Scientific Aviation Stage 1
     sciav_clean_path = pathlib.PurePath('01_clean_reports', 'sciav_1_clean.csv')
-    sciav_1 = pd.read_csv(sciav_clean_path) # do not set index_col to 0, there is none
+    sciav_1 = pd.read_csv(sciav_clean_path)  # do not set index_col to 0, there is none
 
     return cm_1, cm_2, cm_3, ghg_1, ghg_2, ghg_3, kairos_1, kairos_2, kairos_3, kairos_1_ls23, kairos_1_ls25, kairos_2_ls23, kairos_2_ls25, \
         kairos_3_ls23, kairos_3_ls25, sciav_1
@@ -803,3 +848,112 @@ def classify_histogram_data(operator, stage, strict_discard, threshold_lower, th
     summary['bin_height'] = summary[col_for_summing].sum(axis=1)
 
     return summary
+
+
+def calc_percent_error(observed, expected):
+    """Calculate perfect error between an observation and the expected value. Returns value as percent.  """
+    # don't divide by zero:
+    if expected == 0:
+        return np.nan
+
+    # keep overpasses that aren't quantified in series so it can be aligned later
+    if pd.isnull(observed):
+        return np.nan
+    else:
+        return ((observed - expected) / expected) * 100
+
+
+def make_overpass_error_df(operator, stage):
+    """Generate a dataframe that calculates percent error for each overpass."""
+
+    ########## Load overpass summary data ##########
+    strict_discard = False
+    op_lax = load_overpass_summary(operator=operator, stage=stage, strict_discard=strict_discard)
+
+    # Set strict_discard to True
+    strict_discard = True
+    op_strict = load_overpass_summary(operator=operator, stage=stage, strict_discard=strict_discard)
+
+    ########## Make dataframe for summarizing results with strict and lax QC  ##########
+
+    op_error = pd.DataFrame()
+
+    # Load columns that are the same in both strict and lax overpass summaries:
+    op_error['overpass_id'] = op_lax['overpass_id']
+    op_error['zero_release'] = op_lax['zero_release']
+    op_error['operator_kept'] = op_lax['operator_kept']
+    op_error['operator_detected'] = op_lax['operator_detected']
+    op_error['operator_quantified'] = op_lax['operator_quantification'].notna()
+    op_error['operator_quantification'] = op_lax['operator_quantification']
+    op_error['release_rate_kgh'] = op_lax['release_rate_kgh']
+
+    # Load columns that change in strict vs lax overpass summaries
+    op_error['stanford_kept_strict'] = op_strict['stanford_kept']
+    op_error['qc_summary_strict'] = op_strict['qc_summary']
+    op_error['stanford_kept_lax'] = op_lax['stanford_kept']
+    op_error['qc_summary_lax'] = op_lax['qc_summary']
+
+    ########## Calculate percent error for each overpass ##########
+
+    # Calculate percent error for all overpasses
+    percent_error = op_error.apply(lambda x: calc_percent_error(x['operator_quantification'], x['release_rate_kgh']),
+                                   axis=1)
+    op_error['percent_error'] = percent_error
+    return op_error
+
+
+def generate_all_overpass_reports(strict_discard, timekeeper):
+    """Generate all overpass reports"""
+    check_timekeep_capitalization(timekeeper)
+
+    operators = ['Carbon Mapper', 'GHGSat', 'Kairos', 'Kairos LS23', 'Kairos LS25', 'Methane Air']
+    stages = [1, 2, 3]
+
+    # Load clean operator data
+    # format for naming: [operator]_stage
+
+    cm_1, cm_2, cm_3, ghg_1, ghg_2, ghg_3, kairos_1, kairos_2, kairos_3, kairos_ls23_1, kairos_ls25_1, kairos_ls23_2, \
+        kairos_ls25_2, kairos_ls23_3, kairos_ls25_3, sciav_1 = load_clean_operator_reports()
+
+    report_dictionary = {
+        'cm_1': cm_1,
+        'cm_2': cm_2,
+        'cm_3': cm_3,
+        'ghg_1': ghg_1,
+        'ghg_2': ghg_2,
+        'ghg_3': ghg_2,
+        'kairos_1': kairos_1,
+        'kairos_2': kairos_2,
+        'kairos_3': kairos_3,
+        'kairos_ls23_1': kairos_ls23_1,
+        'kairos_ls25_1': kairos_ls25_1,
+        'kairos_ls23_2': kairos_ls23_2,
+        'kairos_ls25_2': kairos_ls25_2,
+        'kairos_ls23_3': kairos_ls23_3,
+        'kairos_ls25_3': kairos_ls25_3,
+        'sciav_1': sciav_1
+    }
+
+    # Load meter data
+    cm_meter, ghg_meter, kairos_meter, mair_meter = load_meter_data(timekeeper)
+    meter_dictionary = {
+        'cm_meter': cm_meter,
+        'ghg_meter': ghg_meter,
+        'kairos_meter': kairos_meter,
+        'mair_meter': mair_meter,
+    }
+
+    for operator in operators:
+        for stage in stages:
+            if operator == 'Methane Air':
+                pass
+            else:
+                op_ab = abbreviate_op_name(operator)
+                operator_report = report_dictionary[f'{op_ab}_{stage}']
+
+                if (operator == 'Kairos LS23') or (operator == 'Kairos LS25'):
+                    operator_meter = meter_dictionary['kairos_meter']
+                else:
+                    operator_meter = meter_dictionary[f'{op_ab}_meter']
+
+                generate_overpass_summary(operator, stage, operator_report, operator_meter, strict_discard)
