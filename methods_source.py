@@ -967,3 +967,27 @@ def generate_all_overpass_reports(strict_discard, timekeeper):
                     operator_meter = meter_dictionary[f'{op_ab}_meter']
 
                 generate_overpass_summary(operator, stage, operator_report, operator_meter, strict_discard)
+
+
+#%% Compare overpass lenght
+
+def check_overpass_number(operator, max_overpass_id, overpasses_length):
+    """Compare the highest value for overpass_id to the length of the overpasses dataframe. Highest overpass_id
+    should represent the last overpass conducted, and therefore should be equal to the length of the overpasses
+    dataframe. If these values are not equal, then there is likely an error in making overpass dataframe or summary file."""
+    if max_overpass_id == overpasses_length:
+        print(
+            f'The length of the {operator} overpasses dataframe ({overpasses_length:0.0f}) matches the highest value '
+            f'for overpass_id ({max_overpass_id:0.0f}).')
+    elif max_overpass_id < overpasses_length:
+        print(
+            f'The maximum {operator} overpass ID is less than the length of the overpass dataframe. Check for '
+            f'duplicate values in summary data.')
+        print(f'Length of {operator} overpasses dataframe: {overpasses_length:0.0f}')
+        print(f'Highest {operator} overpass_id: {max_overpass_id:0.0f}')
+    elif max_overpass_id > overpass_length:
+        print(
+            f'The maximum {operator} overpass ID is greater than the length of the overpass dataframe. Check for gaps '
+            f'in summary data or operator report.')
+        print(f'Length of {operator} overpasses dataframe: {overpasses_length:0.0f}')
+        print(f'Highest {operator} overpass_id: {max_overpass_id:0.0f}')
