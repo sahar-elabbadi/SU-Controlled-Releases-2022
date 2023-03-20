@@ -28,7 +28,7 @@ def abbreviate_op_name(operator):
      - 'Kairos LS25': 'kairos_ls25'
      - 'Methane Air': 'mair'
     """
-    if operator == "Carbon Mapper":
+    if operator == 'Carbon Mapper' or operator == 'CarbonMapper':
         op_abb = 'cm'
     elif operator == "GHGSat":
         op_abb = 'ghg'
@@ -38,7 +38,7 @@ def abbreviate_op_name(operator):
         op_abb = 'kairos_ls23'
     elif operator == 'Kairos LS25':
         op_abb = 'kairos_ls25'
-    elif operator == 'Methane Air':
+    elif operator == 'Methane Air' or operator == 'MethaneAir':
         op_abb = 'mair'
     elif operator == 'Scientific Aviation':
         op_abb = 'sciav'
@@ -820,6 +820,14 @@ def classify_histogram_data(operator, stage, strict_discard, threshold_lower, th
         missing_zero = missing.query('release_rate_kgh == 0')
         count_missing_zero = make_histogram_bins(missing_zero, threshold_lower, threshold_upper, n_bins).n_data_points
 
+    # Count total measurements reported by operator
+    total_reported = op_reported.max()['overpass_id']
+
+    # Count total releases
+    total_releases = total_reported + len(missing)
+
+
+
     ################## store data #########################
 
     summary = pd.DataFrame({
@@ -834,6 +842,8 @@ def classify_histogram_data(operator, stage, strict_discard, threshold_lower, th
         'zero_filter_su': count_zero_su_fail,
         'zero_filter_op': count_zero_op_fail,
         'zero_missing': count_missing_zero,
+        'total_releases': total_releases,
+        'total_reported': total_reported,
     })
 
     # Determine max bin height for plotting:
