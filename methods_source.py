@@ -396,6 +396,7 @@ def load_operator_flight_days(operator):
                               index_col=0, parse_dates=['start_time', 'end_time'])
     return flight_days
 
+
 # %% Generate daily releases
 
 def generate_daily_releases(operator_flight_days):
@@ -488,8 +489,12 @@ def load_clean_operator_reports():
     sciav_clean_path = pathlib.PurePath('01_clean_reports', 'sciav_1_clean.csv')
     sciav_1 = pd.read_csv(sciav_clean_path)  # do not set index_col to 0, there is none
 
+    # MAIR Stage 1
+    mair_clean_path = pathlib.PurePath('01_clean_reports', 'mair_1_clean.csv')
+    mair_1 = pd.read_csv(mair_clean_path)  # do not set index_col to 0, there is none
+
     return cm_1, cm_2, cm_3, ghg_1, ghg_2, ghg_3, kairos_1, kairos_2, kairos_3, kairos_1_ls23, kairos_1_ls25, kairos_2_ls23, kairos_2_ls25, \
-        kairos_3_ls23, kairos_3_ls25, sciav_1
+        kairos_3_ls23, kairos_3_ls25, sciav_1, mair_1
 
 
 # %% Load meter data
@@ -626,7 +631,7 @@ def clean_meter_column_names(operator, operator_meter_raw, overpass_id, timekeep
     meter = 'Meter'  # note renaming meter variable used above
     qc_discard = f'Discarded - using {timekeeper}'
     qc_discard_strict = f'Discarded - 1% - using {timekeeper}'
-    altitude = 'Average altitude last minute (m)' #TODO update if Philippine changes this column title for adjusting units
+    altitude = 'Average altitude last minute (m)'  # TODO update if Philippine changes this column title for adjusting units
 
     operator_meter = pd.DataFrame()
     # Populate relevant dataframes
@@ -842,8 +847,6 @@ def classify_histogram_data(operator, stage, strict_discard, threshold_lower, th
     # Count total releases
     total_releases = total_reported + len(missing)
 
-
-
     ################## store data #########################
 
     summary = pd.DataFrame({
@@ -936,13 +939,12 @@ def generate_all_overpass_reports(strict_discard, timekeeper):
     check_timekeep_capitalization(timekeeper)
 
     operators = ['Carbon Mapper', 'GHGSat', 'Kairos', 'Kairos LS23', 'Kairos LS25', 'Methane Air']
-    stages = [1, 2, 3]
 
     # Load clean operator data
     # format for naming: [operator]_stage
 
     cm_1, cm_2, cm_3, ghg_1, ghg_2, ghg_3, kairos_1, kairos_2, kairos_3, kairos_ls23_1, kairos_ls25_1, kairos_ls23_2, \
-        kairos_ls25_2, kairos_ls23_3, kairos_ls25_3, sciav_1 = load_clean_operator_reports()
+        kairos_ls25_2, kairos_ls23_3, kairos_ls25_3, sciav_1, mair_1 = load_clean_operator_reports()
 
     report_dictionary = {
         'cm_1': cm_1,
@@ -960,7 +962,8 @@ def generate_all_overpass_reports(strict_discard, timekeeper):
         'kairos_ls25_2': kairos_ls25_2,
         'kairos_ls23_3': kairos_ls23_3,
         'kairos_ls25_3': kairos_ls25_3,
-        'sciav_1': sciav_1
+        'sciav_1': sciav_1,
+        'mair_1': mair_1,
     }
 
     # Load meter data
@@ -973,22 +976,25 @@ def generate_all_overpass_reports(strict_discard, timekeeper):
     }
 
     for operator in operators:
+        if operator == 'Methane Air':
+            stages = [1]  # Methane Air only did one stage
+        else:
+            stages = [1, 2, 3]
+
+        # For each operator, make a overpass summary for each stage they participated in
         for stage in stages:
-            if operator == 'Methane Air':
-                pass
+            op_ab = abbreviate_op_name(operator)
+            operator_report = report_dictionary[f'{op_ab}_{stage}']
+
+            if (operator == 'Kairos LS23') or (operator == 'Kairos LS25'):
+                operator_meter = meter_dictionary['kairos_meter']
             else:
-                op_ab = abbreviate_op_name(operator)
-                operator_report = report_dictionary[f'{op_ab}_{stage}']
+                operator_meter = meter_dictionary[f'{op_ab}_meter']
 
-                if (operator == 'Kairos LS23') or (operator == 'Kairos LS25'):
-                    operator_meter = meter_dictionary['kairos_meter']
-                else:
-                    operator_meter = meter_dictionary[f'{op_ab}_meter']
-
-                generate_overpass_summary(operator, stage, operator_report, operator_meter, strict_discard)
+            generate_overpass_summary(operator, stage, operator_report, operator_meter, strict_discard)
 
 
-#%% Compare overpass lenght
+# %% Compare overpass lenght
 
 def check_overpass_number(operator, max_overpass_id, overpasses_length):
     """Compare the highest value for overpass_id to the length of the overpasses dataframe. Highest overpass_id
@@ -1012,7 +1018,7 @@ def check_overpass_number(operator, max_overpass_id, overpasses_length):
         print(f'Highest {operator} overpass_id: {max_overpass_id:0.0f}')
 
 
-#%%
+# %%
 def calc_daily_altitude(operator):
     """Calculate average flight height in feet for each flight day performed by the input operator."""
     # Load operator flight days
