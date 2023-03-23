@@ -1,12 +1,14 @@
 # File for methods used in calculating error
 # Author: Sahar H. El Abbadi
 # Date Created: 2023-03-21
+import pathlib
 
 # imports
 
 import pandas as pd
-from methods_source import make_overpass_error_df
+from methods_source import make_overpass_error_df, abbreviate_op_name
 from scipy.stats.mstats import ttest_ind
+
 
 def evaluate_error_profile(operator, stage):
     """Evaluate percent error for different Stanford QC criteria"""
@@ -14,6 +16,10 @@ def evaluate_error_profile(operator, stage):
     # Load overpass summary with errors calculated. Note: calc_percent_error returns np.nan for percent error on zero
     # releases
     op_error = make_overpass_error_df(operator=operator, stage=stage)
+
+    # Save op_error in results
+    op_ab = abbreviate_op_name(operator)
+    op_error.to_csv(pathlib.PurePath('03_results', 'overpass_error', f'{op_ab}_error_summary.csv'))
 
     # Filter to only include overpasses that pass the operator QC criteria:
     op_error = op_error.query('operator_kept == True')
@@ -80,6 +86,5 @@ def evaluate_error_profile(operator, stage):
         else:
             print(
                 f'-The calculated p-value of {p_value:0.4f} is greater than 0.05, the difference between the two complete overpass sets is not statistically significant.\n')
-
 
     return error_summary, p_values

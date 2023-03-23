@@ -889,7 +889,7 @@ def calc_percent_error(observed, expected):
     if pd.isnull(observed):
         return np.nan
     else:
-        return ((observed - expected) / expected) * 100
+        return (abs(observed - expected) / expected) * 100
 
 
 def make_overpass_error_df(operator, stage):
