@@ -1037,5 +1037,5 @@ def calc_daily_altitude(operator):
     op_daily_altitude = pd.DataFrame.from_dict(op_daily_altitude, orient='index')
     op_daily_altitude.columns = ['altitude_feet']
     op_ab = abbreviate_op_name(operator)
-    op_daily_altitude.to_csv(pathlib.PurePath('03_results', 'daily_altitude', f'{op_ab}_altitude_feet'))
+    op_daily_altitude.to_csv(pathlib.PurePath('03_results', 'daily_altitude', f'{op_ab}_altitude_feet.csv'))
     return op_daily_altitude
