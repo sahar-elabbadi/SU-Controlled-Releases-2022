@@ -1,4 +1,4 @@
-,datetime_utc,overpass_id,phase_iii,kgh_gas_30,kgh_gas_60,kgh_gas_90,kgh_ch4_30,kgh_ch4_60,kgh_ch4_90,methane_fraction,meter,qc_su_discard,qc_su_discard_strict,altitude_meters
+,datetime_utc,overpass_id,phase_iii,kgh_gas_30,kgh_gas_60,kgh_gas_90,kgh_ch4_30,kgh_ch4_60,kgh_ch4_90,methane_fraction,meter,qc_su_discard,qc_su_discard_strict,altitude_feet
 0,2022-10-31 17:04:02,1.0,0,224.1744387,224.1744387,224.1744387,215.1775712,215.1775712,215.1775712,0.959866667,mc,0,0,7994.583333
 1,2022-10-31 17:07:12,2.0,0,224.6143355,224.6143355,224.6143355,215.5998135,215.5998135,215.5998135,0.959866667,mc,0,0,7731.25
 2,2022-10-31 17:10:55,3.0,1,315.7815484,315.7815484,315.7815484,303.1081822,303.1081822,303.1081822,0.959866667,mc,0,0,7865.347222

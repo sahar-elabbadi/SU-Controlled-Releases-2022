@@ -32,11 +32,11 @@ def evaluate_error_profile(operator, stage):
         # Only consider overpasses that were quantified by the operator
         op_error_pass_qc = op_error_pass_qc.query('operator_quantified == True')
         pass_qc_mean_error = op_error_pass_qc.percent_error.mean()
-        print(f'Evaluating {operator} percent error using Stanford {qc} QC criteria.')
+        print(f'Evaluate {operator} percent error using Stanford {qc} QC criteria: ')
         print(
             f'-There are {len(op_error_pass_qc)} overpasses that {operator} quantified which pass the Stanford {qc} QC criteria')
         print(
-            f'-Percent error for {operator} on overpasses that are included in the strict criteria is: {pass_qc_mean_error:.2f}%\n')
+            f'-Percent error for {operator} on overpasses that are included in the {qc} criteria is: {pass_qc_mean_error:.2f}%\n')
 
         # Save error summary for export
         error_summary[qc] = pass_qc_mean_error
@@ -51,7 +51,7 @@ def evaluate_error_profile(operator, stage):
     op_error_pass_lax_fail_strict = op_error_pass_lax_fail_strict.query('operator_quantified == True')
     pass_lax_fail_strict_mean_error = op_error_pass_lax_fail_strict.percent_error.mean()
     print(
-        f'Evaluating {operator} percent error for overpasses that passed the lax criteria and failed the strict criteria.')
+        f'Evaluate {operator} percent error for overpasses that passed the lax criteria and failed the strict criteria:')
     print(
         f'-There are {len(op_error_pass_lax_fail_strict)} overpasses that {operator} quantified which pass the Stanford lax QC criteria but fail the Stanford strict')
     print(
@@ -65,13 +65,13 @@ def evaluate_error_profile(operator, stage):
     strict_comparisons = ['lax', 'lax_not_strict']
 
     # Lax vs Strict QC
-    op_error_pass_strict = error_values['strict']
+    op_error_pass_strict = error_values['strict'].dropna()
 
     p_values = {}
     for comparison in strict_comparisons:
-        print(f'Comparing the strict discard criteria with the {comparison} criteria')
+        print(f'Compare the strict discard criteria with the {comparison} criteria:')
 
-        comparison_error = error_values[comparison]
+        comparison_error = error_values[comparison].dropna()
         t_stat, p_value = ttest_ind(op_error_pass_strict, comparison_error, equal_var=True)
         p_values[f'strict_v_{comparison}'] = p_value
         if p_value <= 0.05:
@@ -83,6 +83,3 @@ def evaluate_error_profile(operator, stage):
 
 
     return error_summary, p_values
-
-
-error_profile, p_values = evaluate_error_profile('Carbon Mapper', 1)

@@ -122,6 +122,7 @@ def generate_overpass_summary(operator, stage, operator_report, operator_meter, 
     operator_qc['stanford_kept'] = combined_df.stanford_kept == 1
     operator_qc['phase_iii'] = combined_df.phase_iii
     operator_qc['pass_all_qc'] = operator_qc.stanford_kept * operator_qc.operator_kept
+    operator_qc['altitude_feet'] = combined_df.altitude_feet
 
     # check if overpass failed both stanford and operator
     check_fail = operator_qc['operator_kept'] + operator_qc['stanford_kept']
@@ -389,6 +390,12 @@ def load_flight_days():
     return cm_flight_days, ghg_flight_days, kairos_flight_days, mair_flight_days, sciav_flight_days
 
 
+def load_operator_flight_days(operator):
+    op_ab = abbreviate_op_name(operator)
+    flight_days = pd.read_csv(pathlib.PurePath('03_results', 'flight_days', f'{op_ab}_flight_days.csv'),
+                              index_col=0, parse_dates=['start_time', 'end_time'])
+    return flight_days
+
 # %% Generate daily releases
 
 def generate_daily_releases(operator_flight_days):
@@ -601,7 +608,7 @@ def check_timekeep_capitalization(timekeeper):
 
 
 # %%
-def clean_meter_column_names(operator_meter_raw, overpass_id, timekeeper):
+def clean_meter_column_names(operator, operator_meter_raw, overpass_id, timekeeper):
     timekeeper = check_timekeep_capitalization(timekeeper)
 
     # Relevant columns from Philippine generated meter dataset:
@@ -619,7 +626,7 @@ def clean_meter_column_names(operator_meter_raw, overpass_id, timekeeper):
     meter = 'Meter'  # note renaming meter variable used above
     qc_discard = f'Discarded - using {timekeeper}'
     qc_discard_strict = f'Discarded - 1% - using {timekeeper}'
-    altitude_meters = 'Average altitude last minute (m)'
+    altitude = 'Average altitude last minute (m)' #TODO update if Philippine changes this column title for adjusting units
 
     operator_meter = pd.DataFrame()
     # Populate relevant dataframes
@@ -636,9 +643,18 @@ def clean_meter_column_names(operator_meter_raw, overpass_id, timekeeper):
     operator_meter['meter'] = operator_meter_raw[meter]
     operator_meter['qc_su_discard'] = operator_meter_raw[qc_discard]
     operator_meter['qc_su_discard_strict'] = operator_meter_raw[qc_discard_strict]
-    operator_meter['altitude_meters'] = operator_meter_raw[altitude_meters]
     operator_meter['time'] = operator_meter_raw[time]
     operator_meter['date'] = operator_meter_raw[date]
+
+    # Altitude for Carbon Mapper, GHGSat and Methane Air was obtained using FlightRadar, and is in feet.
+    # Kairos reported flight altitude NOT using Flight Radar, and their units are reported in meters
+    # If operator is Kairos, Kairos LS23 or Kairos LS25, convert from meters to feet:
+    feet_per_meter = 3.28084
+    kairos_names = ['Kairos', 'Kairos LS23', 'Kairos LS25', 'kairos']
+    if operator in kairos_names:
+        operator_meter['altitude_feet'] = operator_meter_raw[altitude] * feet_per_meter
+    else:
+        operator_meter['altitude_feet'] = operator_meter_raw[altitude]
 
     # Abbreviate meter names in raw meter file
     names = ['Baby Coriolis', 'Mama Coriolis', 'Papa Coriolis']
@@ -667,7 +683,7 @@ def make_operator_meter_dataset(operator, operator_meter_raw, timekeeper):
         timekeeper = check_timekeep_capitalization(timekeeper)
         overpass_id = 'PerformerOverpassID'
 
-        operator_meter = clean_meter_column_names(operator_meter_raw, overpass_id, timekeeper)
+        operator_meter = clean_meter_column_names(operator, operator_meter_raw, overpass_id, timekeeper)
 
         # Drop rows with nan to remove rows with missing values. This is because for some operators, we missed overpasses
         # and timestamps have nan values, which causes issues with downstream code
@@ -740,12 +756,12 @@ def make_histogram_bins(df, threshold_lower, threshold_upper, n_bins):
     return detection_prob
 
 
-def find_missing_data(meter_raw):
+def find_missing_data(operator, meter_raw):
     """ Missing data refers to overpasses documented by Stanford that are not reported by the operator"""
 
     operator_missing_raw = meter_raw.query(
         'PerformerOverpassID.isnull() == True & StanfordOverpassID.isnull() == False')
-    operator_missing = clean_meter_column_names(operator_missing_raw, 'FlightradarOverpassID', 'flightradar')
+    operator_missing = clean_meter_column_names(operator, operator_missing_raw, 'FlightradarOverpassID', 'flightradar')
 
     operator_missing.rename(columns={'kgh_ch4_60': 'release_rate_kgh'}, inplace=True)
 
@@ -794,17 +810,17 @@ def classify_histogram_data(operator, stage, strict_discard, threshold_lower, th
     cm_meter_raw, ghg_meter_raw, kairos_meter_raw, mair_meter_raw, sciav_meter_raw = load_summary_files()
 
     if operator == 'Carbon Mapper':
-        missing = find_missing_data(cm_meter_raw)
+        missing = find_missing_data(operator, cm_meter_raw)
     elif operator == 'GHGSat':
-        missing = find_missing_data(ghg_meter_raw)
+        missing = find_missing_data(operator, ghg_meter_raw)
     elif operator == 'Kairos':
-        missing = find_missing_data(kairos_meter_raw)
+        missing = find_missing_data(operator, kairos_meter_raw)
     elif operator == 'Kairos LS23':
-        missing = find_missing_data(kairos_meter_raw)
+        missing = find_missing_data(operator, kairos_meter_raw)
     elif operator == 'Kairos LS25':
-        missing = find_missing_data(kairos_meter_raw)
+        missing = find_missing_data(operator, kairos_meter_raw)
     elif operator == 'Methane Air':
-        missing = find_missing_data(mair_meter_raw)
+        missing = find_missing_data(operator, mair_meter_raw)
     elif operator == 'Scientific Aviation':
         missing = []
 
@@ -864,6 +880,9 @@ def calc_percent_error(observed, expected):
     """Calculate perfect error between an observation and the expected value. Returns value as percent.  """
     # don't divide by zero:
     if expected == 0:
+        return np.nan
+
+    if observed == 0:
         return np.nan
 
     # keep overpasses that aren't quantified in series so it can be aligned later
@@ -991,3 +1010,32 @@ def check_overpass_number(operator, max_overpass_id, overpasses_length):
             f'in summary data or operator report.')
         print(f'Length of {operator} overpasses dataframe: {overpasses_length:0.0f}')
         print(f'Highest {operator} overpass_id: {max_overpass_id:0.0f}')
+
+
+#%%
+def calc_daily_altitude(operator):
+    """Calculate average flight height in feet for each flight day performed by the input operator."""
+    # Load operator flight days
+    op_days = load_operator_flight_days(operator)
+
+    # Load overpass summary, stage and discard don't matter here because we only care about the altitude column
+    op_overpasses = load_overpass_summary(operator=operator, stage=1, strict_discard=False)
+
+    # Set overpass_datetime to index for easier filtering
+    op_datetime_index = op_overpasses.set_index('overpass_datetime')
+
+    # Set up dictionary for storing data
+    op_daily_altitude = {}
+
+    for i in range(len(op_days)):
+        flight_day = op_days.iloc[i].start_time.strftime('%Y-%m-%d')
+        daily_overpasses = op_datetime_index.loc[flight_day]
+        ave_flight_height = daily_overpasses.altitude_feet.mean()
+        op_daily_altitude[flight_day] = ave_flight_height
+
+    # Save data
+    op_daily_altitude = pd.DataFrame.from_dict(op_daily_altitude, orient='index')
+    op_daily_altitude.columns = ['altitude_feet']
+    op_ab = abbreviate_op_name(operator)
+    op_daily_altitude.to_csv(pathlib.PurePath('03_results', 'daily_altitude', f'{op_ab}_altitude_feet'))
+    return op_daily_altitude

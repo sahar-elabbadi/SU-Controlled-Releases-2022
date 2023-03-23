@@ -143,10 +143,15 @@ def plot_parity(operator, stage, strict_discard):
     plt.legend(facecolor='white')
 
     # Save figure
+    if strict_discard == True:
+        discard = 'strict'
+    else:
+        discard = 'lax'
+
     now = datetime.datetime.now()
     op_ab = abbreviate_op_name(operator)
     save_time = now.strftime("%Y%m%d")
-    fig_name = f'parity_{op_ab}_stage{stage}_{save_time}_test'
+    fig_name = f'parity_{op_ab}_stage{stage}_{discard}_{save_time}_test'
     fig_path = pathlib.PurePath('04_figures', 'parity_plots', fig_name)
     plt.savefig(fig_path)
     plt.show()
@@ -305,10 +310,16 @@ def plot_detection_limit(operator, stage, strict_discard, n_bins, threshold):
     plt.title(f'{operator} Probability of Detection - Stage {stage}')
 
     # Save figure
+
+    if strict_discard == True:
+        discard = 'strict'
+    else:
+        discard = 'lax'
+
     now = datetime.datetime.now()
     save_time = now.strftime("%Y%m%d")
     op_ab = abbreviate_op_name(operator)
-    fig_name = f'detect_limit_{op_ab}_stage{stage}_{save_time}'
+    fig_name = f'detect_limit_{op_ab}_stage{stage}_{discard}_{save_time}'
     fig_path = pathlib.PurePath('04_figures', 'detection_limit', fig_name)
     plt.savefig(fig_path)
     plt.show()
@@ -323,9 +334,15 @@ def plot_detection_limit(operator, stage, strict_discard, n_bins, threshold):
 
 # %%
 
-def plot_qc_summary(operators, stage):
+def plot_qc_summary(operators, stage, strict_discard):
     # Load saved QC dataframe
-    all_qc = pd.read_csv(pathlib.PurePath('03_results', 'qc_comparison', 'all_qc.csv'), index_col=0)
+    if strict_discard == True:
+        file_name = 'all_qc_strict.csv'
+        discard = 'strict'
+    else:
+        file_name = 'all_qc.csv'
+        discard = 'lax'
+    all_qc = pd.read_csv(pathlib.PurePath('03_results', 'qc_comparison', file_name), index_col=0)
     # Plot
 
     category = ['fail_stanford_only', 'fail_all_qc', 'fail_operator_only']
@@ -387,7 +404,7 @@ def plot_qc_summary(operators, stage):
     plt.xticks(r, operators, fontweight='bold')
     plt.xlabel("Operator", fontsize=14)
     plt.ylabel("Number of Overpasses", fontsize=14)
-    plt.title("Summary of Quality Control Filtering")
+    plt.title(f"QC Filtering Summary (SU discard criteria: {discard})")
     plt.tick_params(direction='in', right=True, top=True)
     plt.tick_params(labelsize=12)
     plt.minorticks_on()
@@ -400,7 +417,7 @@ def plot_qc_summary(operators, stage):
     # Save figure
     now = datetime.datetime.now()
     save_time = now.strftime("%Y%m%d")
-    fig_name = f'qc_stage_{stage}_{save_time}'
+    fig_name = f'qc_stage_{stage}_{discard}_{save_time}'
     fig_path = pathlib.PurePath('04_figures', 'qc_summary', fig_name)
     plt.savefig(fig_path)
     plt.show()
@@ -507,10 +524,16 @@ def plot_daily_releases(operator, flight_days, operator_releases, stage, strict_
         plt.tick_params(direction='in', which='major', length=6, bottom=True, top=True, left=True, right=True)
 
         # Save figure
+
+        if strict_discard == True:
+            discard = 'strict'
+        else:
+            discard = 'lax'
+
         now = datetime.datetime.now()
         op_ab = abbreviate_op_name(operator)
         save_time = now.strftime("%Y%m%d")
-        fig_name = f'release_chart_{op_ab}_{day}_{save_time}'
+        fig_name = f'release_chart_{op_ab}_{day}_{discard}_{save_time}'
         fig_path = pathlib.PurePath('04_figures', 'release_rates', fig_name)
         plt.savefig(fig_path, bbox_extra_artists=(lgd,), bbox_inches='tight')
         plt.show()
@@ -731,7 +754,13 @@ def make_releases_histogram(operator, stage, strict_discard):
     save_time = now.strftime("%Y%m%d")
 
     # Save figure
-    fig_name = f'histogram_{op_ab}_{save_time}'
+
+    if strict_discard == True:
+        discard = 'strict'
+    else:
+        discard = 'lax'
+
+    fig_name = f'histogram_{op_ab}_{discard}_{save_time}'
     fig_path = pathlib.PurePath('04_figures', 'histogram', fig_name)
     plt.savefig(fig_path, bbox_extra_artists=(txt_x_label, txt_title), bbox_inches='tight')
 
