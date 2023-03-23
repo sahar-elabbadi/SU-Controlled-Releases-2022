@@ -364,3 +364,59 @@ def make_kairos_combo(kairos_overpass, kairos_stage):
     kairos_combo_clean.to_csv(pathlib.PurePath('01_clean_reports', f'kairos_{kairos_stage}_clean.csv'))
 
     return kairos_combo_clean
+
+
+def clean_mair(mair_report, mair_overpasses, mair_stage):
+    mair_overpasses = np.linspace(1, mair_overpasses, mair_overpasses)
+    overpass_list = [] # for storing all new rows
+
+    for overpass in mair_overpasses:
+
+        # MAIR does not use QC flags, set qc_flag to clear for all overpasses
+        qc_flag = 'clear'
+        operator_kept = True
+
+        # MAIR reports 0 as FacilityEmissionRate for non-detects
+        if mair_report.loc[overpass-1, "FacilityEmissionRate"] > 0:
+            detected = True
+        else:
+            detected = False
+
+        # All plumes for MAIR are quantified
+        quantified = True
+
+        # MAIR reports in UTC
+        utc_time = mair_report.loc[overpass-1, "Timestamp (UTC)"]
+
+        # MAIR uses two types of uncertainty: Confidence Interval and MINIMUM
+        reported_uncertainty_type = mair_report.loc[overpass - 1, "UncertaintyType"]
+        if reported_uncertainty_type == 'Confidence Interval':
+            uncertainty = 'confidence_95'
+        elif reported_uncertainty_type == 'MINIMUM':
+            uncertainty = 'max_min'
+        else:
+            uncertainty = 'ERROR! Check for typo!'
+
+
+        new_row = {
+        'Operator': 'Methane Air',
+        'Stage': mair_stage,
+        'overpass_id': overpass,
+        'DateOfSurvey': mair_report.loc[overpass - 1, "DateOfSurvey"],
+        'TimestampUTC': utc_time,
+        'Detected': detected,
+        'QuantifiedPlume': quantified,
+        'FacilityEmissionRate': mair_report.loc[overpass - 1, "FacilityEmissionRate"],
+        'FacilityEmissionRateUpper': mair_report.loc[overpass - 1, "FacilityEmissionRateUpper"],
+        'FacilityEmissionRateLower': mair_report.loc[overpass - 1, "FacilityEmissionRateLower"],
+        'UncertaintyType': uncertainty,
+        'OperatorWindspeed_RMS': mair_report.loc[overpass - 1, "WindSpeed (m/s) (RMS eddy)"],
+        'OperatorWindspeed_HRRR': mair_report.loc[overpass - 1, 'Windspeed (m/s) (HRRR PBL mean)'],
+        'QCFlag': qc_flag,
+        'OperatorKeep': operator_kept,
+        }
+        # Add new row to overpass list
+        overpass_list.append(new_row)
+
+    mair_clean = pd.DataFrame(overpass_list)
+    return mair_clean
