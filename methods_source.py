@@ -253,11 +253,17 @@ def make_qc_table(strict_discard):
     kairos_ls25_2_qc = summarize_qc(operator="Kairos LS25", stage=2, strict_discard=strict_discard)
     kairos_ls25_3_qc = summarize_qc(operator="Kairos LS25", stage=3, strict_discard=strict_discard)
 
+    # Scientific Aviation
+    sciav_1_qc = summarize_qc(operator="Scientific Aviation", stage=1, strict_discard=strict_discard)
+
+    # Methane Air
+    mair_1_qc = summarize_qc(operator="Methane Air", stage=1, strict_discard=strict_discard)
+
     # Combine all individual QC dataframes
 
     all_qc = [cm_1_qc, cm_2_qc, cm_3_qc, ghg_1_qc, ghg_2_qc, ghg_3_qc, kairos_1_qc, kairos_2_qc, kairos_3_qc,
               kairos_ls23_1_qc, kairos_ls23_2_qc, kairos_ls23_3_qc, kairos_ls25_1_qc, kairos_ls25_2_qc,
-              kairos_ls25_3_qc]
+              kairos_ls25_3_qc, sciav_1_qc, mair_1_qc]
 
     all_qc = pd.concat(all_qc)
 

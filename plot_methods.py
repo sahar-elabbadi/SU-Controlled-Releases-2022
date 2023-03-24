@@ -151,7 +151,7 @@ def plot_parity(operator, stage, strict_discard):
     now = datetime.datetime.now()
     op_ab = abbreviate_op_name(operator)
     save_time = now.strftime("%Y%m%d")
-    fig_name = f'parity_{op_ab}_stage{stage}_{discard}_{save_time}_test'
+    fig_name = f'{op_ab}_{stage}_{discard}_parity_{save_time}_test'
     fig_path = pathlib.PurePath('04_figures', 'parity_plots', fig_name)
     plt.savefig(fig_path)
     plt.show()
@@ -162,7 +162,7 @@ def plot_parity(operator, stage, strict_discard):
     save_parity_data['operator_report'] = y_data
     save_parity_data['operator_sigma'] = y_error
 
-    save_path = pathlib.PurePath('03_results', 'parity_plot_data', f'{op_ab}_{stage}_parity_{save_time}.csv')
+    save_path = pathlib.PurePath('03_results', 'parity_plot_data', f'{op_ab}_{stage}_{discard}_parity_{save_time}.csv')
     save_parity_data.to_csv(save_path)
 
 
