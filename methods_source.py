@@ -658,14 +658,20 @@ def clean_meter_column_names(operator, operator_meter_raw, overpass_id, timekeep
     operator_meter['date'] = operator_meter_raw[date]
 
     # Altitude for Carbon Mapper, GHGSat and Methane Air was obtained using FlightRadar, and is in feet.
+    # Flight Radar reports altitude above mean sea level > need to adjust for the elevation of field site
+    #
     # Kairos reported flight altitude NOT using Flight Radar, and their units are reported in meters
+    #
     # If operator is Kairos, Kairos LS23 or Kairos LS25, convert from meters to feet:
     feet_per_meter = 3.28084
+    field_elevation_m = 429
+    field_elevation_ft = field_elevation_m * feet_per_meter
+
     kairos_names = ['Kairos', 'Kairos LS23', 'Kairos LS25', 'kairos']
     if operator in kairos_names:
-        operator_meter['altitude_feet'] = operator_meter_raw[altitude] * feet_per_meter
+        operator_meter['altitude_feet'] = (operator_meter_raw[altitude] - field_elevation_m)* feet_per_meter
     else:
-        operator_meter['altitude_feet'] = operator_meter_raw[altitude]
+        operator_meter['altitude_feet'] = (operator_meter_raw[altitude] - field_elevation_ft)
 
     # Abbreviate meter names in raw meter file
     names = ['Baby Coriolis', 'Mama Coriolis', 'Papa Coriolis']
