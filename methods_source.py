@@ -104,7 +104,8 @@ def generate_overpass_summary(operator, stage, operator_report, operator_meter, 
 
     # Rename columns to be machine-readable
     # Make column with easier name for coding for now.
-    combined_df['release_rate_kgh'] = combined_df['kgh_ch4_60']
+    combined_df['release_rate_kgh'] = combined_df[
+        'kgh_ch4_60']  # TODO change this to whole gas then calculate the methane using % methane
 
     # combined_df['time_utc'] = combined_df['Time (UTC) - from Stanford']
     # combined_df['date'] = combined_df['Date']
@@ -647,10 +648,14 @@ def clean_meter_column_names(operator, operator_meter_raw, overpass_id, timekeep
     operator_meter['kgh_gas_30'] = operator_meter_raw[kgh_gas_30]
     operator_meter['kgh_gas_60'] = operator_meter_raw[kgh_gas_60]
     operator_meter['kgh_gas_90'] = operator_meter_raw[kgh_gas_90]
-    operator_meter['kgh_ch4_30'] = operator_meter_raw[kgh_ch4_30]
-    operator_meter['kgh_ch4_60'] = operator_meter_raw[kgh_ch4_60]
-    operator_meter['kgh_ch4_90'] = operator_meter_raw[kgh_ch4_90]
-    operator_meter['methane_fraction'] = operator_meter_raw[methane_fraction]
+    # Comment these out for now as they will be calculated for each methane mole fraction
+    # operator_meter['kgh_ch4_30'] = operator_meter_raw[kgh_ch4_30]
+    # operator_meter['kgh_ch4_60'] = operator_meter_raw[kgh_ch4_60]
+    # operator_meter['kgh_ch4_90'] = operator_meter_raw[kgh_ch4_90]
+
+    # Remove this for now as I will set it in make_operator_meter_dataset
+    # operator_meter['methane_fraction'] = operator_meter_raw[
+    #     methane_fraction]
     operator_meter['meter'] = operator_meter_raw[meter]
     operator_meter['qc_su_discard'] = operator_meter_raw[qc_discard]
     operator_meter['qc_su_discard_strict'] = operator_meter_raw[qc_discard_strict]
@@ -669,7 +674,7 @@ def clean_meter_column_names(operator, operator_meter_raw, overpass_id, timekeep
 
     kairos_names = ['Kairos', 'Kairos LS23', 'Kairos LS25', 'kairos']
     if operator in kairos_names:
-        operator_meter['altitude_feet'] = (operator_meter_raw[altitude] - field_elevation_m)* feet_per_meter
+        operator_meter['altitude_feet'] = (operator_meter_raw[altitude] - field_elevation_m) * feet_per_meter
     else:
         operator_meter['altitude_feet'] = (operator_meter_raw[altitude] - field_elevation_ft)
 
@@ -681,6 +686,26 @@ def clean_meter_column_names(operator, operator_meter_raw, overpass_id, timekeep
         operator_meter.loc[operator_meter['meter'] == meter_name, 'meter'] = meter_nickname
 
     return operator_meter
+
+
+# %%
+def select_methane_fraction(input_datetime, gas_comp_source):
+    """Determines the methane mole fraction for a given datetime.
+    Inputs:
+      - input_datetime is a datetime object
+      - gas_comp_source is either 'su_raw', 'su_normalized', or 'km' """
+
+    # Load the clean gas cmoposition data
+    gas_comp = pd.read_csv(pathlib.PurePath('02_meter_data', 'gas_comp_clean_su_km.csv'),
+                           nrows=15,
+                           parse_dates=['start_utc', 'end_utc'])
+
+    # Determine methane mole fraction based on date brackets
+    for index, row in gas_comp.iterrows():
+        if (input_datetime > row['start_utc']) and (input_datetime <= row['end_utc']):
+            methane_mole_fraction = row[gas_comp_source]
+
+    return methane_mole_fraction
 
 
 # %% Function to import Philippine's meter data, select the FlightRadar columns, and with abrename columns to be more
@@ -704,7 +729,6 @@ def make_operator_meter_dataset(operator, operator_meter_raw, timekeeper):
 
         # Drop rows with nan to remove rows with missing values. This is because for some operators, we missed overpasses
         # and timestamps have nan values, which causes issues with downstream code
-
         operator_meter = operator_meter.dropna(axis='index')  # axis = 'index' means to drop rows with missing values
 
         # Combine date and time
@@ -713,6 +737,14 @@ def make_operator_meter_dataset(operator, operator_meter_raw, timekeeper):
 
         # Now that we have removed NA values in time, we can remove date and time columns from operator_meter
         operator_meter = operator_meter.drop(columns=['time', 'date'])
+
+        # Determine methane mole fraction for each overpass
+        gas_comp_source = ['su_raw', 'su_normalized', 'km']
+        time_ave = ['30', '60', '90']
+        for source in gas_comp_source:
+            operator_meter[f'methane_fraction_{source}'] = operator_meter.apply(lambda x: select_methane_fraction(x['overpass_datetime'], source))
+            for time in time_ave:
+                operator_meter[f'kgh_ch4_{time}_{source}'] = operator_meter[f'kgh_gas_{time}'] * operator_meter[f'methane_fraction_{source}']
 
         # Everything from here down should stay in this function
 

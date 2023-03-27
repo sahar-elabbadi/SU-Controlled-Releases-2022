@@ -1,0 +1,35 @@
+﻿refill_no,rawhide_refill_date,start_utc,end_utc,notes,su_notes,km_composition_date,su_raw,su_normalized,km
+1,10/5/22,10/5/22 0:00,10/12/22 18:12,Stop time from log book,Sample: 01,10/5/22,0.94,0.94,0.938118
+2,10/12/22,10/12/22 18:12,10/19/22 0:00,No testing this week,Sample: 03,10/12/22,0.92,0.92,0.939232
+3,10/19/22,10/19/22 0:00,10/25/22 17:42,Start time based on Rawhide invoice,Sample: 05,10/19/22,0.90,0.90,0.946772
+4,10/25/22,10/25/22 17:42,10/28/22 0:00,Stop time based on truck log spreadsheet,Sample: 06,10/25/22,0.88,0.88,0.948721
+5,10/27/22,10/28/22 0:00,10/29/22 16:00,Stop time based on truck log spreadsheet,"Samples: 08, 09",10/27/22,0.87,0.87,0.959663
+6,10/29/22,10/29/22 16:00,10/31/22 0:00,Stop time based on truck log spreadsheet,"Samples: 10, 11",10/29/22,0.92,0.92,0.951361
+7,10/30/22,10/31/22 0:00,11/1/22 16:00,Stop time based on truck log spreadsheet,"Samples: 12, 13",10/30/22,0.96,0.93,0.949013
+8,11/1/22,11/1/22 16:00,11/8/22 0:00,Stop time based on truck log spreadsheet,"Samples: 14, 15",11/1/22,0.96,0.93,0.945616
+9,11/7/22,11/8/22 0:00,11/9/22 0:00,Stop time based on truck log spreadsheet,"Samples: 16, 17",11/7/22,1.00,0.96,0.955863
+10,11/8/22,11/9/22 0:00,11/11/22 0:00,Stop time based on truck log spreadsheet,"Missing - use average of 16, 17, 18",11/8/22,1.00,0.95,0.953660
+11,11/11/22,11/11/22 0:00,11/15/22 16:56,Stop time based on truck log spreadsheet,Sample: 18,11/11/22,1.00,0.95,0.950741
+12,11/15/22,11/15/22 16:56,11/17/22 18:47,Stop time based on truck log spreadsheet,"Samples: 20, 21",11/15/22,1.00,0.95,0.941825
+13,11/17/22,11/17/22 18:47,11/21/22 16:00,Stop time based on truck log spreadsheet,"Samples: 22, 23",11/17/22,1.00,0.96,0.940358
+14,11/19/22,11/21/22 16:00,11/28/22 0:00,Weekend refill,"Samples: 24, 25",11/19/22,1.00,0.95,0.941504
+15,Missing,11/28/22 0:00,12/1/22 0:00,Thanksgiving refill,"Samples: 26, 27",Missing - average 11/26 and 11/27,0.99,0.94,0.941938
+,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
