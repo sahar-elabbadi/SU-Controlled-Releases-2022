@@ -80,8 +80,19 @@ def load_summary_files():
 
 
 # %% method summarize_qc
-def generate_overpass_summary(operator, stage, operator_report, operator_meter, strict_discard):
+def generate_overpass_summary(operator, stage, operator_report, operator_meter, strict_discard, gas_comp_source, time_ave):
     """Generate clean dataframe for each overpass with columns indicating QC status.
+
+    Inputs:
+      - operator: operator name, spelled out in full
+      - stage: stage of data: either 1, 2, or 3 (only for identification in saved CSV file, as operator_report is stage specific)
+      - operator_report: cleaned operator report to be merged with metered data
+      - operator_meter: cleaned operator_meter database, loaded from 02_meter_data > oeprator_meter_data
+      - strict_discard: True if using strict discard, False if using lax discard
+      - gas_comp_source: either 'su_raw', 'su_normalized', or 'km'. su_raw refers to raw gas composition analysis as
+      reported by Eurofins Air Toxins lab, su_normalized refers to using these values normalized such that all values
+      reported add to 100%. km refers to using Kinder Morgen gas analysis
+      - time_ave: is either '30', '60', or '90', select based on the time average period desired for kgh value
 
     Columns are:
       - overpass_id
@@ -105,7 +116,7 @@ def generate_overpass_summary(operator, stage, operator_report, operator_meter, 
     # Rename columns to be machine-readable
     # Make column with easier name for coding for now.
     combined_df['release_rate_kgh'] = combined_df[
-        'kgh_ch4_60']  # TODO change this to whole gas then calculate the methane using % methane
+        f'kgh_ch4_{time_ave}_{gas_comp_source}']
 
     # combined_df['time_utc'] = combined_df['Time (UTC) - from Stanford']
     # combined_df['date'] = combined_df['Date']
@@ -742,7 +753,7 @@ def make_operator_meter_dataset(operator, operator_meter_raw, timekeeper):
         gas_comp_source = ['su_raw', 'su_normalized', 'km']
         time_ave = ['30', '60', '90']
         for source in gas_comp_source:
-            operator_meter[f'methane_fraction_{source}'] = operator_meter.apply(lambda x: select_methane_fraction(x['overpass_datetime'], source))
+            operator_meter[f'methane_fraction_{source}'] = operator_meter.apply(lambda x: select_methane_fraction(x['datetime_utc'], source), axis=1)
             for time in time_ave:
                 operator_meter[f'kgh_ch4_{time}_{source}'] = operator_meter[f'kgh_gas_{time}'] * operator_meter[f'methane_fraction_{source}']
 
@@ -978,7 +989,7 @@ def make_overpass_error_df(operator, stage):
     return op_error
 
 
-def generate_all_overpass_reports(strict_discard, timekeeper):
+def generate_all_overpass_reports(strict_discard, timekeeper, gas_comp_source, time_ave):
     """Generate all overpass reports"""
     check_timekeep_capitalization(timekeeper)
 
@@ -1035,7 +1046,7 @@ def generate_all_overpass_reports(strict_discard, timekeeper):
             else:
                 operator_meter = meter_dictionary[f'{op_ab}_meter']
 
-            generate_overpass_summary(operator, stage, operator_report, operator_meter, strict_discard)
+            generate_overpass_summary(operator, stage, operator_report, operator_meter, strict_discard, gas_comp_source, time_ave)
 
 
 # %% Compare overpass lenght
