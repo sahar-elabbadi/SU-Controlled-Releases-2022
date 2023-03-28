@@ -80,7 +80,8 @@ def load_summary_files():
 
 
 # %% method summarize_qc
-def generate_overpass_summary(operator, stage, operator_report, operator_meter, strict_discard, gas_comp_source, time_ave):
+def generate_overpass_summary(operator, stage, operator_report, operator_meter, strict_discard, gas_comp_source,
+                              time_ave):
     """Generate clean dataframe for each overpass with columns indicating QC status.
 
     Inputs:
@@ -307,7 +308,9 @@ def load_daily_meter_data(date):
 
 # %% Load flight days
 
-def load_flight_days():
+def load_flight_days(operator):
+    op_ab = abbreviate_op_name(operator)
+
     cm_flight_days = {
         "date": ['10_10', '10_11', '10_12', '10_28', '10_29', '10_31'],
         "start_time": [
@@ -380,14 +383,14 @@ def load_flight_days():
     sciav_flight_days = {
         "date": ['11_08', '11_10', '11_11'],
         "start_time": [
-            datetime.datetime(2022, 11, 8, 21, 41, 2),
-            datetime.datetime(2022, 11, 10, 18, 5, 1),
-            datetime.datetime(2022, 11, 10, 19, 10, 45),
+            datetime.datetime(2022, 11, 8, 21, 35, 0),
+            datetime.datetime(2022, 11, 10, 18, 0, 0),
+            datetime.datetime(2022, 11, 11, 19, 0, 0),
         ],
         "end_time": [
             datetime.datetime(2022, 11, 8, 23, 55, 3),
-            datetime.datetime(2022, 11, 10, 22, 5, 52),
-            datetime.datetime(2022, 11, 11, 23, 42, 00),
+            datetime.datetime(2022, 11, 10, 22, 1, 22),
+            datetime.datetime(2022, 11, 11, 23, 39, 33),
         ],
     }
 
@@ -405,10 +408,24 @@ def load_flight_days():
     mair_flight_days.to_csv(pathlib.PurePath('03_results', 'flight_days', f'mair_flight_days.csv'))
     sciav_flight_days.to_csv(pathlib.PurePath('03_results', 'flight_days', f'sciav_flight_days.csv'))
 
-    return cm_flight_days, ghg_flight_days, kairos_flight_days, mair_flight_days, sciav_flight_days
+    # Return flight day for the operator
+    if op_ab == 'cm':
+        return cm_flight_days
+    elif op_ab == 'ghg':
+        return ghg_flight_days
+    elif op_ab == 'kairos':
+        return kairos_flight_days
+    elif op_ab == 'mair':
+        return mair_flight_days
+    elif op_ab == 'sciav':
+        return sciav_flight_days
+    else:
+        print('Typo in operator name ')
+        return
 
 
 def load_operator_flight_days(operator):
+    """Load CSV file with operator flight days"""
     op_ab = abbreviate_op_name(operator)
     flight_days = pd.read_csv(pathlib.PurePath('03_results', 'flight_days', f'{op_ab}_flight_days.csv'),
                               index_col=0, parse_dates=['start_time', 'end_time'])
@@ -417,25 +434,58 @@ def load_operator_flight_days(operator):
 
 # %% Generate daily releases
 
-def generate_daily_releases(operator_flight_days):
-    """Function to generator a dictionary. Key is flight days in mm_dd format, value is a dataframe with relevant
-    metered release rate during periods each airplane was flying"""
+def generate_daily_releases():
+    """Generates daily metered data for all airplane flight days"""
+    operators = ['Carbon Mapper', 'GHGSat', 'Kairos', 'Methane Air', 'Scientific Aviation']
 
+    for operator in operators:
+        # Load operator flight days
+        operator_flight_days = load_operator_flight_days(operator)
+        dates = operator_flight_days.date
+
+        for i in range(len(dates)):
+            day = dates[i]
+            date_meter = load_daily_meter_data(day)
+
+            print(f'Operator: {operator}')
+            print(f'Flight Day: {day}')
+
+            # Select start and end time on the day in question
+            start_t = operator_flight_days.start_time[i]
+            end_t = operator_flight_days.end_time[i]
+
+            # test_period = date_meter[(date_meter.datetime_utc > start_t) & (date_meter.datetime_utc <= end_t)]
+            date_meter = date_meter.query('datetime_utc > @start_t & datetime_utc <= @end_t').copy()
+
+            print(f'Assigning methane mole fraction for {operator} on {day}')
+
+            date_meter['methane_fraction_km'] = date_meter.apply(
+                lambda x: select_methane_fraction(x['datetime_utc'], 'km'), axis=1)
+            date_meter['kgh_ch4'] = date_meter['flow_rate'] * date_meter['methane_fraction_km']
+            # operator_releases[day] = date_meter
+
+            # Save the test_period dataframe
+            op_ab = abbreviate_op_name(operator)
+            save_path = pathlib.PurePath('03_results', 'daily_releases', f'{op_ab}_{day}.csv')
+            date_meter.to_csv(save_path)
+
+    return
+
+
+def load_daily_releases(operator):
+    """Load the pre-saved CSV file containing the daily metered release rates for a given operator"""
     # Initialize dictionary
     operator_releases = {}
 
+    op_ab = abbreviate_op_name(operator)
+    operator_flight_days = load_operator_flight_days(operator)
     dates = operator_flight_days.date
 
     for i in range(len(dates)):
         day = dates[i]
-        date_meter = load_daily_meter_data(day)
-
-        # Select start and end time on the day in question
-        start_t = operator_flight_days.start_time[i]
-        end_t = operator_flight_days.end_time[i]
-
-        test_period = date_meter[(date_meter.datetime_utc > start_t) & (date_meter.datetime_utc <= end_t)]
-        operator_releases[day] = test_period
+        daily_release = pd.read_csv(pathlib.PurePath('03_results', 'daily_releases', f'{op_ab}_{day}.csv'),
+                                  index_col=0, parse_dates=['datetime_utc'])
+        operator_releases[day] = daily_release
 
     return operator_releases
 
@@ -753,9 +803,11 @@ def make_operator_meter_dataset(operator, operator_meter_raw, timekeeper):
         gas_comp_source = ['su_raw', 'su_normalized', 'km']
         time_ave = ['30', '60', '90']
         for source in gas_comp_source:
-            operator_meter[f'methane_fraction_{source}'] = operator_meter.apply(lambda x: select_methane_fraction(x['datetime_utc'], source), axis=1)
+            operator_meter[f'methane_fraction_{source}'] = operator_meter.apply(
+                lambda x: select_methane_fraction(x['datetime_utc'], source), axis=1)
             for time in time_ave:
-                operator_meter[f'kgh_ch4_{time}_{source}'] = operator_meter[f'kgh_gas_{time}'] * operator_meter[f'methane_fraction_{source}']
+                operator_meter[f'kgh_ch4_{time}_{source}'] = operator_meter[f'kgh_gas_{time}'] * operator_meter[
+                    f'methane_fraction_{source}']
 
         # Everything from here down should stay in this function
 
@@ -1046,7 +1098,8 @@ def generate_all_overpass_reports(strict_discard, timekeeper, gas_comp_source, t
             else:
                 operator_meter = meter_dictionary[f'{op_ab}_meter']
 
-            generate_overpass_summary(operator, stage, operator_report, operator_meter, strict_discard, gas_comp_source, time_ave)
+            generate_overpass_summary(operator, stage, operator_report, operator_meter, strict_discard, gas_comp_source,
+                                      time_ave)
 
 
 # %% Compare overpass lenght

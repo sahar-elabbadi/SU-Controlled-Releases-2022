@@ -19,7 +19,8 @@ from matplotlib.lines import Line2D
 import matplotlib.dates as mdates
 from matplotlib.patches import Patch
 
-from methods_source import load_overpass_summary, abbreviate_op_name, classify_histogram_data
+from methods_source import load_overpass_summary, abbreviate_op_name, classify_histogram_data, \
+    load_operator_flight_days, load_daily_releases
 
 
 # Function: generate jitter for a given array
@@ -424,13 +425,15 @@ def plot_qc_summary(operators, stage, strict_discard):
 
 
 # %% Plot daily releases function
-def plot_daily_releases(operator, flight_days, operator_releases, stage, strict_discard):
+def plot_daily_releases(operator, stage, strict_discard):
     """Function to plot daily releases for operators.
     Inputs:
       - Operator is the operator name
       - flight_days is a dataframe with column dates that stores a string for test date of format mm_dd (this can be the operator_flight_days dataframe stored in results
       - operator_releases is a dictionary with a key for each release date (format mm_dd) where corresponding value is a dataframe of Stanford metered flow rates. """
 
+    flight_days = load_operator_flight_days(operator)
+    operator_releases = load_daily_releases(operator)
     dates = flight_days.date
     for day in dates:
 
