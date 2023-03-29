@@ -117,7 +117,8 @@ def generate_overpass_summary(operator, stage, operator_report, operator_meter, 
     # Rename columns to be machine-readable
     # Make column with easier name for coding for now.
     combined_df['release_rate_kgh'] = combined_df[
-        f'kgh_ch4_{time_ave}_{gas_comp_source}']
+        f'kgh_ch4_{time_ave}_mean_{gas_comp_source}']
+    combined_df['release_kgh_stdev'] = combined_df[f'kgh_ch4_{time_ave}_std_{gas_comp_source}']
 
     # combined_df['time_utc'] = combined_df['Time (UTC) - from Stanford']
     # combined_df['date'] = combined_df['Date']
@@ -144,6 +145,7 @@ def generate_overpass_summary(operator, stage, operator_report, operator_meter, 
     # Include operator results
     operator_qc['operator_detected'] = combined_df.Detected
     operator_qc['release_rate_kgh'] = combined_df.release_rate_kgh
+    operator_qc['release_kgh_stdev'] = combined_df.release_kgh_stdev
     operator_qc['operator_quantification'] = combined_df.FacilityEmissionRate
     operator_qc['operator_lower'] = combined_df.FacilityEmissionRateLower
     operator_qc['operator_upper'] = combined_df.FacilityEmissionRateUpper
@@ -170,15 +172,15 @@ def generate_overpass_summary(operator, stage, operator_report, operator_meter, 
 
     # Create save path based on whether or not a strict QC criteria was applied
     if strict_discard is True:
-        operator_qc.to_csv(pathlib.PurePath('03_results', 'overpass_summary', f'{op_ab}_{stage}_overpasses_strict.csv'))
+        operator_qc.to_csv(pathlib.PurePath('03_results', 'overpass_summary', f'{op_ab}_{stage}_{time_ave}s_{gas_comp_source}_overpasses_strict.csv'))
     else:
-        operator_qc.to_csv(pathlib.PurePath('03_results', 'overpass_summary', f'{op_ab}_{stage}_overpasses.csv'))
+        operator_qc.to_csv(pathlib.PurePath('03_results', 'overpass_summary', f'{op_ab}_{stage}_{time_ave}s_{gas_comp_source}_overpasses.csv'))
 
     return operator_qc
 
 
 # %%
-def load_overpass_summary(operator, stage, strict_discard):
+def load_overpass_summary(operator, stage, strict_discard, time_ave, gas_comp_source):
     """Load overpass summary as a dataframe. Stage is a number (1, 2, 3). Input of "True" for strict_discard sets
     Stanford QC to use strict QC criteria, typical input is False. Operator names can be:
 
@@ -190,25 +192,29 @@ def load_overpass_summary(operator, stage, strict_discard):
       - 'Scientific Aviation'
 
       """
+
     op_ab = abbreviate_op_name(operator)
 
-    if strict_discard is True:
-        path = pathlib.PurePath('03_results', 'overpass_summary', f'{op_ab}_{stage}_overpasses_strict.csv')
+    if operator == 'Scientific Aviation':
+        path = pathlib.PurePath('03_results', 'overpass_summary', 'sciav_1_overpasses.csv')
     else:
-        path = pathlib.PurePath('03_results', 'overpass_summary', f'{op_ab}_{stage}_overpasses.csv')
+        if strict_discard is True:
+            path = pathlib.PurePath('03_results', 'overpass_summary', f'{op_ab}_{stage}_{time_ave}s_{gas_comp_source}_overpasses_strict.csv')
+        else:
+            path = pathlib.PurePath('03_results', 'overpass_summary', f'{op_ab}_{stage}_{time_ave}s_{gas_comp_source}_overpasses.csv')
 
     overpass_summary = pd.read_csv(path, index_col=0, parse_dates=['overpass_datetime'])
 
     return overpass_summary
 
 
-def summarize_qc(operator, stage, strict_discard):
+def summarize_qc(operator, stage, strict_discard, time_ave, gas_comp_source):
     """Summarize QC criteria applied by operator and Stanford"""
 
     op_ab = abbreviate_op_name(operator)
 
     # Generate dataframe with all relevant QC information
-    operator_qc = load_overpass_summary(operator, stage, strict_discard)
+    operator_qc = load_overpass_summary(operator, stage, strict_discard, time_ave, gas_comp_source)
 
     # Determine how many were QC'ed by Stanford
     total_overpasses = len(operator_qc)
@@ -242,35 +248,35 @@ def summarize_qc(operator, stage, strict_discard):
 def make_qc_table(strict_discard):
     """Make a summary table all QC results. Input if strict_discard should be True or False."""
 
-    cm_1_qc = summarize_qc(operator="Carbon Mapper", stage=1, strict_discard=strict_discard)
-    cm_2_qc = summarize_qc(operator="Carbon Mapper", stage=2, strict_discard=strict_discard)
-    cm_3_qc = summarize_qc(operator="Carbon Mapper", stage=3, strict_discard=strict_discard)
+    cm_1_qc = summarize_qc(operator="Carbon Mapper", stage=1, strict_discard=strict_discard, time_ave=60, gas_comp_source='km')
+    cm_2_qc = summarize_qc(operator="Carbon Mapper", stage=2, strict_discard=strict_discard, time_ave=60, gas_comp_source='km')
+    cm_3_qc = summarize_qc(operator="Carbon Mapper", stage=3, strict_discard=strict_discard, time_ave=60, gas_comp_source='km')
 
     # GHGSat QC
-    ghg_1_qc = summarize_qc(operator="GHGSat", stage=1, strict_discard=strict_discard)
-    ghg_2_qc = summarize_qc(operator="GHGSat", stage=2, strict_discard=strict_discard)
-    ghg_3_qc = summarize_qc(operator="GHGSat", stage=3, strict_discard=strict_discard)
+    ghg_1_qc = summarize_qc(operator="GHGSat", stage=1, strict_discard=strict_discard, time_ave=60, gas_comp_source='km')
+    ghg_2_qc = summarize_qc(operator="GHGSat", stage=2, strict_discard=strict_discard, time_ave=60, gas_comp_source='km')
+    ghg_3_qc = summarize_qc(operator="GHGSat", stage=3, strict_discard=strict_discard, time_ave=60, gas_comp_source='km')
 
     # Kairos
-    kairos_1_qc = summarize_qc(operator="Kairos", stage=1, strict_discard=strict_discard)
-    kairos_2_qc = summarize_qc(operator="Kairos", stage=2, strict_discard=strict_discard)
-    kairos_3_qc = summarize_qc(operator="Kairos", stage=3, strict_discard=strict_discard)
+    kairos_1_qc = summarize_qc(operator="Kairos", stage=1, strict_discard=strict_discard, time_ave=60, gas_comp_source='km')
+    kairos_2_qc = summarize_qc(operator="Kairos", stage=2, strict_discard=strict_discard, time_ave=60, gas_comp_source='km')
+    kairos_3_qc = summarize_qc(operator="Kairos", stage=3, strict_discard=strict_discard, time_ave=60, gas_comp_source='km')
 
     # Kairos LS23
-    kairos_ls23_1_qc = summarize_qc(operator="Kairos LS23", stage=1, strict_discard=strict_discard)
-    kairos_ls23_2_qc = summarize_qc(operator="Kairos LS23", stage=2, strict_discard=strict_discard)
-    kairos_ls23_3_qc = summarize_qc(operator="Kairos LS23", stage=3, strict_discard=strict_discard)
+    kairos_ls23_1_qc = summarize_qc(operator="Kairos LS23", stage=1, strict_discard=strict_discard, time_ave=60, gas_comp_source='km')
+    kairos_ls23_2_qc = summarize_qc(operator="Kairos LS23", stage=2, strict_discard=strict_discard, time_ave=60, gas_comp_source='km')
+    kairos_ls23_3_qc = summarize_qc(operator="Kairos LS23", stage=3, strict_discard=strict_discard, time_ave=60, gas_comp_source='km')
 
     # Kairos LS25
-    kairos_ls25_1_qc = summarize_qc(operator="Kairos LS25", stage=1, strict_discard=strict_discard)
-    kairos_ls25_2_qc = summarize_qc(operator="Kairos LS25", stage=2, strict_discard=strict_discard)
-    kairos_ls25_3_qc = summarize_qc(operator="Kairos LS25", stage=3, strict_discard=strict_discard)
+    kairos_ls25_1_qc = summarize_qc(operator="Kairos LS25", stage=1, strict_discard=strict_discard, time_ave=60, gas_comp_source='km')
+    kairos_ls25_2_qc = summarize_qc(operator="Kairos LS25", stage=2, strict_discard=strict_discard, time_ave=60, gas_comp_source='km')
+    kairos_ls25_3_qc = summarize_qc(operator="Kairos LS25", stage=3, strict_discard=strict_discard, time_ave=60, gas_comp_source='km')
 
     # Scientific Aviation
-    sciav_1_qc = summarize_qc(operator="Scientific Aviation", stage=1, strict_discard=strict_discard)
+    sciav_1_qc = summarize_qc(operator="Scientific Aviation", stage=1, strict_discard=strict_discard, time_ave=60, gas_comp_source='km')
 
     # Methane Air
-    mair_1_qc = summarize_qc(operator="Methane Air", stage=1, strict_discard=strict_discard)
+    mair_1_qc = summarize_qc(operator="Methane Air", stage=1, strict_discard=strict_discard, time_ave=60, gas_comp_source='km')
 
     # Combine all individual QC dataframes
 
@@ -308,18 +314,16 @@ def load_daily_meter_data(date):
 
 # %% Load flight days
 
-def load_flight_days(operator):
-    op_ab = abbreviate_op_name(operator)
-
+def load_flight_days(operator='all'):
     cm_flight_days = {
         "date": ['10_10', '10_11', '10_12', '10_28', '10_29', '10_31'],
         "start_time": [
-            datetime.datetime(2022, 10, 10, 17, 00, 00),
-            datetime.datetime(2022, 10, 11, 17, 16, 13),
-            datetime.datetime(2022, 10, 12, 17, 15, 16),
-            datetime.datetime(2022, 10, 28, 17, 51, 5),
-            datetime.datetime(2022, 10, 29, 17, 13, 30),
-            datetime.datetime(2022, 10, 31, 17, 16, 46),
+            datetime.datetime(2022, 10, 10, 16, 59, 00),
+            datetime.datetime(2022, 10, 11, 17, 14, 13),
+            datetime.datetime(2022, 10, 12, 17, 13, 16),
+            datetime.datetime(2022, 10, 28, 17, 49, 5),
+            datetime.datetime(2022, 10, 29, 17, 11, 30),
+            datetime.datetime(2022, 10, 31, 17, 14, 46),
         ],
         "end_time": [
             datetime.datetime(2022, 10, 10, 21, 30, 14),
@@ -335,11 +339,11 @@ def load_flight_days(operator):
     kairos_flight_days = {
         "date": ['10_24', '10_25', '10_26', '10_27', '10_28'],
         "start_time": [
-            datetime.datetime(2022, 10, 24, 16, 46, 28),
-            datetime.datetime(2022, 10, 25, 16, 36, 27),
-            datetime.datetime(2022, 10, 26, 16, 38, 47),
-            datetime.datetime(2022, 10, 27, 16, 37, 23),
-            datetime.datetime(2022, 10, 28, 16, 41, 12),
+            datetime.datetime(2022, 10, 24, 16, 44, 28),
+            datetime.datetime(2022, 10, 25, 16, 34, 27),
+            datetime.datetime(2022, 10, 26, 16, 36, 47),
+            datetime.datetime(2022, 10, 27, 16, 35, 23),
+            datetime.datetime(2022, 10, 28, 16, 39, 12),
         ],
         "end_time": [
             datetime.datetime(2022, 10, 24, 19, 48, 44),
@@ -354,8 +358,8 @@ def load_flight_days(operator):
     mair_flight_days = {
         "date": ['10_25', '10_29'],
         "start_time": [
-            datetime.datetime(2022, 10, 25, 16, 57, 47),
-            datetime.datetime(2022, 10, 29, 16, 25, 1),
+            datetime.datetime(2022, 10, 25, 16, 55, 47),
+            datetime.datetime(2022, 10, 29, 16, 23, 1),
         ],
         "end_time": [
             datetime.datetime(2022, 10, 25, 20, 46, 41),
@@ -367,10 +371,10 @@ def load_flight_days(operator):
     ghg_flight_days = {
         "date": ['10_31', '11_02', '11_04', '11_07'],
         "start_time": [
-            datetime.datetime(2022, 10, 31, 17, 3, 58),
-            datetime.datetime(2022, 11, 2, 16, 38, 30),
-            datetime.datetime(2022, 11, 4, 16, 43, 19),
-            datetime.datetime(2022, 11, 7, 19, 23, 44),
+            datetime.datetime(2022, 10, 31, 17, 1, 58),
+            datetime.datetime(2022, 11, 2, 16, 36, 30),
+            datetime.datetime(2022, 11, 4, 16, 41, 19),
+            datetime.datetime(2022, 11, 7, 19, 21, 44),
         ],
         "end_time": [
             datetime.datetime(2022, 10, 31, 20, 59, 3),
@@ -409,19 +413,23 @@ def load_flight_days(operator):
     sciav_flight_days.to_csv(pathlib.PurePath('03_results', 'flight_days', f'sciav_flight_days.csv'))
 
     # Return flight day for the operator
-    if op_ab == 'cm':
-        return cm_flight_days
-    elif op_ab == 'ghg':
-        return ghg_flight_days
-    elif op_ab == 'kairos':
-        return kairos_flight_days
-    elif op_ab == 'mair':
-        return mair_flight_days
-    elif op_ab == 'sciav':
-        return sciav_flight_days
-    else:
-        print('Typo in operator name ')
+    if operator == 'all':
         return
+    else:
+        op_ab = abbreviate_op_name(operator)
+        if op_ab == 'cm':
+            return cm_flight_days
+        elif op_ab == 'ghg':
+            return ghg_flight_days
+        elif op_ab == 'kairos':
+            return kairos_flight_days
+        elif op_ab == 'mair':
+            return mair_flight_days
+        elif op_ab == 'sciav':
+            return sciav_flight_days
+        else:
+            print('Typo in operator name ')
+            return
 
 
 def load_operator_flight_days(operator):
@@ -457,11 +465,13 @@ def generate_daily_releases():
             # test_period = date_meter[(date_meter.datetime_utc > start_t) & (date_meter.datetime_utc <= end_t)]
             date_meter = date_meter.query('datetime_utc > @start_t & datetime_utc <= @end_t').copy()
 
-            print(f'Assigning methane mole fraction for {operator} on {day}')
+            gas_comp_sources = ['km', 'su_raw', 'su_normalized']
+            for source in gas_comp_sources:
+                print(f'Assigning {source} methane mole fraction for {operator} on {day}')
 
-            date_meter['methane_fraction_km'] = date_meter.apply(
-                lambda x: select_methane_fraction(x['datetime_utc'], 'km'), axis=1)
-            date_meter['kgh_ch4'] = date_meter['flow_rate'] * date_meter['methane_fraction_km']
+                date_meter[f'methane_fraction_{source}'] = date_meter.apply(
+                    lambda x: select_methane_fraction(x['datetime_utc'], source), axis=1)
+                date_meter[f'kgh_ch4_{source}'] = date_meter['flow_rate'] * date_meter[f'methane_fraction_{source}']
             # operator_releases[day] = date_meter
 
             # Save the test_period dataframe
@@ -484,7 +494,7 @@ def load_daily_releases(operator):
     for i in range(len(dates)):
         day = dates[i]
         daily_release = pd.read_csv(pathlib.PurePath('03_results', 'daily_releases', f'{op_ab}_{day}.csv'),
-                                  index_col=0, parse_dates=['datetime_utc'])
+                                    index_col=0, parse_dates=['datetime_utc'])
         operator_releases[day] = daily_release
 
     return operator_releases
@@ -567,28 +577,40 @@ def load_clean_operator_reports():
 
 # %% Load meter data
 
-def load_meter_data(timekeeper):
+def load_meter_data(timekeeper, gas_comp_source, time_ave):
     """Input timekeeper. Must be string, all lower case: flightradar, operator, stanford"""
+    operators = ['Carbon Mapper', 'GHGSat', 'Kairos', 'Methane Air']
+    meter_files = {}
+    for operator in operators:
+        op_ab = abbreviate_op_name(operator)
+        op_path = pathlib.PurePath('02_meter_data', 'operator_meter_data', f'{timekeeper}_timestamp', f'{op_ab}_{time_ave}s_{gas_comp_source}_meter.csv')
+        op_meter = pd.read_csv(op_path, index_col=0, parse_dates=['datetime_utc'])
+        meter_files[f'{op_ab}_meter'] = op_meter
+
+    # cm_meter = meter_files['cm']
+    # ghg_meter = meter_files['ghg']
+    # kairos_meter = meter_files['kairos']
+    # mair_meter = meter_files['mair']
     # Carbon Mapper meter data
-    cm_path_meter = pathlib.PurePath('02_meter_data', 'operator_meter_data', f'{timekeeper}_timestamp', 'cm_meter.csv')
-    cm_meter = pd.read_csv(cm_path_meter, index_col=0)
+    # cm_path_meter = pathlib.PurePath('02_meter_data', 'operator_meter_data', f'{timekeeper}_timestamp', 'cm_meter.csv')
+    # cm_meter = pd.read_csv(cm_path_meter, index_col=0)
+    #
+    # # GHGSat Stage 1
+    # ghg_path_meter = pathlib.PurePath('02_meter_data', 'operator_meter_data', f'{timekeeper}_timestamp',
+    #                                   'ghg_meter.csv')
+    # ghg_meter = pd.read_csv(ghg_path_meter, index_col=0)
+    #
+    # # Kairos Stage 1
+    # kairos_path_meter = pathlib.PurePath('02_meter_data', 'operator_meter_data', f'{timekeeper}_timestamp',
+    #                                      'kairos_meter.csv')
+    # kairos_meter = pd.read_csv(kairos_path_meter, index_col=0)
+    #
+    # # MAIR
+    # mair_path_meter = pathlib.PurePath('02_meter_data', 'operator_meter_data', f'{timekeeper}_timestamp',
+    #                                    'mair_meter.csv')
+    # mair_meter = pd.read_csv(mair_path_meter, index_col=0)
 
-    # GHGSat Stage 1
-    ghg_path_meter = pathlib.PurePath('02_meter_data', 'operator_meter_data', f'{timekeeper}_timestamp',
-                                      'ghg_meter.csv')
-    ghg_meter = pd.read_csv(ghg_path_meter, index_col=0)
-
-    # Kairos Stage 1
-    kairos_path_meter = pathlib.PurePath('02_meter_data', 'operator_meter_data', f'{timekeeper}_timestamp',
-                                         'kairos_meter.csv')
-    kairos_meter = pd.read_csv(kairos_path_meter, index_col=0)
-
-    # MAIR
-    mair_path_meter = pathlib.PurePath('02_meter_data', 'operator_meter_data', f'{timekeeper}_timestamp',
-                                       'mair_meter.csv')
-    mair_meter = pd.read_csv(mair_path_meter, index_col=0)
-
-    return cm_meter, ghg_meter, kairos_meter, mair_meter
+    return meter_files
 
 
 # %% Function: select_valid_overpasses
@@ -706,9 +728,9 @@ def clean_meter_column_names(operator, operator_meter_raw, overpass_id, timekeep
 
     operator_meter['overpass_id'] = operator_meter_raw[overpass_id]
     operator_meter['phase_iii'] = operator_meter_raw[phase_iii]
-    operator_meter['kgh_gas_30'] = operator_meter_raw[kgh_gas_30]
-    operator_meter['kgh_gas_60'] = operator_meter_raw[kgh_gas_60]
-    operator_meter['kgh_gas_90'] = operator_meter_raw[kgh_gas_90]
+    # operator_meter['kgh_gas_30'] = operator_meter_raw[kgh_gas_30]
+    # operator_meter['kgh_gas_60'] = operator_meter_raw[kgh_gas_60]
+    # operator_meter['kgh_gas_90'] = operator_meter_raw[kgh_gas_90]
     # Comment these out for now as they will be calculated for each methane mole fraction
     # operator_meter['kgh_ch4_30'] = operator_meter_raw[kgh_ch4_30]
     # operator_meter['kgh_ch4_60'] = operator_meter_raw[kgh_ch4_60]
@@ -742,7 +764,6 @@ def clean_meter_column_names(operator, operator_meter_raw, overpass_id, timekeep
     # Abbreviate meter names in raw meter file
     names = ['Baby Coriolis', 'Mama Coriolis', 'Papa Coriolis']
     nicknames = ['bc', 'mc', 'pc']
-
     for meter_name, meter_nickname in zip(names, nicknames):
         operator_meter.loc[operator_meter['meter'] == meter_name, 'meter'] = meter_nickname
 
@@ -769,9 +790,49 @@ def select_methane_fraction(input_datetime, gas_comp_source):
     return methane_mole_fraction
 
 
+# %%
+def calc_average_gas_flow(operator, operator_meter, ave_period, comp_source):
+    op_ab = abbreviate_op_name(operator)
+
+    # Calculate time average period as a Timedelta object
+    delta_t = pd.Timedelta(seconds=ave_period)  # the period of time over which we want to average
+    overpass_gas_data = []
+
+    for index, row in operator_meter.iterrows():
+        overpass_datetime = row.datetime_utc
+        flight_date_code = overpass_datetime.strftime('%m_%d')
+        flight_data = pd.read_csv(pathlib.PurePath('03_results', 'daily_releases', f'{op_ab}_{flight_date_code}.csv'),
+                                  parse_dates=['datetime_utc'], index_col=0)
+        start_t = overpass_datetime - delta_t
+        select_t_mask = (flight_data['datetime_utc'] > start_t) & (flight_data['datetime_utc'] <= overpass_datetime)
+        overpass_period = flight_data.loc[select_t_mask].copy()
+
+        overpass_gas_mean = overpass_period['flow_rate'].mean()
+        overpass_gas_std = overpass_period['flow_rate'].std()
+        overpass_ch4_mean = overpass_period[f'kgh_ch4_{comp_source}'].mean()
+        overpass_ch4_std = overpass_period[f'kgh_ch4_{comp_source}'].std()
+
+        # Calculate the mean methane fraction, on the off chance that the truck changed during the overpass period
+        methane_fraction_mean = overpass_period[f'methane_fraction_{comp_source}'].mean()
+
+        new_row = {
+            'overpass_id': row['overpass_id'],
+            f'methane_fraction_{comp_source}': methane_fraction_mean,
+            f'kgh_gas_{ave_period}_mean': overpass_gas_mean,
+            f'kgh_gas_{ave_period}_std': overpass_gas_std,
+            f'kgh_ch4_{ave_period}_mean_{comp_source}': overpass_ch4_mean,
+            f'kgh_ch4_{ave_period}_std_{comp_source}': overpass_ch4_std,
+        }
+
+        overpass_gas_data.append(new_row)
+
+    overpass_gas_data = pd.DataFrame(overpass_gas_data)
+    return overpass_gas_data
+
+
 # %% Function to import Philippine's meter data, select the FlightRadar columns, and with abrename columns to be more
 # brief and machine-readable
-def make_operator_meter_dataset(operator, operator_meter_raw, timekeeper):
+def make_operator_meter_dataset(operator, operator_meter_raw, timekeeper, ave_period, comp_source):
     """Function to make a clean dataset for each overpass for a given operator. Input is the full name of operator
     and the operator meter file. Also include the desired timekeeper metric for when the oeprator was overhead: this
     can be one of three options:
@@ -795,19 +856,26 @@ def make_operator_meter_dataset(operator, operator_meter_raw, timekeeper):
         # Combine date and time
         overpass_datetime = operator_meter.apply(lambda x: combine_datetime(x['date'], x['time']), axis=1)
         operator_meter.insert(loc=0, column='datetime_utc', value=overpass_datetime)
-
         # Now that we have removed NA values in time, we can remove date and time columns from operator_meter
         operator_meter = operator_meter.drop(columns=['time', 'date'])
 
-        # Determine methane mole fraction for each overpass
-        gas_comp_source = ['su_raw', 'su_normalized', 'km']
-        time_ave = ['30', '60', '90']
-        for source in gas_comp_source:
-            operator_meter[f'methane_fraction_{source}'] = operator_meter.apply(
-                lambda x: select_methane_fraction(x['datetime_utc'], source), axis=1)
-            for time in time_ave:
-                operator_meter[f'kgh_ch4_{time}_{source}'] = operator_meter[f'kgh_gas_{time}'] * operator_meter[
-                    f'methane_fraction_{source}']
+        # Calculate whole gas average for datetime
+        gas_flow_rates = calc_average_gas_flow(operator, operator_meter, ave_period, comp_source)
+        operator_meter = operator_meter.merge(gas_flow_rates, on='overpass_id')
+        # operator_meter[f'methane_fraction_{comp_source}'] = operator_meter.apply(lambda x: select_methane_fraction(
+        #     x['datetime_utc'], comp_source), axis=1)
+        # operator_meter[f'kgh_ch4_{ave_period}_{comp_source}'] = operator_meter[f'kgh_gas_{ave_period}_mean'] * \
+        #                                                         operator_meter[f'methane_fraction_{comp_source}']
+
+        # # Determine methane mole fraction for each overpass
+        # gas_comp_source = ['su_raw', 'su_normalized', 'km']
+        # time_ave = ['30', '60', '90']
+        # for source in gas_comp_source:
+        #     operator_meter[f'methane_fraction_{source}'] = operator_meter.apply(
+        #         lambda x: select_methane_fraction(x['datetime_utc'], source), axis=1)
+        #     for time in time_ave:
+        #         operator_meter[f'kgh_ch4_{time}_{source}'] = operator_meter[f'kgh_gas_{time}'] * operator_meter[
+        #             f'methane_fraction_{source}']
 
         # Everything from here down should stay in this function
 
@@ -823,7 +891,7 @@ def make_operator_meter_dataset(operator, operator_meter_raw, timekeeper):
 
         # Save CSV file
         operator_meter.to_csv(pathlib.PurePath('02_meter_data', 'operator_meter_data',
-                                               save_folder, f'{op_ab}_meter.csv'))
+                                               save_folder, f'{op_ab}_{ave_period}s_{comp_source}_meter.csv'))
 
     return operator_meter
 
@@ -883,7 +951,7 @@ def find_missing_data(operator, meter_raw):
 # %%
 def classify_histogram_data(operator, stage, strict_discard, threshold_lower, threshold_upper, n_bins):
     # Load operator overpass data
-    op_reported = load_overpass_summary(operator=operator, stage=stage, strict_discard=strict_discard)
+    op_reported = load_overpass_summary(operator=operator, stage=stage, strict_discard=strict_discard, time_ave=60, gas_comp_source='km')
 
     # Pass all QC filter
     op_qc_pass = op_reported.query('qc_summary == "pass_all"')
@@ -1007,11 +1075,11 @@ def make_overpass_error_df(operator, stage):
 
     ########## Load overpass summary data ##########
     strict_discard = False
-    op_lax = load_overpass_summary(operator=operator, stage=stage, strict_discard=strict_discard)
+    op_lax = load_overpass_summary(operator=operator, stage=stage, strict_discard=strict_discard, time_ave=60, gas_comp_source='km')
 
     # Set strict_discard to True
     strict_discard = True
-    op_strict = load_overpass_summary(operator=operator, stage=stage, strict_discard=strict_discard)
+    op_strict = load_overpass_summary(operator=operator, stage=stage, strict_discard=strict_discard, time_ave=60, gas_comp_source='km')
 
     ########## Make dataframe for summarizing results with strict and lax QC  ##########
 
@@ -1074,13 +1142,13 @@ def generate_all_overpass_reports(strict_discard, timekeeper, gas_comp_source, t
     }
 
     # Load meter data
-    cm_meter, ghg_meter, kairos_meter, mair_meter = load_meter_data(timekeeper)
-    meter_dictionary = {
-        'cm_meter': cm_meter,
-        'ghg_meter': ghg_meter,
-        'kairos_meter': kairos_meter,
-        'mair_meter': mair_meter,
-    }
+    meter_dictionary = load_meter_data(timekeeper, gas_comp_source, time_ave)
+    # meter_dictionary = {
+    #     'cm_meter': cm_meter,
+    #     'ghg_meter': ghg_meter,
+    #     'kairos_meter': kairos_meter,
+    #     'mair_meter': mair_meter,
+    # }
 
     for operator in operators:
         if operator == 'Methane Air':
@@ -1097,7 +1165,7 @@ def generate_all_overpass_reports(strict_discard, timekeeper, gas_comp_source, t
                 operator_meter = meter_dictionary['kairos_meter']
             else:
                 operator_meter = meter_dictionary[f'{op_ab}_meter']
-
+            print(f'Generating operator summary file for {operator} Stage {stage}')
             generate_overpass_summary(operator, stage, operator_report, operator_meter, strict_discard, gas_comp_source,
                                       time_ave)
 
@@ -1118,7 +1186,7 @@ def check_overpass_number(operator, max_overpass_id, overpasses_length):
             f'duplicate values in summary data.')
         print(f'Length of {operator} overpasses dataframe: {overpasses_length:0.0f}')
         print(f'Highest {operator} overpass_id: {max_overpass_id:0.0f}')
-    elif max_overpass_id > overpass_length:
+    elif max_overpass_id > overpasses_length:
         print(
             f'The maximum {operator} overpass ID is greater than the length of the overpass dataframe. Check for gaps '
             f'in summary data or operator report.')
@@ -1133,7 +1201,7 @@ def calc_daily_altitude(operator):
     op_days = load_operator_flight_days(operator)
 
     # Load overpass summary, stage and discard don't matter here because we only care about the altitude column
-    op_overpasses = load_overpass_summary(operator=operator, stage=1, strict_discard=False)
+    op_overpasses = load_overpass_summary(operator=operator, stage=1, strict_discard=False, time_ave=60, gas_comp_source='km')
 
     # Set overpass_datetime to index for easier filtering
     op_datetime_index = op_overpasses.set_index('overpass_datetime')

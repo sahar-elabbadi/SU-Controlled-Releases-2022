@@ -36,11 +36,11 @@ def rand_jitter(input_list):
 # > stage
 # > operator_report
 # > operator_meter
-def plot_parity(operator, stage, strict_discard):
+def plot_parity(operator, stage, strict_discard, time_ave, gas_comp_source):
     """Inputs are operator name, stage of analysis, operator_plot dataframe containing all relevant data"""
 
     # Load overpass summary csv file
-    operator_plot = load_overpass_summary(operator, stage, strict_discard)
+    operator_plot = load_overpass_summary(operator, stage, strict_discard, time_ave, gas_comp_source)
 
     # Apply the following filters to overpass data :
     # Must pass all QC filters:
@@ -177,9 +177,9 @@ def plot_parity(operator, stage, strict_discard):
 # n_bins: number of bins desired in plot
 # threshold: highest release rate in kgh to show in detection threshold graph
 
-def plot_detection_limit(operator, stage, strict_discard, n_bins, threshold):
+def plot_detection_limit(operator, stage, strict_discard, n_bins, threshold, time_ave, gas_comp_source):
     # Load overpass summary for operator, stage, and discard criteria:
-    operator_df = load_overpass_summary(operator, stage, strict_discard)
+    operator_df = load_overpass_summary(operator, stage, strict_discard, time_ave, gas_comp_source)
 
     # Apply QC filter
     operator_df = operator_df[(operator_df.qc_summary == 'pass_all')]
@@ -425,7 +425,7 @@ def plot_qc_summary(operators, stage, strict_discard):
 
 
 # %% Plot daily releases function
-def plot_daily_releases(operator, stage, strict_discard):
+def plot_daily_releases(operator, stage, strict_discard, time_ave, gas_comp_source):
     """Function to plot daily releases for operators.
     Inputs:
       - Operator is the operator name
@@ -443,7 +443,7 @@ def plot_daily_releases(operator, stage, strict_discard):
         date_string = f'2022-{month_abb}-{date_abb}'
 
         # Load overpass data:
-        operator_stage_overpasses = load_overpass_summary(operator, stage, strict_discard)
+        operator_stage_overpasses = load_overpass_summary(operator, stage, strict_discard, time_ave, gas_comp_source)
         daily_overpasses = operator_stage_overpasses[operator_stage_overpasses
                                                      ['overpass_datetime'].dt.strftime('%Y-%m-%d') == date_string]
 

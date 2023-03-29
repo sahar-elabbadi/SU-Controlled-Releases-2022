@@ -189,6 +189,9 @@ def clean_ghgsat(ghg_report, ghg_overpasses, ghg_stage):
         overpass_list.append(new_row)
 
     ghg_clean = pd.DataFrame(overpass_list)
+
+    # Manually correct typo in GHGSat report ffor Overpass ID 75:
+    ghg_clean.at[74, 'TimestampUTC'] = datetime.time(16, 58, 28)
     return ghg_clean
 
 
