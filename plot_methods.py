@@ -36,7 +36,7 @@ def rand_jitter(input_list):
 # > stage
 # > operator_report
 # > operator_meter
-def plot_parity(operator, stage, strict_discard, time_ave, gas_comp_source):
+def plot_parity(operator, stage, strict_discard=False, time_ave=60, gas_comp_source='km'):
     """Inputs are operator name, stage of analysis, operator_plot dataframe containing all relevant data"""
 
     # Load overpass summary csv file
@@ -177,7 +177,7 @@ def plot_parity(operator, stage, strict_discard, time_ave, gas_comp_source):
 # n_bins: number of bins desired in plot
 # threshold: highest release rate in kgh to show in detection threshold graph
 
-def plot_detection_limit(operator, stage, strict_discard, n_bins, threshold, time_ave, gas_comp_source):
+def plot_detection_limit(operator, stage, n_bins, threshold, strict_discard=False, time_ave=60, gas_comp_source='km'):
     # Load overpass summary for operator, stage, and discard criteria:
     operator_df = load_overpass_summary(operator, stage, strict_discard, time_ave, gas_comp_source)
 
@@ -335,7 +335,7 @@ def plot_detection_limit(operator, stage, strict_discard, n_bins, threshold, tim
 
 # %%
 
-def plot_qc_summary(operators, stage, strict_discard):
+def plot_qc_summary(operators, stage, strict_discard=False):
     # Load saved QC dataframe
     if strict_discard == True:
         file_name = 'all_qc_strict.csv'
@@ -425,7 +425,7 @@ def plot_qc_summary(operators, stage, strict_discard):
 
 
 # %% Plot daily releases function
-def plot_daily_releases(operator, stage, strict_discard, time_ave, gas_comp_source):
+def plot_daily_releases(operator, stage, strict_discard=False, time_ave=60, gas_comp_source='km'):
     """Function to plot daily releases for operators.
     Inputs:
       - Operator is the operator name
@@ -544,7 +544,7 @@ def plot_daily_releases(operator, stage, strict_discard, time_ave, gas_comp_sour
 
 # %%
 
-def make_releases_histogram(operator, stage, strict_discard, time_ave, gas_comp_source):
+def make_releases_histogram(operator, stage, strict_discard=False, time_ave=60, gas_comp_source='km'):
     ############## Setup Data ##############
 
     # Create bins for middle histogram plot
