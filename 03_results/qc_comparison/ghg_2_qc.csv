@@ -1,2 +1,2 @@
 ,operator,stage,total_overpasses,pass_stanford_qc,pass_operator_qc,pass_all_qc,fail_stanford_qc,fail_operator_qc,fail_all_qc,fail_stanford_only,fail_operator_only
-0,ghg,2,198,141,192,140,57,6,5,52,1
+0,ghg,2,192,135,186,134,57,6,5,52,1

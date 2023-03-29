@@ -245,38 +245,38 @@ def summarize_qc(operator, stage, strict_discard, time_ave, gas_comp_source):
 
 # %%
 
-def make_qc_table(strict_discard):
+def make_qc_table(strict_discard, time_ave, gas_comp_source):
     """Make a summary table all QC results. Input if strict_discard should be True or False."""
 
-    cm_1_qc = summarize_qc(operator="Carbon Mapper", stage=1, strict_discard=strict_discard, time_ave=60, gas_comp_source='km')
-    cm_2_qc = summarize_qc(operator="Carbon Mapper", stage=2, strict_discard=strict_discard, time_ave=60, gas_comp_source='km')
-    cm_3_qc = summarize_qc(operator="Carbon Mapper", stage=3, strict_discard=strict_discard, time_ave=60, gas_comp_source='km')
+    cm_1_qc = summarize_qc(operator="Carbon Mapper", stage=1, strict_discard=strict_discard, time_ave=time_ave, gas_comp_source=gas_comp_source)
+    cm_2_qc = summarize_qc(operator="Carbon Mapper", stage=2, strict_discard=strict_discard, time_ave=time_ave, gas_comp_source=gas_comp_source)
+    cm_3_qc = summarize_qc(operator="Carbon Mapper", stage=3, strict_discard=strict_discard, time_ave=time_ave, gas_comp_source=gas_comp_source)
 
     # GHGSat QC
-    ghg_1_qc = summarize_qc(operator="GHGSat", stage=1, strict_discard=strict_discard, time_ave=60, gas_comp_source='km')
-    ghg_2_qc = summarize_qc(operator="GHGSat", stage=2, strict_discard=strict_discard, time_ave=60, gas_comp_source='km')
-    ghg_3_qc = summarize_qc(operator="GHGSat", stage=3, strict_discard=strict_discard, time_ave=60, gas_comp_source='km')
+    ghg_1_qc = summarize_qc(operator="GHGSat", stage=1, strict_discard=strict_discard, time_ave=time_ave, gas_comp_source=gas_comp_source)
+    ghg_2_qc = summarize_qc(operator="GHGSat", stage=2, strict_discard=strict_discard, time_ave=time_ave, gas_comp_source=gas_comp_source)
+    ghg_3_qc = summarize_qc(operator="GHGSat", stage=3, strict_discard=strict_discard, time_ave=time_ave, gas_comp_source=gas_comp_source)
 
     # Kairos
-    kairos_1_qc = summarize_qc(operator="Kairos", stage=1, strict_discard=strict_discard, time_ave=60, gas_comp_source='km')
-    kairos_2_qc = summarize_qc(operator="Kairos", stage=2, strict_discard=strict_discard, time_ave=60, gas_comp_source='km')
-    kairos_3_qc = summarize_qc(operator="Kairos", stage=3, strict_discard=strict_discard, time_ave=60, gas_comp_source='km')
+    kairos_1_qc = summarize_qc(operator="Kairos", stage=1, strict_discard=strict_discard, time_ave=time_ave, gas_comp_source=gas_comp_source)
+    kairos_2_qc = summarize_qc(operator="Kairos", stage=2, strict_discard=strict_discard, time_ave=time_ave, gas_comp_source=gas_comp_source)
+    kairos_3_qc = summarize_qc(operator="Kairos", stage=3, strict_discard=strict_discard, time_ave=time_ave, gas_comp_source=gas_comp_source)
 
     # Kairos LS23
-    kairos_ls23_1_qc = summarize_qc(operator="Kairos LS23", stage=1, strict_discard=strict_discard, time_ave=60, gas_comp_source='km')
-    kairos_ls23_2_qc = summarize_qc(operator="Kairos LS23", stage=2, strict_discard=strict_discard, time_ave=60, gas_comp_source='km')
-    kairos_ls23_3_qc = summarize_qc(operator="Kairos LS23", stage=3, strict_discard=strict_discard, time_ave=60, gas_comp_source='km')
+    kairos_ls23_1_qc = summarize_qc(operator="Kairos LS23", stage=1, strict_discard=strict_discard, time_ave=time_ave, gas_comp_source=gas_comp_source)
+    kairos_ls23_2_qc = summarize_qc(operator="Kairos LS23", stage=2, strict_discard=strict_discard, time_ave=time_ave, gas_comp_source=gas_comp_source)
+    kairos_ls23_3_qc = summarize_qc(operator="Kairos LS23", stage=3, strict_discard=strict_discard, time_ave=time_ave, gas_comp_source=gas_comp_source)
 
     # Kairos LS25
-    kairos_ls25_1_qc = summarize_qc(operator="Kairos LS25", stage=1, strict_discard=strict_discard, time_ave=60, gas_comp_source='km')
-    kairos_ls25_2_qc = summarize_qc(operator="Kairos LS25", stage=2, strict_discard=strict_discard, time_ave=60, gas_comp_source='km')
-    kairos_ls25_3_qc = summarize_qc(operator="Kairos LS25", stage=3, strict_discard=strict_discard, time_ave=60, gas_comp_source='km')
+    kairos_ls25_1_qc = summarize_qc(operator="Kairos LS25", stage=1, strict_discard=strict_discard, time_ave=time_ave, gas_comp_source=gas_comp_source)
+    kairos_ls25_2_qc = summarize_qc(operator="Kairos LS25", stage=2, strict_discard=strict_discard, time_ave=time_ave, gas_comp_source=gas_comp_source)
+    kairos_ls25_3_qc = summarize_qc(operator="Kairos LS25", stage=3, strict_discard=strict_discard, time_ave=time_ave, gas_comp_source=gas_comp_source)
 
     # Scientific Aviation
-    sciav_1_qc = summarize_qc(operator="Scientific Aviation", stage=1, strict_discard=strict_discard, time_ave=60, gas_comp_source='km')
+    sciav_1_qc = summarize_qc(operator="Scientific Aviation", stage=1, strict_discard=strict_discard, time_ave=time_ave, gas_comp_source=gas_comp_source)
 
     # Methane Air
-    mair_1_qc = summarize_qc(operator="Methane Air", stage=1, strict_discard=strict_discard, time_ave=60, gas_comp_source='km')
+    mair_1_qc = summarize_qc(operator="Methane Air", stage=1, strict_discard=strict_discard, time_ave=time_ave, gas_comp_source=gas_comp_source)
 
     # Combine all individual QC dataframes
 
