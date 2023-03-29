@@ -469,8 +469,16 @@ def generate_daily_releases():
             for source in gas_comp_sources:
                 print(f'Assigning {source} methane mole fraction for {operator} on {day}')
 
-                date_meter[f'methane_fraction_{source}'] = date_meter.apply(
-                    lambda x: select_methane_fraction(x['datetime_utc'], source), axis=1)
+                # date_meter[f'methane_fraction_{source}', f'gas_comp_sigma_{source}'] = date_meter.apply(
+                #     lambda x: select_methane_fraction(x['datetime_utc'], source), axis=1, result_type='expand')
+
+                # Determine gas composition mean value and sigma for each datetime
+                gas_comp_values = date_meter.apply(lambda x: select_methane_fraction(x['datetime_utc'], source),
+                                                   axis=1, result_type='expand')
+                date_meter[f'methane_fraction_{source}'] = gas_comp_values[0]
+                date_meter[f'gas_comp_sigma_{source}'] = gas_comp_values[1]
+
+                # Calculate kgh CH4 using the methane mole fraction selected
                 date_meter[f'kgh_ch4_{source}'] = date_meter['flow_rate'] * date_meter[f'methane_fraction_{source}']
             # operator_releases[day] = date_meter
 
@@ -745,27 +753,33 @@ def select_methane_fraction(input_datetime, gas_comp_source='km'):
     for index, row in gas_comp.iterrows():
         if (input_datetime > row['start_utc']) and (input_datetime <= row['end_utc']):
             methane_mole_fraction = row[gas_comp_source]
+            gas_comp_sigma = row[f'{gas_comp_source}_sigma']
 
-    return methane_mole_fraction
+    return methane_mole_fraction, gas_comp_sigma
 
 
 # %%
 def calc_average_gas_flow(operator, operator_meter, time_ave=60, comp_source='km'):
+    """Calculate average gas flow over the input time period (time_ave) for each operator overpass.
+    Specify gas composition source """
     op_ab = abbreviate_op_name(operator)
 
     # Calculate time average period as a Timedelta object
     delta_t = pd.Timedelta(seconds=time_ave)  # the period of time over which we want to average
     overpass_gas_data = []
 
+    # Iterate through each row in the operator_meter dataframe
     for index, row in operator_meter.iterrows():
         overpass_datetime = row.datetime_utc
         flight_date_code = overpass_datetime.strftime('%m_%d')
         flight_data = pd.read_csv(pathlib.PurePath('03_results', 'daily_releases', f'{op_ab}_{flight_date_code}.csv'),
                                   parse_dates=['datetime_utc'], index_col=0)
+        # Create the time period for averaging
         start_t = overpass_datetime - delta_t
         select_t_mask = (flight_data['datetime_utc'] > start_t) & (flight_data['datetime_utc'] <= overpass_datetime)
         overpass_period = flight_data.loc[select_t_mask].copy()
 
+        # Calculate mean and standard deviation for gas flow rate and ch4 flow rate
         overpass_gas_mean = overpass_period['flow_rate'].mean()
         overpass_gas_std = overpass_period['flow_rate'].std()
         overpass_ch4_mean = overpass_period[f'kgh_ch4_{comp_source}'].mean()
