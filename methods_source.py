@@ -80,8 +80,8 @@ def load_summary_files():
 
 
 # %% method summarize_qc
-def generate_overpass_summary(operator, stage, operator_report, operator_meter, strict_discard, gas_comp_source,
-                              time_ave):
+def generate_overpass_summary(operator, stage, operator_report, operator_meter, strict_discard=False,
+                              gas_comp_source='km', time_ave=60):
     """Generate clean dataframe for each overpass with columns indicating QC status.
 
     Inputs:
@@ -180,7 +180,7 @@ def generate_overpass_summary(operator, stage, operator_report, operator_meter, 
 
 
 # %%
-def load_overpass_summary(operator, stage, strict_discard, time_ave, gas_comp_source):
+def load_overpass_summary(operator, stage, strict_discard=False, time_ave=60, gas_comp_source='km'):
     """Load overpass summary as a dataframe. Stage is a number (1, 2, 3). Input of "True" for strict_discard sets
     Stanford QC to use strict QC criteria, typical input is False. Operator names can be:
 
@@ -208,7 +208,7 @@ def load_overpass_summary(operator, stage, strict_discard, time_ave, gas_comp_so
     return overpass_summary
 
 
-def summarize_qc(operator, stage, strict_discard, time_ave, gas_comp_source):
+def summarize_qc(operator, stage, strict_discard=False, time_ave=60, gas_comp_source='km'):
     """Summarize QC criteria applied by operator and Stanford"""
 
     op_ab = abbreviate_op_name(operator)
@@ -245,7 +245,7 @@ def summarize_qc(operator, stage, strict_discard, time_ave, gas_comp_source):
 
 # %%
 
-def make_qc_table(strict_discard, time_ave, gas_comp_source):
+def make_qc_table(strict_discard=False, time_ave=60, gas_comp_source='km'):
     """Make a summary table all QC results. Input if strict_discard should be True or False."""
 
     cm_1_qc = summarize_qc(operator="Carbon Mapper", stage=1, strict_discard=strict_discard, time_ave=time_ave, gas_comp_source=gas_comp_source)
@@ -577,7 +577,7 @@ def load_clean_operator_reports():
 
 # %% Load meter data
 
-def load_meter_data(timekeeper, gas_comp_source, time_ave):
+def load_meter_data(timekeeper='flightradar', gas_comp_source='km', time_ave=60):
     """Input timekeeper. Must be string, all lower case: flightradar, operator, stanford"""
     operators = ['Carbon Mapper', 'GHGSat', 'Kairos', 'Methane Air']
     meter_files = {}
@@ -586,29 +586,6 @@ def load_meter_data(timekeeper, gas_comp_source, time_ave):
         op_path = pathlib.PurePath('02_meter_data', 'operator_meter_data', f'{timekeeper}_timestamp', f'{op_ab}_{time_ave}s_{gas_comp_source}_meter.csv')
         op_meter = pd.read_csv(op_path, index_col=0, parse_dates=['datetime_utc'])
         meter_files[f'{op_ab}_meter'] = op_meter
-
-    # cm_meter = meter_files['cm']
-    # ghg_meter = meter_files['ghg']
-    # kairos_meter = meter_files['kairos']
-    # mair_meter = meter_files['mair']
-    # Carbon Mapper meter data
-    # cm_path_meter = pathlib.PurePath('02_meter_data', 'operator_meter_data', f'{timekeeper}_timestamp', 'cm_meter.csv')
-    # cm_meter = pd.read_csv(cm_path_meter, index_col=0)
-    #
-    # # GHGSat Stage 1
-    # ghg_path_meter = pathlib.PurePath('02_meter_data', 'operator_meter_data', f'{timekeeper}_timestamp',
-    #                                   'ghg_meter.csv')
-    # ghg_meter = pd.read_csv(ghg_path_meter, index_col=0)
-    #
-    # # Kairos Stage 1
-    # kairos_path_meter = pathlib.PurePath('02_meter_data', 'operator_meter_data', f'{timekeeper}_timestamp',
-    #                                      'kairos_meter.csv')
-    # kairos_meter = pd.read_csv(kairos_path_meter, index_col=0)
-    #
-    # # MAIR
-    # mair_path_meter = pathlib.PurePath('02_meter_data', 'operator_meter_data', f'{timekeeper}_timestamp',
-    #                                    'mair_meter.csv')
-    # mair_meter = pd.read_csv(mair_path_meter, index_col=0)
 
     return meter_files
 
@@ -619,7 +596,7 @@ def load_meter_data(timekeeper, gas_comp_source, time_ave):
 # > operator_report: cleaned operator data, loaded from folder 01_clean_reports
 # > operator_meter: cleaned metering data, loaded from folder 02_meter_data
 
-def select_stanford_valid_overpasses(operator_report, operator_meter, strict_discard):
+def select_stanford_valid_overpasses(operator_report, operator_meter, strict_discard=False):
     """Merge operator report and operator meter dataframes and select overpasses which pass Stanford QC criteria.
     strict_discard is True or False
 
@@ -703,7 +680,7 @@ def check_timekeep_capitalization(timekeeper):
 
 
 # %%
-def clean_meter_column_names(operator, operator_meter_raw, overpass_id, timekeeper):
+def clean_meter_column_names(operator, operator_meter_raw, overpass_id, timekeeper='flightradar'):
     timekeeper = check_timekeep_capitalization(timekeeper)
 
     # Relevant columns from Philippine generated meter dataset:
@@ -753,7 +730,7 @@ def clean_meter_column_names(operator, operator_meter_raw, overpass_id, timekeep
 
 
 # %%
-def select_methane_fraction(input_datetime, gas_comp_source):
+def select_methane_fraction(input_datetime, gas_comp_source='km'):
     """Determines the methane mole fraction for a given datetime.
     Inputs:
       - input_datetime is a datetime object
@@ -773,7 +750,7 @@ def select_methane_fraction(input_datetime, gas_comp_source):
 
 
 # %%
-def calc_average_gas_flow(operator, operator_meter, time_ave, comp_source):
+def calc_average_gas_flow(operator, operator_meter, time_ave=60, comp_source='km'):
     op_ab = abbreviate_op_name(operator)
 
     # Calculate time average period as a Timedelta object
@@ -814,7 +791,7 @@ def calc_average_gas_flow(operator, operator_meter, time_ave, comp_source):
 
 # %% Function to import Philippine's meter data, select the FlightRadar columns, and with abrename columns to be more
 # brief and machine-readable
-def make_operator_meter_dataset(operator, operator_meter_raw, timekeeper, time_ave, comp_source):
+def make_operator_meter_dataset(operator, operator_meter_raw, timekeeper='flightradar', time_ave=60, gas_comp_source='km'):
     """Function to make a clean dataset for each overpass for a given operator. Input is the full name of operator
     and the operator meter file. Also include the desired timekeeper metric for when the oeprator was overhead: this
     can be one of three options:
@@ -842,7 +819,7 @@ def make_operator_meter_dataset(operator, operator_meter_raw, timekeeper, time_a
         operator_meter = operator_meter.drop(columns=['time', 'date'])
 
         # Calculate whole gas average for datetime
-        gas_flow_rates = calc_average_gas_flow(operator, operator_meter, time_ave, comp_source)
+        gas_flow_rates = calc_average_gas_flow(operator, operator_meter, time_ave, gas_comp_source)
         operator_meter = operator_meter.merge(gas_flow_rates, on='overpass_id')
 
         op_ab = abbreviate_op_name(operator)
@@ -857,7 +834,7 @@ def make_operator_meter_dataset(operator, operator_meter_raw, timekeeper, time_a
 
         # Save CSV file
         operator_meter.to_csv(pathlib.PurePath('02_meter_data', 'operator_meter_data',
-                                               save_folder, f'{op_ab}_{time_ave}s_{comp_source}_meter.csv'))
+                                               save_folder, f'{op_ab}_{time_ave}s_{gas_comp_source}_meter.csv'))
 
     return operator_meter
 
@@ -902,7 +879,7 @@ def make_histogram_bins(df, threshold_lower, threshold_upper, n_bins):
     return detection_prob
 
 
-def find_missing_data(operator, meter_raw, time_ave, gas_comp_source):
+def find_missing_data(operator, meter_raw, time_ave=60, gas_comp_source='km'):
     """ Missing data refers to overpasses documented by Stanford that are not reported by the operator"""
 
     operator_missing_raw = meter_raw.query(
@@ -930,7 +907,7 @@ def find_missing_data(operator, meter_raw, time_ave, gas_comp_source):
 
 
 # %%
-def classify_histogram_data(operator, stage, strict_discard, time_ave, gas_comp_source, threshold_lower, threshold_upper, n_bins):
+def classify_histogram_data(operator, stage, threshold_lower, threshold_upper, n_bins, strict_discard=False, time_ave=60, gas_comp_source='km'):
     # Load operator overpass data
     op_reported = load_overpass_summary(operator=operator, stage=stage, strict_discard=strict_discard,
                                         time_ave=time_ave, gas_comp_source=gas_comp_source)
@@ -1096,7 +1073,7 @@ def make_overpass_error_df(operator, stage):
     return op_error
 
 
-def generate_all_overpass_reports(strict_discard, timekeeper, gas_comp_source, time_ave):
+def generate_all_overpass_reports(strict_discard=False, timekeeper='flightradar', gas_comp_source='km', time_ave=60):
     """Generate all overpass reports"""
     check_timekeep_capitalization(timekeeper)
 

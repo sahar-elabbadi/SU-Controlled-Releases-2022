@@ -551,19 +551,21 @@ def make_releases_histogram(operator, stage, strict_discard, time_ave, gas_comp_
     threshold_lower = 0
     threshold_upper = 50
     n_bins = 10
-    op_histogram_low = classify_histogram_data(operator=operator, stage=stage, strict_discard=strict_discard,
-                                               time_ave=time_ave, gas_comp_source=gas_comp_source,
+    op_histogram_low = classify_histogram_data(operator=operator, stage=stage,
                                                threshold_lower=threshold_lower, threshold_upper=threshold_upper,
-                                               n_bins=n_bins)
+                                               n_bins=n_bins,
+                                               strict_discard=strict_discard, time_ave=time_ave,
+                                               gas_comp_source=gas_comp_source)
 
     # Create bins for right histogram plot
     threshold_lower = 50
     threshold_upper = 1500
     n_bins = 30
-    op_histogram_high = classify_histogram_data(operator=operator, stage=stage, strict_discard=strict_discard,
-                                                time_ave=time_ave, gas_comp_source=gas_comp_source,
+    op_histogram_high = classify_histogram_data(operator=operator, stage=stage,
                                                 threshold_lower=threshold_lower, threshold_upper=threshold_upper,
-                                                n_bins=n_bins)
+                                                n_bins=n_bins,
+                                                strict_discard=strict_discard, time_ave=time_ave,
+                                                gas_comp_source=gas_comp_source)
 
     ############## Figure ##############
     fig, [ax1, ax2, ax3] = plt.subplots(1, 3,
