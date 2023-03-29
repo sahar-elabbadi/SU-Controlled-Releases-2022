@@ -711,13 +711,6 @@ def clean_meter_column_names(operator, operator_meter_raw, overpass_id, timekeep
     time = f'Time (UTC) - from {timekeeper}'
 
     phase_iii = 'PhaseIII'  # 0 indicates the overpass was not provided to team in Phase III, 1 indicates it was
-    kgh_gas_30 = f'Last 30s (kg/h) - whole gas measurement - from {timekeeper}'
-    kgh_gas_60 = f'Last 60s (kg/h) - whole gas measurement - from {timekeeper}'
-    kgh_gas_90 = f'Last 90s (kg/h) - whole gas measurement - from {timekeeper}'
-    kgh_ch4_30 = f'Last 30s (kg/h) - from {timekeeper}'
-    kgh_ch4_60 = f'Last 60s (kg/h) - from {timekeeper}'
-    kgh_ch4_90 = f'Last 90s (kg/h) - from {timekeeper}'
-    methane_fraction = 'Percent methane'
     meter = 'Meter'  # note renaming meter variable used above
     qc_discard = f'Discarded - using {timekeeper}'
     qc_discard_strict = f'Discarded - 1% - using {timekeeper}'
@@ -728,17 +721,6 @@ def clean_meter_column_names(operator, operator_meter_raw, overpass_id, timekeep
 
     operator_meter['overpass_id'] = operator_meter_raw[overpass_id]
     operator_meter['phase_iii'] = operator_meter_raw[phase_iii]
-    # operator_meter['kgh_gas_30'] = operator_meter_raw[kgh_gas_30]
-    # operator_meter['kgh_gas_60'] = operator_meter_raw[kgh_gas_60]
-    # operator_meter['kgh_gas_90'] = operator_meter_raw[kgh_gas_90]
-    # Comment these out for now as they will be calculated for each methane mole fraction
-    # operator_meter['kgh_ch4_30'] = operator_meter_raw[kgh_ch4_30]
-    # operator_meter['kgh_ch4_60'] = operator_meter_raw[kgh_ch4_60]
-    # operator_meter['kgh_ch4_90'] = operator_meter_raw[kgh_ch4_90]
-
-    # Remove this for now as I will set it in make_operator_meter_dataset
-    # operator_meter['methane_fraction'] = operator_meter_raw[
-    #     methane_fraction]
     operator_meter['meter'] = operator_meter_raw[meter]
     operator_meter['qc_su_discard'] = operator_meter_raw[qc_discard]
     operator_meter['qc_su_discard_strict'] = operator_meter_raw[qc_discard_strict]
@@ -862,22 +844,6 @@ def make_operator_meter_dataset(operator, operator_meter_raw, timekeeper, time_a
         # Calculate whole gas average for datetime
         gas_flow_rates = calc_average_gas_flow(operator, operator_meter, time_ave, comp_source)
         operator_meter = operator_meter.merge(gas_flow_rates, on='overpass_id')
-        # operator_meter[f'methane_fraction_{comp_source}'] = operator_meter.apply(lambda x: select_methane_fraction(
-        #     x['datetime_utc'], comp_source), axis=1)
-        # operator_meter[f'kgh_ch4_{ave_period}_{comp_source}'] = operator_meter[f'kgh_gas_{ave_period}_mean'] * \
-        #                                                         operator_meter[f'methane_fraction_{comp_source}']
-
-        # # Determine methane mole fraction for each overpass
-        # gas_comp_source = ['su_raw', 'su_normalized', 'km']
-        # time_ave = ['30', '60', '90']
-        # for source in gas_comp_source:
-        #     operator_meter[f'methane_fraction_{source}'] = operator_meter.apply(
-        #         lambda x: select_methane_fraction(x['datetime_utc'], source), axis=1)
-        #     for time in time_ave:
-        #         operator_meter[f'kgh_ch4_{time}_{source}'] = operator_meter[f'kgh_gas_{time}'] * operator_meter[
-        #             f'methane_fraction_{source}']
-
-        # Everything from here down should stay in this function
 
         op_ab = abbreviate_op_name(operator)
 
