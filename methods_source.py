@@ -791,11 +791,11 @@ def select_methane_fraction(input_datetime, gas_comp_source):
 
 
 # %%
-def calc_average_gas_flow(operator, operator_meter, ave_period, comp_source):
+def calc_average_gas_flow(operator, operator_meter, time_ave, comp_source):
     op_ab = abbreviate_op_name(operator)
 
     # Calculate time average period as a Timedelta object
-    delta_t = pd.Timedelta(seconds=ave_period)  # the period of time over which we want to average
+    delta_t = pd.Timedelta(seconds=time_ave)  # the period of time over which we want to average
     overpass_gas_data = []
 
     for index, row in operator_meter.iterrows():
@@ -818,10 +818,10 @@ def calc_average_gas_flow(operator, operator_meter, ave_period, comp_source):
         new_row = {
             'overpass_id': row['overpass_id'],
             f'methane_fraction_{comp_source}': methane_fraction_mean,
-            f'kgh_gas_{ave_period}_mean': overpass_gas_mean,
-            f'kgh_gas_{ave_period}_std': overpass_gas_std,
-            f'kgh_ch4_{ave_period}_mean_{comp_source}': overpass_ch4_mean,
-            f'kgh_ch4_{ave_period}_std_{comp_source}': overpass_ch4_std,
+            f'kgh_gas_{time_ave}_mean': overpass_gas_mean,
+            f'kgh_gas_{time_ave}_std': overpass_gas_std,
+            f'kgh_ch4_{time_ave}_mean_{comp_source}': overpass_ch4_mean,
+            f'kgh_ch4_{time_ave}_std_{comp_source}': overpass_ch4_std,
         }
 
         overpass_gas_data.append(new_row)
@@ -832,7 +832,7 @@ def calc_average_gas_flow(operator, operator_meter, ave_period, comp_source):
 
 # %% Function to import Philippine's meter data, select the FlightRadar columns, and with abrename columns to be more
 # brief and machine-readable
-def make_operator_meter_dataset(operator, operator_meter_raw, timekeeper, ave_period, comp_source):
+def make_operator_meter_dataset(operator, operator_meter_raw, timekeeper, time_ave, comp_source):
     """Function to make a clean dataset for each overpass for a given operator. Input is the full name of operator
     and the operator meter file. Also include the desired timekeeper metric for when the oeprator was overhead: this
     can be one of three options:
@@ -860,7 +860,7 @@ def make_operator_meter_dataset(operator, operator_meter_raw, timekeeper, ave_pe
         operator_meter = operator_meter.drop(columns=['time', 'date'])
 
         # Calculate whole gas average for datetime
-        gas_flow_rates = calc_average_gas_flow(operator, operator_meter, ave_period, comp_source)
+        gas_flow_rates = calc_average_gas_flow(operator, operator_meter, time_ave, comp_source)
         operator_meter = operator_meter.merge(gas_flow_rates, on='overpass_id')
         # operator_meter[f'methane_fraction_{comp_source}'] = operator_meter.apply(lambda x: select_methane_fraction(
         #     x['datetime_utc'], comp_source), axis=1)
@@ -891,7 +891,7 @@ def make_operator_meter_dataset(operator, operator_meter_raw, timekeeper, ave_pe
 
         # Save CSV file
         operator_meter.to_csv(pathlib.PurePath('02_meter_data', 'operator_meter_data',
-                                               save_folder, f'{op_ab}_{ave_period}s_{comp_source}_meter.csv'))
+                                               save_folder, f'{op_ab}_{time_ave}s_{comp_source}_meter.csv'))
 
     return operator_meter
 
@@ -936,22 +936,38 @@ def make_histogram_bins(df, threshold_lower, threshold_upper, n_bins):
     return detection_prob
 
 
-def find_missing_data(operator, meter_raw):
+def find_missing_data(operator, meter_raw, time_ave, gas_comp_source):
     """ Missing data refers to overpasses documented by Stanford that are not reported by the operator"""
 
     operator_missing_raw = meter_raw.query(
         'PerformerOverpassID.isnull() == True & StanfordOverpassID.isnull() == False')
     operator_missing = clean_meter_column_names(operator, operator_missing_raw, 'FlightradarOverpassID', 'flightradar')
 
-    operator_missing.rename(columns={'kgh_ch4_60': 'release_rate_kgh'}, inplace=True)
+    if operator_missing.empty:
+        operator_missing['release_rate_kgh'] = None
+
+    else:
+        # Combine date and time
+        missing_datetime = operator_missing.apply(lambda x: combine_datetime(x['date'], x['time']), axis=1)
+        operator_missing.insert(loc=0, column='datetime_utc', value=missing_datetime)
+        # Now that we have removed NA values in time, we can remove date and time columns from operator_meter
+        operator_missing = operator_missing.drop(columns=['time', 'date'])
+
+        # Calculate whole gas average for given overpass id
+        gas_flow_rates = calc_average_gas_flow(operator, operator_missing, time_ave, gas_comp_source)
+        operator_missing = operator_missing.merge(gas_flow_rates, on='overpass_id')
+
+        # make a column with the desired release_rate_kgh value (so this dataframe can be ready by files that read an overpass summary file)
+        operator_missing['release_rate_kgh'] = operator_missing[f'kgh_ch4_{time_ave}_mean_{gas_comp_source}']
 
     return operator_missing
 
 
 # %%
-def classify_histogram_data(operator, stage, strict_discard, threshold_lower, threshold_upper, n_bins):
+def classify_histogram_data(operator, stage, strict_discard, time_ave, gas_comp_source, threshold_lower, threshold_upper, n_bins):
     # Load operator overpass data
-    op_reported = load_overpass_summary(operator=operator, stage=stage, strict_discard=strict_discard, time_ave=60, gas_comp_source='km')
+    op_reported = load_overpass_summary(operator=operator, stage=stage, strict_discard=strict_discard,
+                                        time_ave=time_ave, gas_comp_source=gas_comp_source)
 
     # Pass all QC filter
     op_qc_pass = op_reported.query('qc_summary == "pass_all"')
@@ -990,17 +1006,17 @@ def classify_histogram_data(operator, stage, strict_discard, threshold_lower, th
     cm_meter_raw, ghg_meter_raw, kairos_meter_raw, mair_meter_raw, sciav_meter_raw = load_summary_files()
 
     if operator == 'Carbon Mapper':
-        missing = find_missing_data(operator, cm_meter_raw)
+        missing = find_missing_data(operator, cm_meter_raw, time_ave=time_ave, gas_comp_source=gas_comp_source)
     elif operator == 'GHGSat':
-        missing = find_missing_data(operator, ghg_meter_raw)
+        missing = find_missing_data(operator, ghg_meter_raw, time_ave=time_ave, gas_comp_source=gas_comp_source)
     elif operator == 'Kairos':
-        missing = find_missing_data(operator, kairos_meter_raw)
+        missing = find_missing_data(operator, kairos_meter_raw, time_ave=time_ave, gas_comp_source=gas_comp_source)
     elif operator == 'Kairos LS23':
-        missing = find_missing_data(operator, kairos_meter_raw)
+        missing = find_missing_data(operator, kairos_meter_raw, time_ave=time_ave, gas_comp_source=gas_comp_source)
     elif operator == 'Kairos LS25':
-        missing = find_missing_data(operator, kairos_meter_raw)
+        missing = find_missing_data(operator, kairos_meter_raw, time_ave=time_ave, gas_comp_source=gas_comp_source)
     elif operator == 'Methane Air':
-        missing = find_missing_data(operator, mair_meter_raw)
+        missing = find_missing_data(operator, mair_meter_raw, time_ave=time_ave, gas_comp_source=gas_comp_source)
     elif operator == 'Scientific Aviation':
         missing = []
 
@@ -1009,12 +1025,17 @@ def classify_histogram_data(operator, stage, strict_discard, threshold_lower, th
         count_missing_zero = 0
     else:
         # Filter missing for non-zero values
-        missing_non_zero = missing.query('release_rate_kgh > 0')
-        count_missing = make_histogram_bins(missing_non_zero, threshold_lower, threshold_upper, n_bins).n_data_points
+        if missing.empty:
+            count_missing = 0
+            count_missing_zero = 0
+        else:
+            # Make a subset of the missing non-zero values
+            missing_non_zero = missing.query(f'kgh_ch4_{time_ave}_mean_{gas_comp_source} > 0')
+            count_missing = make_histogram_bins(missing_non_zero, threshold_lower, threshold_upper, n_bins).n_data_points
 
-        # Filter missing for zero values
-        missing_zero = missing.query('release_rate_kgh == 0')
-        count_missing_zero = make_histogram_bins(missing_zero, threshold_lower, threshold_upper, n_bins).n_data_points
+            # Make a subset of the missing zero values
+            missing_zero = missing.query(f'kgh_ch4_{time_ave}_mean_{gas_comp_source} == 0')
+            count_missing_zero = make_histogram_bins(missing_zero, threshold_lower, threshold_upper, n_bins).n_data_points
 
     # Count total measurements reported by operator
     total_reported = op_reported.max()['overpass_id']
