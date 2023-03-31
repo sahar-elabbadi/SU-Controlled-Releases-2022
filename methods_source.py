@@ -15,6 +15,7 @@ import pathlib
 import pandas as pd
 import numpy as np
 import datetime
+import math
 
 
 # %% Abbreviate operator name
@@ -118,7 +119,7 @@ def generate_overpass_summary(operator, stage, operator_report, operator_meter, 
     # Make column with easier name for coding for now.
     combined_df['release_rate_kgh'] = combined_df[
         f'kgh_ch4_{time_ave}_mean_{gas_comp_source}']
-    combined_df['release_kgh_stdev'] = combined_df[f'kgh_ch4_{time_ave}_std_{gas_comp_source}']
+    # combined_df['release_kgh_stdev'] = combined_df[f'kgh_ch4_{time_ave}_std_{gas_comp_source}'] # remove (this is sigma of the meter variability)
 
     # combined_df['time_utc'] = combined_df['Time (UTC) - from Stanford']
     # combined_df['date'] = combined_df['Date']
@@ -142,10 +143,10 @@ def generate_overpass_summary(operator, stage, operator_report, operator_meter, 
     check_fail = operator_qc['operator_kept'] + operator_qc['stanford_kept']
     operator_qc['fail_all_qc'] = check_fail == 0
 
-    # Include operator results
-    operator_qc['operator_detected'] = combined_df.Detected
+    # Include meter and operator results
     operator_qc['release_rate_kgh'] = combined_df.release_rate_kgh
-    operator_qc['release_kgh_stdev'] = combined_df.release_kgh_stdev
+    operator_qc['kgh_ch4_sigma'] = combined_df.kgh_ch4_sigma
+    operator_qc['operator_detected'] = combined_df.Detected
     operator_qc['operator_quantification'] = combined_df.FacilityEmissionRate
     operator_qc['operator_lower'] = combined_df.FacilityEmissionRateLower
     operator_qc['operator_upper'] = combined_df.FacilityEmissionRateUpper
@@ -172,9 +173,11 @@ def generate_overpass_summary(operator, stage, operator_report, operator_meter, 
 
     # Create save path based on whether or not a strict QC criteria was applied
     if strict_discard is True:
-        operator_qc.to_csv(pathlib.PurePath('03_results', 'overpass_summary', f'{op_ab}_{stage}_{time_ave}s_{gas_comp_source}_overpasses_strict.csv'))
+        operator_qc.to_csv(pathlib.PurePath('03_results', 'overpass_summary',
+                                            f'{op_ab}_{stage}_{time_ave}s_{gas_comp_source}_overpasses_strict.csv'))
     else:
-        operator_qc.to_csv(pathlib.PurePath('03_results', 'overpass_summary', f'{op_ab}_{stage}_{time_ave}s_{gas_comp_source}_overpasses.csv'))
+        operator_qc.to_csv(pathlib.PurePath('03_results', 'overpass_summary',
+                                            f'{op_ab}_{stage}_{time_ave}s_{gas_comp_source}_overpasses.csv'))
 
     return operator_qc
 
@@ -199,9 +202,11 @@ def load_overpass_summary(operator, stage, strict_discard=False, time_ave=60, ga
         path = pathlib.PurePath('03_results', 'overpass_summary', 'sciav_1_overpasses.csv')
     else:
         if strict_discard is True:
-            path = pathlib.PurePath('03_results', 'overpass_summary', f'{op_ab}_{stage}_{time_ave}s_{gas_comp_source}_overpasses_strict.csv')
+            path = pathlib.PurePath('03_results', 'overpass_summary',
+                                    f'{op_ab}_{stage}_{time_ave}s_{gas_comp_source}_overpasses_strict.csv')
         else:
-            path = pathlib.PurePath('03_results', 'overpass_summary', f'{op_ab}_{stage}_{time_ave}s_{gas_comp_source}_overpasses.csv')
+            path = pathlib.PurePath('03_results', 'overpass_summary',
+                                    f'{op_ab}_{stage}_{time_ave}s_{gas_comp_source}_overpasses.csv')
 
     overpass_summary = pd.read_csv(path, index_col=0, parse_dates=['overpass_datetime'])
 
@@ -248,35 +253,52 @@ def summarize_qc(operator, stage, strict_discard=False, time_ave=60, gas_comp_so
 def make_qc_table(strict_discard=False, time_ave=60, gas_comp_source='km'):
     """Make a summary table all QC results. Input if strict_discard should be True or False."""
 
-    cm_1_qc = summarize_qc(operator="Carbon Mapper", stage=1, strict_discard=strict_discard, time_ave=time_ave, gas_comp_source=gas_comp_source)
-    cm_2_qc = summarize_qc(operator="Carbon Mapper", stage=2, strict_discard=strict_discard, time_ave=time_ave, gas_comp_source=gas_comp_source)
-    cm_3_qc = summarize_qc(operator="Carbon Mapper", stage=3, strict_discard=strict_discard, time_ave=time_ave, gas_comp_source=gas_comp_source)
+    cm_1_qc = summarize_qc(operator="Carbon Mapper", stage=1, strict_discard=strict_discard, time_ave=time_ave,
+                           gas_comp_source=gas_comp_source)
+    cm_2_qc = summarize_qc(operator="Carbon Mapper", stage=2, strict_discard=strict_discard, time_ave=time_ave,
+                           gas_comp_source=gas_comp_source)
+    cm_3_qc = summarize_qc(operator="Carbon Mapper", stage=3, strict_discard=strict_discard, time_ave=time_ave,
+                           gas_comp_source=gas_comp_source)
 
     # GHGSat QC
-    ghg_1_qc = summarize_qc(operator="GHGSat", stage=1, strict_discard=strict_discard, time_ave=time_ave, gas_comp_source=gas_comp_source)
-    ghg_2_qc = summarize_qc(operator="GHGSat", stage=2, strict_discard=strict_discard, time_ave=time_ave, gas_comp_source=gas_comp_source)
-    ghg_3_qc = summarize_qc(operator="GHGSat", stage=3, strict_discard=strict_discard, time_ave=time_ave, gas_comp_source=gas_comp_source)
+    ghg_1_qc = summarize_qc(operator="GHGSat", stage=1, strict_discard=strict_discard, time_ave=time_ave,
+                            gas_comp_source=gas_comp_source)
+    ghg_2_qc = summarize_qc(operator="GHGSat", stage=2, strict_discard=strict_discard, time_ave=time_ave,
+                            gas_comp_source=gas_comp_source)
+    ghg_3_qc = summarize_qc(operator="GHGSat", stage=3, strict_discard=strict_discard, time_ave=time_ave,
+                            gas_comp_source=gas_comp_source)
 
     # Kairos
-    kairos_1_qc = summarize_qc(operator="Kairos", stage=1, strict_discard=strict_discard, time_ave=time_ave, gas_comp_source=gas_comp_source)
-    kairos_2_qc = summarize_qc(operator="Kairos", stage=2, strict_discard=strict_discard, time_ave=time_ave, gas_comp_source=gas_comp_source)
-    kairos_3_qc = summarize_qc(operator="Kairos", stage=3, strict_discard=strict_discard, time_ave=time_ave, gas_comp_source=gas_comp_source)
+    kairos_1_qc = summarize_qc(operator="Kairos", stage=1, strict_discard=strict_discard, time_ave=time_ave,
+                               gas_comp_source=gas_comp_source)
+    kairos_2_qc = summarize_qc(operator="Kairos", stage=2, strict_discard=strict_discard, time_ave=time_ave,
+                               gas_comp_source=gas_comp_source)
+    kairos_3_qc = summarize_qc(operator="Kairos", stage=3, strict_discard=strict_discard, time_ave=time_ave,
+                               gas_comp_source=gas_comp_source)
 
     # Kairos LS23
-    kairos_ls23_1_qc = summarize_qc(operator="Kairos LS23", stage=1, strict_discard=strict_discard, time_ave=time_ave, gas_comp_source=gas_comp_source)
-    kairos_ls23_2_qc = summarize_qc(operator="Kairos LS23", stage=2, strict_discard=strict_discard, time_ave=time_ave, gas_comp_source=gas_comp_source)
-    kairos_ls23_3_qc = summarize_qc(operator="Kairos LS23", stage=3, strict_discard=strict_discard, time_ave=time_ave, gas_comp_source=gas_comp_source)
+    kairos_ls23_1_qc = summarize_qc(operator="Kairos LS23", stage=1, strict_discard=strict_discard, time_ave=time_ave,
+                                    gas_comp_source=gas_comp_source)
+    kairos_ls23_2_qc = summarize_qc(operator="Kairos LS23", stage=2, strict_discard=strict_discard, time_ave=time_ave,
+                                    gas_comp_source=gas_comp_source)
+    kairos_ls23_3_qc = summarize_qc(operator="Kairos LS23", stage=3, strict_discard=strict_discard, time_ave=time_ave,
+                                    gas_comp_source=gas_comp_source)
 
     # Kairos LS25
-    kairos_ls25_1_qc = summarize_qc(operator="Kairos LS25", stage=1, strict_discard=strict_discard, time_ave=time_ave, gas_comp_source=gas_comp_source)
-    kairos_ls25_2_qc = summarize_qc(operator="Kairos LS25", stage=2, strict_discard=strict_discard, time_ave=time_ave, gas_comp_source=gas_comp_source)
-    kairos_ls25_3_qc = summarize_qc(operator="Kairos LS25", stage=3, strict_discard=strict_discard, time_ave=time_ave, gas_comp_source=gas_comp_source)
+    kairos_ls25_1_qc = summarize_qc(operator="Kairos LS25", stage=1, strict_discard=strict_discard, time_ave=time_ave,
+                                    gas_comp_source=gas_comp_source)
+    kairos_ls25_2_qc = summarize_qc(operator="Kairos LS25", stage=2, strict_discard=strict_discard, time_ave=time_ave,
+                                    gas_comp_source=gas_comp_source)
+    kairos_ls25_3_qc = summarize_qc(operator="Kairos LS25", stage=3, strict_discard=strict_discard, time_ave=time_ave,
+                                    gas_comp_source=gas_comp_source)
 
     # Scientific Aviation
-    sciav_1_qc = summarize_qc(operator="Scientific Aviation", stage=1, strict_discard=strict_discard, time_ave=time_ave, gas_comp_source=gas_comp_source)
+    sciav_1_qc = summarize_qc(operator="Scientific Aviation", stage=1, strict_discard=strict_discard, time_ave=time_ave,
+                              gas_comp_source=gas_comp_source)
 
     # Methane Air
-    mair_1_qc = summarize_qc(operator="Methane Air", stage=1, strict_discard=strict_discard, time_ave=time_ave, gas_comp_source=gas_comp_source)
+    mair_1_qc = summarize_qc(operator="Methane Air", stage=1, strict_discard=strict_discard, time_ave=time_ave,
+                             gas_comp_source=gas_comp_source)
 
     # Combine all individual QC dataframes
 
@@ -440,9 +462,71 @@ def load_operator_flight_days(operator):
     return flight_days
 
 
+# %%
+def calc_meter_uncertainty(meter, flow_kgh):
+    """ Input meter ('bc', 'mc', 'pc') and flow rate to determine the associated uncertainty.
+    Uncertainty is a percentage of total gas flow rate, as reported by Emerson. """
+    # cutoff dictionary: for all meters, flow rates above a certain cutoff have uncertainty of 0.25% of flow rate
+    cutoff = {
+        'bc': 4.84,
+        'mc': 32.6,
+        'pc': 350,
+    }
+
+    # Data from Emerson Sizing tool for each meter (see files downloaded from Emerson website in meter_sizing_graphs folder
+
+    # baby corey
+    bc_flow_kgh = [4.84, 4.26, 4.12, 3.68, 3.14, 3.1, 2.52, 2.16, 1.94, 1.36, 1.18, 0.78, 0.2, 0.2]
+    bc_uncertainty = [0.25, 0.2658, 0.2748, 0.3077, 0.3606, 0.3652, 0.4493, 0.5242, 0.5836, 0.8325, 0.9595, 1.4515,
+                      5.6608, 5.6608]
+
+    # mama corey
+    mc_flow_kgh = [32.6, 28.9, 25.2, 21.5, 20, 17.8, 14.1, 10.4, 6.7, 3]
+    mc_uncertainty = [0.25, 0.2686, 0.308, 0.361, 0.3881, 0.4361, 0.5505, 0.7463, 1.1585, 2.5873]
+
+    # papa corey
+    pc_flow_kgh = [350, 318, 300, 286, 254, 222, 190, 158, 126, 94, 62, 30]
+    pc_uncertainty = [0.25, 0.2562, 0.2715, 0.2848, 0.3207, 0.3669, 0.4287, 0.5155, 0.6465, 0.8666, 1.3138, 2.7152]
+
+    # Determine best fit for the flow regime below the cutoff:
+    bc_power = power_fit(bc_flow_kgh, bc_uncertainty)
+    mc_power = power_fit(mc_flow_kgh, mc_uncertainty)
+    pc_power = power_fit(pc_flow_kgh, pc_uncertainty)
+
+    meter_best_fit_power = {
+        'bc': bc_power,
+        'mc': mc_power,
+        'pc': pc_power,
+    }
+
+    if (flow_kgh == 0) or (meter == 'None'):
+        uncertainty_percent = 0  # If release is a zero, meter entry in meter column is 'None', set uncertainty to 0
+    else:
+        if flow_kgh >= cutoff[meter]:
+            uncertainty_percent = 0.25
+        else:
+            a = meter_best_fit_power[meter]['a']
+            b = meter_best_fit_power[meter]['b']
+            uncertainty_percent = a * (flow_kgh ** b)
+
+    # meter_sigma = uncertainty_percent/1.96
+
+    return uncertainty_percent
+
+
+def sum_of_quadrature(*uncertainties):
+    """Combine uncertainties using sum of quadrature method"""
+    summation = 0  # initialize summation
+    for uncertainty in uncertainties:
+        summation += uncertainty ** 2
+
+    sigma_final = math.sqrt(summation)
+    return sigma_final
+
+
 # %% Generate daily releases
 
-def generate_daily_releases():
+def generate_daily_releases(gas_comp_sources=['km']):
     """Generates daily metered data for all airplane flight days"""
     operators = ['Carbon Mapper', 'GHGSat', 'Kairos', 'Methane Air', 'Scientific Aviation']
 
@@ -465,12 +549,15 @@ def generate_daily_releases():
             # test_period = date_meter[(date_meter.datetime_utc > start_t) & (date_meter.datetime_utc <= end_t)]
             date_meter = date_meter.query('datetime_utc > @start_t & datetime_utc <= @end_t').copy()
 
-            gas_comp_sources = ['km', 'su_raw', 'su_normalized']
+            # gas_comp_sources = ['km', 'su_raw', 'su_normalized']
             for source in gas_comp_sources:
-                print(f'Assigning {source} methane mole fraction for {operator} on {day}')
 
-                # date_meter[f'methane_fraction_{source}', f'gas_comp_sigma_{source}'] = date_meter.apply(
-                #     lambda x: select_methane_fraction(x['datetime_utc'], source), axis=1, result_type='expand')
+                # Determine uncertainty associated with meter reading
+                meter_uncertainty = date_meter.apply(lambda x: calc_meter_uncertainty(x['meter'], x['flow_rate']),
+                                                                                      axis=1)
+                date_meter['meter_sigma_kgh_gas'] = meter_uncertainty / 100 / 1.96 * date_meter['flow_rate']
+
+                print(f'Assigning {source} methane mole fraction for {operator} on {day}')
 
                 # Determine gas composition mean value and sigma for each datetime
                 gas_comp_values = date_meter.apply(lambda x: select_methane_fraction(x['datetime_utc'], source),
@@ -480,7 +567,31 @@ def generate_daily_releases():
 
                 # Calculate kgh CH4 using the methane mole fraction selected
                 date_meter[f'kgh_ch4_{source}'] = date_meter['flow_rate'] * date_meter[f'methane_fraction_{source}']
-            # operator_releases[day] = date_meter
+
+                combined_uncertainty = []
+                upper_bound_95 = []
+                lower_bound_95 = []
+
+                for index, row in date_meter.iterrows():
+                    if row[f'kgh_ch4_{source}'] == 0:
+                        combined_sigma_kgh_ch4 = 0
+                    else:
+                        # Calculate the combined error using sum of quadrature on relative uncertainty
+                        # Meter reading relative uncertainty:
+                        meter_relative_sigma = row['meter_sigma_kgh_gas'] / row['flow_rate']
+                        gas_comp_relative_sigma = row[f'gas_comp_sigma_{source}'] / row[f'methane_fraction_{source}']
+                        combined_sigma_kgh_ch4 = row[f'kgh_ch4_{source}'] * sum_of_quadrature(meter_relative_sigma,
+                                                                                              gas_comp_relative_sigma)
+                    upper_bound = row[f'kgh_ch4_{source}'] + (1.96 * combined_sigma_kgh_ch4)
+                    lower_bound = row[f'kgh_ch4_{source}'] - (1.96 * combined_sigma_kgh_ch4)
+
+                    combined_uncertainty.append(combined_sigma_kgh_ch4)
+                    upper_bound_95.append(upper_bound)
+                    lower_bound_95.append(lower_bound)
+
+                date_meter['combined_uncertainty_kgh_ch4'] = combined_uncertainty
+                date_meter['CI95_upper'] = upper_bound_95
+                date_meter['CI95_lower'] = lower_bound_95
 
             # Save the test_period dataframe
             op_ab = abbreviate_op_name(operator)
@@ -591,7 +702,8 @@ def load_meter_data(timekeeper='flightradar', gas_comp_source='km', time_ave=60)
     meter_files = {}
     for operator in operators:
         op_ab = abbreviate_op_name(operator)
-        op_path = pathlib.PurePath('02_meter_data', 'operator_meter_data', f'{timekeeper}_timestamp', f'{op_ab}_{time_ave}s_{gas_comp_source}_meter.csv')
+        op_path = pathlib.PurePath('02_meter_data', 'operator_meter_data', f'{timekeeper}_timestamp',
+                                   f'{op_ab}_{time_ave}s_{gas_comp_source}_meter.csv')
         op_meter = pd.read_csv(op_path, index_col=0, parse_dates=['datetime_utc'])
         meter_files[f'{op_ab}_meter'] = op_meter
 
@@ -759,9 +871,33 @@ def select_methane_fraction(input_datetime, gas_comp_source='km'):
 
 
 # %%
+
+def power_fit(x_data, y_data):
+    """Find equation of best fit using form y = ax^b. Inputs are x_data, y_data: two series of equal length.
+    Outputs are a and b from y = ax^b"""
+
+    x_log = np.log(x_data)
+    y_log = np.log(y_data)
+    slope, intercept = np.polyfit(x_log, y_log, deg=1)
+    power_b = slope
+    power_a = np.exp(intercept)
+    power_constants = {'a': power_a, 'b': power_b}
+    return power_constants
+
+
+# %%
 def calc_average_gas_flow(operator, operator_meter, time_ave=60, comp_source='km'):
     """Calculate average gas flow over the input time period (time_ave) for each operator overpass.
-    Specify gas composition source """
+    Specify gas composition source. Output is a dataframe with the following columns (using default values):
+       - overpass_id
+       - methane_fraction_km
+       - methane_fraction_km_sigma
+       - kgh_gas_60_mean
+       - kgh_gas_60_std
+       - kgh_ch4_60_mean_km
+       - kgh_ch4_60_std_km
+       - meter_uncertainty"""
+
     op_ab = abbreviate_op_name(operator)
 
     # Calculate time average period as a Timedelta object
@@ -787,14 +923,47 @@ def calc_average_gas_flow(operator, operator_meter, time_ave=60, comp_source='km
 
         # Calculate the mean methane fraction, on the off chance that the truck changed during the overpass period
         methane_fraction_mean = overpass_period[f'methane_fraction_{comp_source}'].mean()
+        methane_faction_sigma = overpass_period[f'gas_comp_sigma_{comp_source}'].mean()
+
+        # Calculate the uncertainty associated with the meter reading
+        meter_uncertainty = calc_meter_uncertainty(row.meter, overpass_gas_mean)
+        meter_sigma_percent = meter_uncertainty / 1.96  # convert from 95% CI bound to sigma
+        meter_sigma_kgh_gas = meter_sigma_percent / 100 * overpass_gas_mean
+
+        ########### Combine Uncertainties ###########
+
+        if overpass_gas_mean == 0:
+            sigma_ch4_kgh = 0  # TODO check if this is ok
+
+        else:
+            # First, combine the uncertainties associated with meter reading and gas flow variability using
+            # sum of quadrature:
+            sigma_gas = sum_of_quadrature(overpass_gas_std, meter_sigma_kgh_gas)
+
+            # Next, calculate the uncertainty inclusive of gas composition.
+            # Because we are multiplying gas composition by the whole gas flow rate, we use sum of quadrature
+            # on the relative uncertainty: sigma / mean
+
+            relative_gas_sigma = sigma_gas / overpass_gas_mean
+
+            # Relative sigma value for gas compositional analysis:
+            relative_comp_sigma = methane_faction_sigma / methane_fraction_mean
+
+            # Combine uncertainties and multiply by the methane flow rate to convert from relative uncertainty to sigma value
+            sigma_ch4_kgh = sum_of_quadrature(relative_gas_sigma, relative_comp_sigma) * overpass_ch4_mean
 
         new_row = {
             'overpass_id': row['overpass_id'],
             f'methane_fraction_{comp_source}': methane_fraction_mean,
+            f'methane_fraction_{comp_source}_sigma': methane_faction_sigma,
             f'kgh_gas_{time_ave}_mean': overpass_gas_mean,
             f'kgh_gas_{time_ave}_std': overpass_gas_std,
             f'kgh_ch4_{time_ave}_mean_{comp_source}': overpass_ch4_mean,
             f'kgh_ch4_{time_ave}_std_{comp_source}': overpass_ch4_std,
+            f'meter_uncertainty': meter_uncertainty,
+            f'meter_sigma_percent': meter_sigma_percent,
+            f'meter_sigma_kgh_gas': meter_sigma_kgh_gas,
+            f'kgh_ch4_sigma': sigma_ch4_kgh
         }
 
         overpass_gas_data.append(new_row)
@@ -805,7 +974,8 @@ def calc_average_gas_flow(operator, operator_meter, time_ave=60, comp_source='km
 
 # %% Function to import Philippine's meter data, select the FlightRadar columns, and with abrename columns to be more
 # brief and machine-readable
-def make_operator_meter_dataset(operator, operator_meter_raw, timekeeper='flightradar', time_ave=60, gas_comp_source='km'):
+def make_operator_meter_dataset(operator, operator_meter_raw, timekeeper='flightradar', time_ave=60,
+                                gas_comp_source='km'):
     """Function to make a clean dataset for each overpass for a given operator. Input is the full name of operator
     and the operator meter file. Also include the desired timekeeper metric for when the oeprator was overhead: this
     can be one of three options:
@@ -921,7 +1091,8 @@ def find_missing_data(operator, meter_raw, time_ave=60, gas_comp_source='km'):
 
 
 # %%
-def classify_histogram_data(operator, stage, threshold_lower, threshold_upper, n_bins, strict_discard=False, time_ave=60, gas_comp_source='km'):
+def classify_histogram_data(operator, stage, threshold_lower, threshold_upper, n_bins, strict_discard=False,
+                            time_ave=60, gas_comp_source='km'):
     # Load operator overpass data
     op_reported = load_overpass_summary(operator=operator, stage=stage, strict_discard=strict_discard,
                                         time_ave=time_ave, gas_comp_source=gas_comp_source)
@@ -988,11 +1159,13 @@ def classify_histogram_data(operator, stage, threshold_lower, threshold_upper, n
         else:
             # Make a subset of the missing non-zero values
             missing_non_zero = missing.query(f'kgh_ch4_{time_ave}_mean_{gas_comp_source} > 0')
-            count_missing = make_histogram_bins(missing_non_zero, threshold_lower, threshold_upper, n_bins).n_data_points
+            count_missing = make_histogram_bins(missing_non_zero, threshold_lower, threshold_upper,
+                                                n_bins).n_data_points
 
             # Make a subset of the missing zero values
             missing_zero = missing.query(f'kgh_ch4_{time_ave}_mean_{gas_comp_source} == 0')
-            count_missing_zero = make_histogram_bins(missing_zero, threshold_lower, threshold_upper, n_bins).n_data_points
+            count_missing_zero = make_histogram_bins(missing_zero, threshold_lower, threshold_upper,
+                                                     n_bins).n_data_points
 
     # Count total measurements reported by operator
     total_reported = op_reported.max()['overpass_id']
@@ -1053,11 +1226,13 @@ def make_overpass_error_df(operator, stage):
 
     ########## Load overpass summary data ##########
     strict_discard = False
-    op_lax = load_overpass_summary(operator=operator, stage=stage, strict_discard=strict_discard, time_ave=60, gas_comp_source='km')
+    op_lax = load_overpass_summary(operator=operator, stage=stage, strict_discard=strict_discard, time_ave=60,
+                                   gas_comp_source='km')
 
     # Set strict_discard to True
     strict_discard = True
-    op_strict = load_overpass_summary(operator=operator, stage=stage, strict_discard=strict_discard, time_ave=60, gas_comp_source='km')
+    op_strict = load_overpass_summary(operator=operator, stage=stage, strict_discard=strict_discard, time_ave=60,
+                                      gas_comp_source='km')
 
     ########## Make dataframe for summarizing results with strict and lax QC  ##########
 
@@ -1179,7 +1354,8 @@ def calc_daily_altitude(operator):
     op_days = load_operator_flight_days(operator)
 
     # Load overpass summary, stage and discard don't matter here because we only care about the altitude column
-    op_overpasses = load_overpass_summary(operator=operator, stage=1, strict_discard=False, time_ave=60, gas_comp_source='km')
+    op_overpasses = load_overpass_summary(operator=operator, stage=1, strict_discard=False, time_ave=60,
+                                          gas_comp_source='km')
 
     # Set overpass_datetime to index for easier filtering
     op_datetime_index = op_overpasses.set_index('overpass_datetime')
