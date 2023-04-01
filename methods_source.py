@@ -957,7 +957,7 @@ def calc_average_gas_flow_all_overpasses(operator, operator_meter, time_ave=60, 
         ########### Combine Uncertainties ###########
 
         if overpass_gas_mean == 0:
-            sigma_ch4_kgh = 0  # TODO check if this is ok
+            sigma_ch4_kgh = 0
 
         else:
             # First, combine the uncertainties associated with meter reading and gas flow variability using
@@ -1406,3 +1406,74 @@ def calc_daily_altitude(operator):
     op_ab = abbreviate_op_name(operator)
     op_daily_altitude.to_csv(pathlib.PurePath('03_results', 'daily_altitude', f'{op_ab}_altitude_feet.csv'))
     return op_daily_altitude
+
+
+#%%
+#TODO adjust code so that we use this to calculate the release rate of a given time period???
+def calc_average_release(start_t, stop_t):
+    """ Calculate the average flow rate and associated uncertainty given a start and stop time.
+    Inputs:
+      - start_t, stop_t are datetime objects
+
+    Outputs:
+      - Dictionary containing keys for "ch4_kgh_mean and ch4_kgh_sigma
+      - ch4_kgh_mean is the mean methane release rate over the period
+      - ch4_kgh_sigma is the sigma value that combines uncertainty associated with: 1) variability of flow rate over the time period being analyzed 2) meter reading 3) variability in gas composition"""
+
+    if start_t.date() != stop_t.date():
+        print(
+            'Do not attempt to calculate average flow across multiple dates. Please consider a new start or end time.')
+    else:
+        # Load data
+        file_name = start_t.strftime('%m_%d')
+        file_path = pathlib.PurePath('02_meter_data', 'daily_meter_data', 'whole_gas_clean', f'{file_name}.csv')
+
+        # Select data for averaging
+        meter_data = pd.read_csv(file_path, index_col=0, parse_dates=['datetime_utc'])
+        time_ave_mask = (meter_data['datetime_utc'] > start_t) & (meter_data['datetime_utc'] <= stop_t)
+        average_period = meter_data.loc[time_ave_mask].copy()
+        length_before_drop_na = len(average_period)
+
+        # Drop rows with NA values
+        average_period.dropna(axis='index', inplace=True, thresh=7)
+        length_after_drop_na = len(average_period)
+        print(f'Number of rows that were NA in the average period: {length_before_drop_na - length_after_drop_na}')
+
+        # Calculate mean and standard deviation for gas flow rate and ch4 flow rate
+        ch4_kgh_mean = average_period['methane_kgh'].mean()
+        gas_kgh_mean = average_period['whole_gas_kgh'].mean()
+        gas_kgh_sigma = average_period['whole_gas_kgh'].std()
+        print(f'gas std: {gas_kgh_sigma}')
+
+        # Calculate the mean methane fraction in case average_period straddles a period when the truck was changed
+        methane_fraction_mean = average_period[f'fraction_methane'].mean()
+        methane_fraction_sigma = average_period[f'fraction_methane_sigma'].mean()
+        print(f'methane fraction sigma: {methane_fraction_sigma}')
+
+        # Calculate the meter reading uncertainty for the mean gas flow rate
+        meter_sigma = average_period['meter_sigma'].mean()
+        print(f'meter sigma gas: {meter_sigma}')
+
+        # Combine sigma values
+
+        if ch4_kgh_mean == 0:
+            sigma_kgh_ch4 = 0
+        else:
+            # Combine uncertainties associated with variability in gas flow rate and meter uncertainty
+            gas_sigma = sum_of_quadrature(gas_kgh_sigma, meter_sigma)
+
+            # Combine uncertainty associated with gas flow rate (flow variability and meter reading) with the uncertainty associated with variability in gas composition.
+            # Because we multiply gas composition by gas flow rate, use sum of quadrature on the relative uncertainty values:
+
+            relative_gas_sigma = gas_sigma / gas_kgh_mean
+            relative_gas_comp_sigma = methane_fraction_sigma / methane_fraction_mean
+
+            ch4_kgh_sigma = sum_of_quadrature(relative_gas_sigma, relative_gas_comp_sigma) * ch4_kgh_mean
+
+    results_summary = {
+        'ch4_kgh_mean': ch4_kgh_mean,
+        'ch4_kgh_sigma': ch4_kgh_sigma,
+    }
+    return results_summary
+
+

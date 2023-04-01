@@ -1,4 +1,4 @@
-,datetime_utc,flow_rate,meter,qc_flag,meter_sigma_kgh_gas,methane_fraction_km,gas_comp_sigma_km,kgh_ch4_km,combined_uncertainty_kgh_ch4,CI95_upper,CI95_lower
+,datetime_utc,flow_rate,meter,qc_flag,meter_sigma_kgh_gas,methane_fraction_km,gas_comp_sigma_km,kgh_ch4_km,combined_uncertainty_kgh_ch4_km,CI95_upper_km,CI95_lower_km
 3118,2022-10-29 16:23:02,0.0,None,0,0.0,0.953323875,0.0046103061607482,0.0,0.0,0.0,0.0
 3119,2022-10-29 16:23:03,0.0,None,0,0.0,0.953323875,0.0046103061607482,0.0,0.0,0.0,0.0
 3120,2022-10-29 16:23:04,0.0,None,0,0.0,0.953323875,0.0046103061607482,0.0,0.0,0.0,0.0
