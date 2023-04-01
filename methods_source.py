@@ -420,6 +420,30 @@ def load_flight_days(operator='all'):
         ],
     }
 
+    # TODO add "all_days" to generate meter data for all days using start and end times for each day
+
+    # all_days = {
+    #     "date": ['10_10', '10_11', '10_12', '10_13', '10_14', '10_17', '10_18', '10_19', '10_24', '10_25',
+    #              '10_26', '10_27', '10_28', '10_29', '10_30', '10_31', '11_01', '11_02', '11_03', '11_04',
+    #              '11_07', '11_08', '11_10', '11_11', '11_14', '11_15', '11_16', '11_17', '11_18', '11_21',
+    #              '11_22', '11_23', '11_28', '11_29', '11_30']
+    #     "start_time": [
+    #         datetime.datetime(2022, 10, 10, 16, 59, 00),
+    #         datetime.datetime(2022, 10, 11, 17, 14, 13),
+    #         datetime.datetime(2022, 10, 12, 17, 13, 16),
+    #         datetime.datetime(2022, 10, 13, 20, 45, 00),
+    #         datetime.datetime(2022, 10, 14, 16, 22, 30),
+    #
+    #     ],
+    #     "end_time": [
+    #         datetime.datetime(2022, 10, 10, 21, 30, 14),
+    #         datetime.datetime(2022, 10, 11, 21, 16, 36),
+    #         datetime.datetime(2022, 10, 12, 21, 15, 23),
+    #         datetime.datetime(2022, 10, 13, 21, 42, 35),
+    #         datetime.datetime(2022, 10, 14, 16, 50, 13),
+    #     ]
+    # }
+
     # Convert dictionaries to pandas dataframes
 
     cm_flight_days = pd.DataFrame.from_dict(cm_flight_days)
@@ -589,9 +613,9 @@ def generate_daily_releases(gas_comp_sources=['km']):
                     upper_bound_95.append(upper_bound)
                     lower_bound_95.append(lower_bound)
 
-                date_meter['combined_uncertainty_kgh_ch4'] = combined_uncertainty
-                date_meter['CI95_upper'] = upper_bound_95
-                date_meter['CI95_lower'] = lower_bound_95
+                date_meter[f'combined_uncertainty_kgh_ch4_{source}'] = combined_uncertainty
+                date_meter[f'CI95_upper_{source}'] = upper_bound_95
+                date_meter[f'CI95_lower_{source}'] = lower_bound_95
 
             # Save the test_period dataframe
             op_ab = abbreviate_op_name(operator)
@@ -886,7 +910,7 @@ def power_fit(x_data, y_data):
 
 
 # %%
-def calc_average_gas_flow(operator, operator_meter, time_ave=60, comp_source='km'):
+def calc_average_gas_flow_all_overpasses(operator, operator_meter, time_ave=60, comp_source='km'):
     """Calculate average gas flow over the input time period (time_ave) for each operator overpass.
     Specify gas composition source. Output is a dataframe with the following columns (using default values):
        - overpass_id
@@ -974,7 +998,7 @@ def calc_average_gas_flow(operator, operator_meter, time_ave=60, comp_source='km
 
 # %% Function to import Philippine's meter data, select the FlightRadar columns, and with abrename columns to be more
 # brief and machine-readable
-def make_operator_meter_dataset(operator, operator_meter_raw, timekeeper='flightradar', time_ave=60,
+def make_operator_meter_dataset(operator, operator_summary, timekeeper='flightradar', time_ave=60,
                                 gas_comp_source='km'):
     """Function to make a clean dataset for each overpass for a given operator. Input is the full name of operator
     and the operator meter file. Also include the desired timekeeper metric for when the oeprator was overhead: this
@@ -983,14 +1007,21 @@ def make_operator_meter_dataset(operator, operator_meter_raw, timekeeper='flight
       - Stanford: Stanford ground team visual observation of when the airplane was overhead
       - team: participating operator's report of when they were over the source """
 
-    # This function is not meant to clean Scientific Aviation data
+    #TODO finish making this code for SciAV
+    # # This function is not meant to clean Scientific Aviation data
     if operator == "Scientific Aviation":
         pass
+    #     overpass_id = 'overpass_id'
+    #     start_t = operator_summary['start_using_sciav']
+    #     end_t = operator_summary['end_using_sciav']
+    #     operator_meter = operator_summary
+
     else:
         timekeeper = check_timekeep_capitalization(timekeeper)
         overpass_id = 'PerformerOverpassID'
 
-        operator_meter = clean_meter_column_names(operator, operator_meter_raw, overpass_id, timekeeper)
+        # Load summary file that aligns timestamps
+        operator_meter = clean_meter_column_names(operator, operator_summary, overpass_id, timekeeper)
 
         # Drop rows with nan to remove rows with missing values. This is because for some operators, we missed overpasses
         # and timestamps have nan values, which causes issues with downstream code
@@ -1003,7 +1034,7 @@ def make_operator_meter_dataset(operator, operator_meter_raw, timekeeper='flight
         operator_meter = operator_meter.drop(columns=['time', 'date'])
 
         # Calculate whole gas average for datetime
-        gas_flow_rates = calc_average_gas_flow(operator, operator_meter, time_ave, gas_comp_source)
+        gas_flow_rates = calc_average_gas_flow_all_overpasses(operator, operator_meter, time_ave, gas_comp_source)
         operator_meter = operator_meter.merge(gas_flow_rates, on='overpass_id')
 
         op_ab = abbreviate_op_name(operator)
@@ -1081,7 +1112,7 @@ def find_missing_data(operator, meter_raw, time_ave=60, gas_comp_source='km'):
         operator_missing = operator_missing.drop(columns=['time', 'date'])
 
         # Calculate whole gas average for given overpass id
-        gas_flow_rates = calc_average_gas_flow(operator, operator_missing, time_ave, gas_comp_source)
+        gas_flow_rates = calc_average_gas_flow_all_overpasses(operator, operator_missing, time_ave, gas_comp_source)
         operator_missing = operator_missing.merge(gas_flow_rates, on='overpass_id')
 
         # make a column with the desired release_rate_kgh value (so this dataframe can be ready by files that read an overpass summary file)
