@@ -1,6 +1,6 @@
-,overpass_id,overpass_datetime,zero_release,non_zero_release,operator_kept,stanford_kept,phase_iii,pass_all_qc,altitude_feet,fail_all_qc,release_rate_kgh,kgh_ch4_sigma,operator_detected,operator_quantification,operator_lower,operator_upper,qc_summary
+,overpass_id,overpass_datetime,zero_release,non_zero_release,operator_kept,stanford_kept,phase_iii,pass_all_qc,altitude_feet,fail_all_qc,release_rate_kgh,ch4_kgh_sigma,operator_detected,operator_quantification,operator_lower,operator_upper,qc_summary
 0,1.0,2022-10-25 17:15:08,False,True,True,False,0,False,41623.97797,False,205.23387501000005,0.6705249334767854,True,177,121,232,fail_stanford
-1,2.0,2022-10-25 17:32:52,False,True,True,True,0,True,41630.46886,False,97.04010463392,0.3173453650486967,True,61,18,105,pass_all
+1,2.0,2022-10-25 17:32:52,False,True,True,True,0,True,41630.46886,False,97.04010463392,0.3173453650486966,True,61,18,105,pass_all
 2,3.0,2022-10-25 17:50:42,False,True,True,False,0,False,42633.14464,False,987.1340896824,26.02085367385715,True,855,578,1133,fail_stanford
 3,4.0,2022-10-25 18:09:11,False,True,True,True,0,True,42635.03948,False,982.4968482504,27.562196202649133,True,908,662,1155,pass_all
 4,5.0,2022-10-25 18:27:57,True,False,True,False,0,False,43640.08684,False,0.0,0.0,False,0,-100,100,fail_stanford
@@ -22,4 +22,4 @@
 20,21.0,2022-10-29 19:59:57,False,True,True,True,0,True,44608.46226,False,585.3206487838501,4.993826244134245,True,579,397,761,pass_all
 21,22.0,2022-10-29 20:21:33,False,True,True,False,0,False,44617.51964,False,199.2621738348675,17.4525203760053,True,252,147,357,fail_stanford
 22,23.0,2022-10-29 20:42:37,False,True,True,False,0,False,44617.51964,False,493.5212795646,3.316718346730041,True,584,328,839,fail_stanford
-23,24.0,2022-10-29 21:02:19,False,True,True,True,0,True,44627.8691,False,168.86165228935704,0.8513419099840044,True,112,-21,244,pass_all
+23,24.0,2022-10-29 21:02:19,False,True,True,True,0,True,44627.8691,False,168.86279184012,0.8511460509525397,True,112,-21,244,pass_all

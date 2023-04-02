@@ -117,8 +117,9 @@ def generate_overpass_summary(operator, stage, operator_report, operator_meter, 
 
     # Rename columns to be machine-readable
     # Make column with easier name for coding for now.
-    combined_df['release_rate_kgh'] = combined_df[
-        f'ch4_kgh_{time_ave}_mean_{gas_comp_source}']
+
+    combined_df['release_rate_kgh'] = combined_df[f'ch4_kgh_{time_ave}_mean_{gas_comp_source}']
+
     # combined_df['release_kgh_stdev'] = combined_df[f'kgh_ch4_{time_ave}_std_{gas_comp_source}'] # remove (this is sigma of the meter variability)
 
     # combined_df['time_utc'] = combined_df['Time (UTC) - from Stanford']
@@ -1297,7 +1298,7 @@ def generate_all_overpass_reports(strict_discard=False, timekeeper='flightradar'
     """Generate all overpass reports"""
     check_timekeep_capitalization(timekeeper)
 
-    operators = ['Carbon Mapper', 'GHGSat', 'Kairos', 'Kairos LS23', 'Kairos LS25', 'Methane Air', 'Scientific Aviation']
+    operators = ['Carbon Mapper', 'GHGSat', 'Kairos', 'Kairos LS23', 'Kairos LS25', 'Methane Air']
 
     # Load clean operator data
     # format for naming: [operator]_stage

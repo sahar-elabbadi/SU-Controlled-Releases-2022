@@ -64,7 +64,7 @@ def plot_parity(operator, stage, strict_discard=False, time_ave=60, gas_comp_sou
     # Select x data
     x_data = operator_plot['release_rate_kgh']
     y_data = operator_plot['operator_quantification']
-    x_error = (2*operator_plot['kgh_ch4_sigma'])
+    x_error = (2*operator_plot['ch4_kgh_sigma'])
     y_error = operator_plot['operator_upper'] - operator_plot['operator_quantification']
 
     # Fit linear regression via least squares with numpy.polyfit
