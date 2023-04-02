@@ -118,7 +118,7 @@ def generate_overpass_summary(operator, stage, operator_report, operator_meter, 
     # Rename columns to be machine-readable
     # Make column with easier name for coding for now.
     combined_df['release_rate_kgh'] = combined_df[
-        f'kgh_ch4_{time_ave}_mean_{gas_comp_source}']
+        f'ch4_kgh_{time_ave}_mean_{gas_comp_source}']
     # combined_df['release_kgh_stdev'] = combined_df[f'kgh_ch4_{time_ave}_std_{gas_comp_source}'] # remove (this is sigma of the meter variability)
 
     # combined_df['time_utc'] = combined_df['Time (UTC) - from Stanford']
@@ -145,7 +145,7 @@ def generate_overpass_summary(operator, stage, operator_report, operator_meter, 
 
     # Include meter and operator results
     operator_qc['release_rate_kgh'] = combined_df.release_rate_kgh
-    operator_qc['kgh_ch4_sigma'] = combined_df.kgh_ch4_sigma
+    operator_qc['ch4_kgh_sigma'] = combined_df.ch4_kgh_sigma
     operator_qc['operator_detected'] = combined_df.Detected
     operator_qc['operator_quantification'] = combined_df.FacilityEmissionRate
     operator_qc['operator_lower'] = combined_df.FacilityEmissionRateLower
@@ -318,18 +318,13 @@ def make_qc_table(strict_discard=False, time_ave=60, gas_comp_source='km'):
 
 # %% Load daily meter data
 
-def load_daily_meter_data(date):
-    """Load daily meter file saved in format mm_dd.xlsx"""
+def load_daily_meter_data(date, gas_source='km'):
+    """Load daily meter file saved in format mm_dd.csv"""
 
     # File location
-    date_path = pathlib.PurePath('02_meter_data', 'daily_meter_data', f'{date}.xlsx')
-
-    # Import data and rename columns to machine readable format
-    date_meter = pd.read_excel(date_path, header=None, names=['datetime_utc', 'flow_rate', 'meter', 'qc_flag'],
-                               skiprows=1)
-    date_meter.loc[date_meter['meter'] == 'Baby Coriolis', 'meter'] = 'bc'
-    date_meter.loc[date_meter['meter'] == 'Mama Coriolis', 'meter'] = 'mc'
-    date_meter.loc[date_meter['meter'] == 'Papa Coriolis', 'meter'] = 'pc'
+    date_path = pathlib.PurePath('02_meter_data', 'daily_meter_data', 'whole_gas_clean', f'{gas_source}',
+                                 f'{date}.csv')
+    date_meter = pd.read_csv(date_path, parse_dates=['datetime_utc'])
 
     return date_meter
 
@@ -560,67 +555,30 @@ def generate_daily_releases(gas_comp_sources=['km']):
         dates = operator_flight_days.date
 
         for i in range(len(dates)):
-            day = dates[i]
-            date_meter = load_daily_meter_data(day)
-
-            print(f'Operator: {operator}')
-            print(f'Flight Day: {day}')
-
-            # Select start and end time on the day in question
-            start_t = operator_flight_days.start_time[i]
-            end_t = operator_flight_days.end_time[i]
-
-            # test_period = date_meter[(date_meter.datetime_utc > start_t) & (date_meter.datetime_utc <= end_t)]
-            date_meter = date_meter.query('datetime_utc > @start_t & datetime_utc <= @end_t').copy()
-
-            # gas_comp_sources = ['km', 'su_raw', 'su_normalized']
             for source in gas_comp_sources:
+                day = dates[i]
+                date_meter = load_daily_meter_data(day,
+                                                   source)  # default value here is 'km' if no other gas source is specified
 
-                # Determine uncertainty associated with meter reading
-                meter_uncertainty = date_meter.apply(lambda x: calc_meter_uncertainty(x['meter'], x['flow_rate']),
-                                                                                      axis=1)
-                date_meter['meter_sigma_kgh_gas'] = meter_uncertainty / 100 / 1.96 * date_meter['flow_rate']
+                print(f'Operator: {operator}')
+                print(f'Flight Day: {day}')
 
-                print(f'Assigning {source} methane mole fraction for {operator} on {day}')
+                # Select start and end time on the day in question
+                start_t = operator_flight_days.start_time[i]
+                end_t = operator_flight_days.end_time[i]
 
-                # Determine gas composition mean value and sigma for each datetime
-                gas_comp_values = date_meter.apply(lambda x: select_methane_fraction(x['datetime_utc'], source),
-                                                   axis=1, result_type='expand')
-                date_meter[f'methane_fraction_{source}'] = gas_comp_values[0]
-                date_meter[f'gas_comp_sigma_{source}'] = gas_comp_values[1]
+                flight_mask = (date_meter['datetime_utc'] > start_t) & (date_meter['datetime_utc'] <= end_t)
+                date_meter = date_meter.loc[flight_mask].copy()
 
-                # Calculate kgh CH4 using the methane mole fraction selected
-                date_meter[f'kgh_ch4_{source}'] = date_meter['flow_rate'] * date_meter[f'methane_fraction_{source}']
+                # Calculate the 95% confidence interval for each secondly measurement (airplane operators may also want to easily so this)
+                date_meter['CI95_upper'] = date_meter['methane_kgh'] + 1.96 * date_meter['methane_kgh_sigma']
+                date_meter['CI95_lower'] = date_meter['methane_kgh'] - 1.96 * date_meter['methane_kgh_sigma']
+                date_meter['gas_comp_source'] = source
 
-                combined_uncertainty = []
-                upper_bound_95 = []
-                lower_bound_95 = []
-
-                for index, row in date_meter.iterrows():
-                    if row[f'kgh_ch4_{source}'] == 0:
-                        combined_sigma_kgh_ch4 = 0
-                    else:
-                        # Calculate the combined error using sum of quadrature on relative uncertainty
-                        # Meter reading relative uncertainty:
-                        meter_relative_sigma = row['meter_sigma_kgh_gas'] / row['flow_rate']
-                        gas_comp_relative_sigma = row[f'gas_comp_sigma_{source}'] / row[f'methane_fraction_{source}']
-                        combined_sigma_kgh_ch4 = row[f'kgh_ch4_{source}'] * sum_of_quadrature(meter_relative_sigma,
-                                                                                              gas_comp_relative_sigma)
-                    upper_bound = row[f'kgh_ch4_{source}'] + (1.96 * combined_sigma_kgh_ch4)
-                    lower_bound = row[f'kgh_ch4_{source}'] - (1.96 * combined_sigma_kgh_ch4)
-
-                    combined_uncertainty.append(combined_sigma_kgh_ch4)
-                    upper_bound_95.append(upper_bound)
-                    lower_bound_95.append(lower_bound)
-
-                date_meter[f'combined_uncertainty_kgh_ch4_{source}'] = combined_uncertainty
-                date_meter[f'CI95_upper_{source}'] = upper_bound_95
-                date_meter[f'CI95_lower_{source}'] = lower_bound_95
-
-            # Save the test_period dataframe
-            op_ab = abbreviate_op_name(operator)
-            save_path = pathlib.PurePath('03_results', 'daily_releases', f'{op_ab}_{day}.csv')
-            date_meter.to_csv(save_path)
+                # Save the test_period dataframe
+                op_ab = abbreviate_op_name(operator)
+                save_path = pathlib.PurePath('03_results', 'daily_releases', f'{op_ab}_{day}_{source}.csv')
+                date_meter.to_csv(save_path)
 
     return
 
@@ -722,12 +680,16 @@ def load_clean_operator_reports():
 
 def load_meter_data(timekeeper='flightradar', gas_comp_source='km', time_ave=60):
     """Input timekeeper. Must be string, all lower case: flightradar, operator, stanford"""
-    operators = ['Carbon Mapper', 'GHGSat', 'Kairos', 'Methane Air']
+    operators = ['Carbon Mapper', 'GHGSat', 'Kairos', 'Methane Air', 'Scientific Aviation']
     meter_files = {}
     for operator in operators:
         op_ab = abbreviate_op_name(operator)
-        op_path = pathlib.PurePath('02_meter_data', 'operator_meter_data', f'{timekeeper}_timestamp',
-                                   f'{op_ab}_{time_ave}s_{gas_comp_source}_meter.csv')
+        if operator == 'Scientific Aviation':
+            op_path = pathlib.PurePath('02_meter_data', 'operator_meter_data', f'sciav_meter_{gas_comp_source}.csv')
+        else:
+            op_path = pathlib.PurePath('02_meter_data', 'operator_meter_data', f'{timekeeper}_timestamp',
+                                       f'{op_ab}_{time_ave}s_{gas_comp_source}_meter.csv')
+
         op_meter = pd.read_csv(op_path, index_col=0, parse_dates=['datetime_utc'])
         meter_files[f'{op_ab}_meter'] = op_meter
 
@@ -824,7 +786,7 @@ def check_timekeep_capitalization(timekeeper):
 
 
 # %%
-def clean_meter_column_names(operator, operator_meter_raw, overpass_id, timekeeper='flightradar'):
+def clean_summary_file_colnames(operator, operator_meter_raw, overpass_id, timekeeper='flightradar'):
     timekeeper = check_timekeep_capitalization(timekeeper)
 
     # Relevant columns from Philippine generated meter dataset:
@@ -931,65 +893,108 @@ def calc_average_gas_flow_all_overpasses(operator, operator_meter, time_ave=60, 
     # Iterate through each row in the operator_meter dataframe
     for index, row in operator_meter.iterrows():
         overpass_datetime = row.datetime_utc
-        flight_date_code = overpass_datetime.strftime('%m_%d')
-        flight_data = pd.read_csv(pathlib.PurePath('03_results', 'daily_releases', f'{op_ab}_{flight_date_code}.csv'),
-                                  parse_dates=['datetime_utc'], index_col=0)
-        # Create the time period for averaging
         start_t = overpass_datetime - delta_t
-        select_t_mask = (flight_data['datetime_utc'] > start_t) & (flight_data['datetime_utc'] <= overpass_datetime)
-        overpass_period = flight_data.loc[select_t_mask].copy()
 
-        # Calculate mean and standard deviation for gas flow rate and ch4 flow rate
-        overpass_gas_mean = overpass_period['flow_rate'].mean()
-        overpass_gas_std = overpass_period['flow_rate'].std()
-        overpass_ch4_mean = overpass_period[f'kgh_ch4_{comp_source}'].mean()
-        overpass_ch4_std = overpass_period[f'kgh_ch4_{comp_source}'].std()
+        # results_summary = {
+        #     f'gas_kgh_mean': gas_kgh_mean,  # mean gas flow, kgh whole gas
+        #     f'gas_kgh_sigma': gas_kgh_sigma,  # std of gas flow (physical variability in gas), kgh whole gas
+        #     f'meter_sigma': meter_sigma,  # meter sigma as kgh gas
+        #     f'ch4_fraction_{gas_comp_source}': methane_fraction_mean,
+        #     # mean value for mole fraction methane (units: fraction methane)
+        #     f'ch4_fraction_{gas_comp_source}_sigma': methane_fraction_sigma,
+        #     # std of the methane mole fraction (units: fraction methane)
+        #     'ch4_kgh_mean': ch4_kgh_mean,  # mean methane flow rate (combined gas flow and methane fraction)
+        #     'ch4_kgh_sigma': ch4_kgh_sigma,
+        #     # total uncertainty in methane flow rate (combined all three sources of uncertainty)
+        # }
 
-        # Calculate the mean methane fraction, on the off chance that the truck changed during the overpass period
-        methane_fraction_mean = overpass_period[f'methane_fraction_{comp_source}'].mean()
-        methane_faction_sigma = overpass_period[f'gas_comp_sigma_{comp_source}'].mean()
-
-        # Calculate the uncertainty associated with the meter reading
-        meter_uncertainty = calc_meter_uncertainty(row.meter, overpass_gas_mean)
-        meter_sigma_percent = meter_uncertainty / 1.96  # convert from 95% CI bound to sigma
-        meter_sigma_kgh_gas = meter_sigma_percent / 100 * overpass_gas_mean
-
-        ########### Combine Uncertainties ###########
-
-        if overpass_gas_mean == 0:
-            sigma_ch4_kgh = 0
-
-        else:
-            # First, combine the uncertainties associated with meter reading and gas flow variability using
-            # sum of quadrature:
-            sigma_gas = sum_of_quadrature(overpass_gas_std, meter_sigma_kgh_gas)
-
-            # Next, calculate the uncertainty inclusive of gas composition.
-            # Because we are multiplying gas composition by the whole gas flow rate, we use sum of quadrature
-            # on the relative uncertainty: sigma / mean
-
-            relative_gas_sigma = sigma_gas / overpass_gas_mean
-
-            # Relative sigma value for gas compositional analysis:
-            relative_comp_sigma = methane_faction_sigma / methane_fraction_mean
-
-            # Combine uncertainties and multiply by the methane flow rate to convert from relative uncertainty to sigma value
-            sigma_ch4_kgh = sum_of_quadrature(relative_gas_sigma, relative_comp_sigma) * overpass_ch4_mean
+        release_rate_summary = calc_average_release(start_t, overpass_datetime, comp_source)
 
         new_row = {
             'overpass_id': row['overpass_id'],
-            f'methane_fraction_{comp_source}': methane_fraction_mean,
-            f'methane_fraction_{comp_source}_sigma': methane_faction_sigma,
-            f'kgh_gas_{time_ave}_mean': overpass_gas_mean,
-            f'kgh_gas_{time_ave}_std': overpass_gas_std,
-            f'kgh_ch4_{time_ave}_mean_{comp_source}': overpass_ch4_mean,
-            f'kgh_ch4_{time_ave}_std_{comp_source}': overpass_ch4_std,
-            f'meter_uncertainty': meter_uncertainty,
-            f'meter_sigma_percent': meter_sigma_percent,
-            f'meter_sigma_kgh_gas': meter_sigma_kgh_gas,
-            f'kgh_ch4_sigma': sigma_ch4_kgh
+
+            # mean gas flow, kgh whole gas:
+            f'gas_kgh_{time_ave}_mean': release_rate_summary['gas_kgh_mean'],
+
+            # variablity (as sigma) in gas flow rate, kgh whole gas
+            f'gas_kgh_{time_ave}_std': release_rate_summary['gas_kgh_sigma'],
+
+            # meter sigma as kgh gas
+            f'meter_sigma': release_rate_summary['meter_sigma'],
+
+            # mean value for mole fraction methane (units: fraction methane) over delta_t
+            f'methane_fraction_{comp_source}': release_rate_summary[f'ch4_fraction_{comp_source}'],
+
+            # std of the methane mole fraction (units: fraction methane)
+            f'methane_fraction_{comp_source}_sigma': release_rate_summary[f'ch4_fraction_{comp_source}_sigma'],
+
+            # mean methane flow rate (combined gas flow and methane fraction)
+            f'ch4_kgh_{time_ave}_mean_{comp_source}': release_rate_summary['ch4_kgh_mean'],
+
+            # total uncertainty in methane flow rate (combined all three sources of uncertainty)
+            f'ch4_kgh_sigma': release_rate_summary['ch4_kgh_sigma']
         }
 
+        # flight_date_code = overpass_datetime.strftime('%m_%d')
+        # flight_data = pd.read_csv(pathlib.PurePath('03_results', 'daily_releases',
+        #                                            f'{op_ab}_{flight_date_code}_{comp_source}.csv'),
+        #                           parse_dates=['datetime_utc'], index_col=0)
+        # Create the time period for averaging
+        # start_t = overpass_datetime - delta_t
+        # select_t_mask = (flight_data['datetime_utc'] > start_t) & (flight_data['datetime_utc'] <= overpass_datetime)
+        # overpass_period = flight_data.loc[select_t_mask].copy()
+        #
+        # # Calculate mean and standard deviation for gas flow rate and ch4 flow rate
+        # overpass_gas_mean = overpass_period['flow_rate'].mean()
+        # overpass_gas_std = overpass_period['flow_rate'].std()
+        # overpass_ch4_mean = overpass_period[f'kgh_ch4_{comp_source}'].mean()
+        # overpass_ch4_std = overpass_period[f'kgh_ch4_{comp_source}'].std()
+        #
+        # # Calculate the mean methane fraction, on the off chance that the truck changed during the overpass period
+        # methane_fraction_mean = overpass_period[f'methane_fraction_{comp_source}'].mean()
+        # methane_faction_sigma = overpass_period[f'gas_comp_sigma_{comp_source}'].mean()
+        #
+        # # Calculate the uncertainty associated with the meter reading
+        # meter_uncertainty = calc_meter_uncertainty(row.meter, overpass_gas_mean)
+        # meter_sigma_percent = meter_uncertainty / 1.96  # convert from 95% CI bound to sigma
+        # meter_sigma_kgh_gas = meter_sigma_percent / 100 * overpass_gas_mean
+        #
+        # ########### Combine Uncertainties ###########
+        #
+        # if overpass_gas_mean == 0:
+        #     sigma_ch4_kgh = 0
+        #
+        # else:
+        #     # First, combine the uncertainties associated with meter reading and gas flow variability using
+        #     # sum of quadrature:
+        #     sigma_gas = sum_of_quadrature(overpass_gas_std, meter_sigma_kgh_gas)
+        #
+        #     # Next, calculate the uncertainty inclusive of gas composition.
+        #     # Because we are multiplying gas composition by the whole gas flow rate, we use sum of quadrature
+        #     # on the relative uncertainty: sigma / mean
+        #
+        #     relative_gas_sigma = sigma_gas / overpass_gas_mean
+        #
+        #     # Relative sigma value for gas compositional analysis:
+        #     relative_comp_sigma = methane_faction_sigma / methane_fraction_mean
+        #
+        #     # Combine uncertainties and multiply by the methane flow rate to convert from relative uncertainty to sigma value
+        #     sigma_ch4_kgh = sum_of_quadrature(relative_gas_sigma, relative_comp_sigma) * overpass_ch4_mean
+        #
+        # new_row = {
+        #     'overpass_id': row['overpass_id'],
+        #     f'methane_fraction_{comp_source}': methane_fraction_mean,
+        #     f'methane_fraction_{comp_source}_sigma': methane_faction_sigma,
+        #     f'kgh_gas_{time_ave}_mean': overpass_gas_mean,
+        #     f'kgh_gas_{time_ave}_std': overpass_gas_std,
+        #     f'kgh_ch4_{time_ave}_mean_{comp_source}': overpass_ch4_mean,
+        #     f'kgh_ch4_{time_ave}_std_{comp_source}': overpass_ch4_std,
+        #     f'meter_uncertainty': meter_uncertainty,
+        #     f'meter_sigma_percent': meter_sigma_percent,
+        #     f'meter_sigma_kgh_gas': meter_sigma_kgh_gas,
+        #     f'kgh_ch4_sigma': sigma_ch4_kgh
+        # }
+        #
         overpass_gas_data.append(new_row)
 
     overpass_gas_data = pd.DataFrame(overpass_gas_data)
@@ -1007,21 +1012,15 @@ def make_operator_meter_dataset(operator, operator_summary, timekeeper='flightra
       - Stanford: Stanford ground team visual observation of when the airplane was overhead
       - team: participating operator's report of when they were over the source """
 
-    #TODO finish making this code for SciAV
-    # # This function is not meant to clean Scientific Aviation data
     if operator == "Scientific Aviation":
-        pass
-    #     overpass_id = 'overpass_id'
-    #     start_t = operator_summary['start_using_sciav']
-    #     end_t = operator_summary['end_using_sciav']
-    #     operator_meter = operator_summary
+        operator_meter = make_sciav_meter(gas_comp_source)
 
     else:
         timekeeper = check_timekeep_capitalization(timekeeper)
         overpass_id = 'PerformerOverpassID'
 
         # Load summary file that aligns timestamps
-        operator_meter = clean_meter_column_names(operator, operator_summary, overpass_id, timekeeper)
+        operator_meter = clean_summary_file_colnames(operator, operator_summary, overpass_id, timekeeper)
 
         # Drop rows with nan to remove rows with missing values. This is because for some operators, we missed overpasses
         # and timestamps have nan values, which causes issues with downstream code
@@ -1099,7 +1098,8 @@ def find_missing_data(operator, meter_raw, time_ave=60, gas_comp_source='km'):
 
     operator_missing_raw = meter_raw.query(
         'PerformerOverpassID.isnull() == True & StanfordOverpassID.isnull() == False')
-    operator_missing = clean_meter_column_names(operator, operator_missing_raw, 'FlightradarOverpassID', 'flightradar')
+    operator_missing = clean_summary_file_colnames(operator, operator_missing_raw, 'FlightradarOverpassID',
+                                                   'flightradar')
 
     if operator_missing.empty:
         operator_missing['release_rate_kgh'] = None
@@ -1297,7 +1297,7 @@ def generate_all_overpass_reports(strict_discard=False, timekeeper='flightradar'
     """Generate all overpass reports"""
     check_timekeep_capitalization(timekeeper)
 
-    operators = ['Carbon Mapper', 'GHGSat', 'Kairos', 'Kairos LS23', 'Kairos LS25', 'Methane Air']
+    operators = ['Carbon Mapper', 'GHGSat', 'Kairos', 'Kairos LS23', 'Kairos LS25', 'Methane Air', 'Scientific Aviation']
 
     # Load clean operator data
     # format for naming: [operator]_stage
@@ -1335,7 +1335,7 @@ def generate_all_overpass_reports(strict_discard=False, timekeeper='flightradar'
     # }
 
     for operator in operators:
-        if operator == 'Methane Air':
+        if (operator == 'Methane Air') or (operator == 'Scientific Aviation'):
             stages = [1]  # Methane Air only did one stage
         else:
             stages = [1, 2, 3]
@@ -1408,9 +1408,9 @@ def calc_daily_altitude(operator):
     return op_daily_altitude
 
 
-#%%
-#TODO adjust code so that we use this to calculate the release rate of a given time period???
-def calc_average_release(start_t, stop_t):
+# %%
+# TODO adjust code so that we use this to calculate the release rate of a given time period???
+def calc_average_release(start_t, stop_t, gas_comp_source='km'):
     """ Calculate the average flow rate and associated uncertainty given a start and stop time.
     Inputs:
       - start_t, stop_t are datetime objects
@@ -1426,7 +1426,8 @@ def calc_average_release(start_t, stop_t):
     else:
         # Load data
         file_name = start_t.strftime('%m_%d')
-        file_path = pathlib.PurePath('02_meter_data', 'daily_meter_data', 'whole_gas_clean', f'{file_name}.csv')
+        file_path = pathlib.PurePath('02_meter_data', 'daily_meter_data', 'whole_gas_clean',
+                                     f'{gas_comp_source}', f'{file_name}.csv')
 
         # Select data for averaging
         meter_data = pd.read_csv(file_path, index_col=0, parse_dates=['datetime_utc'])
@@ -1437,27 +1438,29 @@ def calc_average_release(start_t, stop_t):
         # Drop rows with NA values
         average_period.dropna(axis='index', inplace=True, thresh=7)
         length_after_drop_na = len(average_period)
-        print(f'Number of rows that were NA in the average period: {length_before_drop_na - length_after_drop_na}')
+        dropped_rows = length_before_drop_na - length_after_drop_na
+        if dropped_rows > 0:
+            print(f'Number of rows that were NA in the average period ({start_t} to {stop_t}): {dropped_rows}')
 
         # Calculate mean and standard deviation for gas flow rate and ch4 flow rate
         ch4_kgh_mean = average_period['methane_kgh'].mean()
         gas_kgh_mean = average_period['whole_gas_kgh'].mean()
         gas_kgh_sigma = average_period['whole_gas_kgh'].std()
-        print(f'gas std: {gas_kgh_sigma}')
+        # print(f'gas std: {gas_kgh_sigma}')
 
         # Calculate the mean methane fraction in case average_period straddles a period when the truck was changed
         methane_fraction_mean = average_period[f'fraction_methane'].mean()
         methane_fraction_sigma = average_period[f'fraction_methane_sigma'].mean()
-        print(f'methane fraction sigma: {methane_fraction_sigma}')
+        # print(f'methane fraction sigma: {methane_fraction_sigma}')
 
         # Calculate the meter reading uncertainty for the mean gas flow rate
         meter_sigma = average_period['meter_sigma'].mean()
-        print(f'meter sigma gas: {meter_sigma}')
+        # print(f'meter sigma gas: {meter_sigma}')
 
         # Combine sigma values
 
         if ch4_kgh_mean == 0:
-            sigma_kgh_ch4 = 0
+            ch4_kgh_sigma = 0
         else:
             # Combine uncertainties associated with variability in gas flow rate and meter uncertainty
             gas_sigma = sum_of_quadrature(gas_kgh_sigma, meter_sigma)
@@ -1471,9 +1474,62 @@ def calc_average_release(start_t, stop_t):
             ch4_kgh_sigma = sum_of_quadrature(relative_gas_sigma, relative_gas_comp_sigma) * ch4_kgh_mean
 
     results_summary = {
-        'ch4_kgh_mean': ch4_kgh_mean,
+        f'gas_kgh_mean': gas_kgh_mean,  # mean gas flow, kgh whole gas
+        f'gas_kgh_sigma': gas_kgh_sigma,  # std of gas flow (physical variability in gas), kgh whole gas
+        f'meter_sigma': meter_sigma,  # meter sigma as kgh gas
+        f'ch4_fraction_{gas_comp_source}': methane_fraction_mean,
+        # mean value for mole fraction methane (units: fraction methane)
+        f'ch4_fraction_{gas_comp_source}_sigma': methane_fraction_sigma,
+        # std of the methane mole fraction (units: fraction methane)
+        'ch4_kgh_mean': ch4_kgh_mean,  # mean methane flow rate (combined gas flow and methane fraction)
         'ch4_kgh_sigma': ch4_kgh_sigma,
+        # total uncertainty in methane flow rate (combined all three sources of uncertainty)
     }
     return results_summary
 
 
+def make_sciav_meter(comp_source):
+    # Load the clean SciAv file which includes their reported start and end times for each measurement period
+    sciav_clean_path = pathlib.PurePath('01_clean_reports', 'sciav_1_clean.csv')
+    sciav = pd.read_csv(sciav_clean_path, parse_dates={'start_utc': ['DateOfSurvey', 'StartUTC'],
+                                                       'end_utc': ['DateOfSurvey', 'EndUTC']})
+
+    overpass_summary = []
+
+    for index, row in sciav.iterrows():
+        overpass_id = row['overpass_id']
+        start_t = row['start_utc']
+        end_t = row['end_utc']
+        release_rate_summary = calc_average_release(start_t, end_t, 'km')
+
+        new_row = {
+            'datetime_utc': row['start_utc'],
+            'overpass_id': row['overpass_id'],
+
+            # mean gas flow, kgh whole gas:
+            f'gas_kgh_mean': release_rate_summary['gas_kgh_mean'],
+
+            # variablity (as sigma) in gas flow rate, kgh whole gas
+            f'gas_kgh_std': release_rate_summary['gas_kgh_sigma'],
+
+            # meter sigma as kgh gas
+            f'meter_sigma': release_rate_summary['meter_sigma'],
+
+            # mean value for mole fraction methane (units: fraction methane) over delta_t
+            f'methane_fraction_{comp_source}': release_rate_summary[f'ch4_fraction_{comp_source}'],
+
+            # std of the methane mole fraction (units: fraction methane)
+            f'methane_fraction_{comp_source}_sigma': release_rate_summary[f'ch4_fraction_{comp_source}_sigma'],
+
+            # mean methane flow rate (combined gas flow and methane fraction)
+            f'ch4_kgh_mean_{comp_source}': release_rate_summary['ch4_kgh_mean'],
+
+            # total uncertainty in methane flow rate (combined all three sources of uncertainty)
+            f'ch4_kgh_sigma': release_rate_summary['ch4_kgh_sigma']
+        }
+
+        overpass_summary.append(new_row)
+
+    sciav_meter = pd.DataFrame(overpass_summary)
+    save_path = pathlib.PurePath('02_meter_data', 'operator_meter_data', f'sciav_meter_{comp_source}.csv')
+    sciav_meter.to_csv(save_path)
