@@ -183,8 +183,13 @@ def plot_detection_limit(operator, stage, n_bins, threshold, strict_discard=Fals
     # Load overpass summary for operator, stage, and discard criteria:
     operator_df = load_overpass_summary(operator, stage, strict_discard, time_ave, gas_comp_source)
 
+    # SciAV says
     # Apply QC filter
-    operator_df = operator_df[(operator_df.qc_summary == 'pass_all')]
+    if (operator == 'Carbon Mapper') or (operator == 'Scientific Aviation'):
+        # SciAV and Carbon Mapper apply their QC to quantification estimates only
+        operator_df = operator_df[(operator_df.stanford_kept == 1)]
+    else:
+        operator_df = operator_df[(operator_df.qc_summary == 'pass_all')]
 
     # Must be non-zero values
     operator_df = operator_df.query('non_zero_release == True')

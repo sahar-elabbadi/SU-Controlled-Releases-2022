@@ -1103,7 +1103,7 @@ def make_operator_meter_dataset(operator, timekeeper='flightradar', time_ave=60,
 
     if operator == "Scientific Aviation":
         print('Making SciAV operator meter dataset')
-        operator_meter = make_sciav_meter(gas_comp_source)
+        operator_meter = make_sciav_operator_meter(gas_comp_source)
         operator_meter.to_csv(pathlib.PurePath('02_meter_data', 'operator_meter_data',
                                                f'sciav_{gas_comp_source}_meter.csv'))
 
@@ -1609,7 +1609,7 @@ def calc_average_release(start_t, stop_t, gas_comp_source='km'):
     return results_summary
 
 
-def make_sciav_meter(comp_source):
+def make_sciav_operator_meter(comp_source):
     # Load the clean SciAv file which includes their reported start and end times for each measurement period
     sciav_clean_path = pathlib.PurePath('01_clean_reports', 'sciav_1_clean.csv')
     sciav = pd.read_csv(sciav_clean_path, parse_dates={'start_utc': ['DateOfSurvey', 'StartUTC'],
