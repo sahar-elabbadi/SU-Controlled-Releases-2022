@@ -91,6 +91,23 @@ def load_summary_files(input_operator='all'):
         return all_summary[abbreviate_op_name(input_operator)]
 
 
+#%%
+def overpass_summary_save_path(op_ab, stage, gas_comp_source='km', time_ave=60, strict_discard=False):
+
+    if strict_discard is True:
+        save_strict = 'strict'
+    else:
+        save_strict = 'lax'
+
+    if op_ab == 'sciav':
+        save_path = pathlib.PurePath('03_results', 'overpass_summary',
+                                     f'{op_ab}_{stage}_{gas_comp_source}_{save_strict}_overpasses.csv')
+    else:
+        save_path = pathlib.PurePath('03_results', 'overpass_summary',
+                                     f'{op_ab}_{stage}_{time_ave}s_{gas_comp_source}_{save_strict}_overpasses.csv')
+
+    return save_path
+
 # %% method summarize_qc
 def generate_overpass_summary(operator, stage, timekeeper='flightradar', strict_discard=False,
                               gas_comp_source='km', time_ave=60):
@@ -215,17 +232,19 @@ def generate_overpass_summary(operator, stage, timekeeper='flightradar', strict_
     ############# Save Data #############
 
     # Create save path based on whether or not a strict QC criteria was applied
-    if strict_discard is True:
-        save_strict = 'strict'
-    else:
-        save_strict = 'lax'
+    # if strict_discard is True:
+    #     save_strict = 'strict'
+    # else:
+    #     save_strict = 'lax'
 
-    if op_ab == 'sciav':
-        save_path = pathlib.PurePath('03_results', 'overpass_summary',
-                                     f'{op_ab}_{stage}_{gas_comp_source}_{save_strict}_overpasses.csv')
-    else:
-        save_path = pathlib.PurePath('03_results', 'overpass_summary',
-                                     f'{op_ab}_{stage}_{time_ave}s_{gas_comp_source}_{save_strict}_overpasses.csv')
+    save_path = overpass_summary_save_path(op_ab, stage, gas_comp_source, time_ave, strict_discard)
+
+    # if op_ab == 'sciav':
+    #     save_path = pathlib.PurePath('03_results', 'overpass_summary',
+    #                                  f'{op_ab}_{stage}_{gas_comp_source}_{save_strict}_overpasses.csv')
+    # else:
+    #     save_path = pathlib.PurePath('03_results', 'overpass_summary',
+    #                                  f'{op_ab}_{stage}_{time_ave}s_{gas_comp_source}_{save_strict}_overpasses.csv')
 
     overpass_summary.to_csv(save_path)
 
@@ -247,18 +266,19 @@ def load_overpass_summary(operator, stage, strict_discard=False, time_ave=60, ga
       """
 
     op_ab = abbreviate_op_name(operator)
+    save_path = overpass_summary_save_path(op_ab, stage, gas_comp_source, time_ave, strict_discard)
 
-    if operator == 'Scientific Aviation':
-        path = pathlib.PurePath('03_results', 'overpass_summary', 'sciav_1_overpasses.csv')
-    else:
-        if strict_discard is True:
-            path = pathlib.PurePath('03_results', 'overpass_summary',
-                                    f'{op_ab}_{stage}_{time_ave}s_{gas_comp_source}_overpasses_strict.csv')
-        else:
-            path = pathlib.PurePath('03_results', 'overpass_summary',
-                                    f'{op_ab}_{stage}_{time_ave}s_{gas_comp_source}_overpasses.csv')
+    # if operator == 'Scientific Aviation':
+    #     path = pathlib.PurePath('03_results', 'overpass_summary', f'{op_ab}_{stage}_{gas_comp_source}_')
+    # else:
+    #     if strict_discard is True:
+    #         path = pathlib.PurePath('03_results', 'overpass_summary',
+    #                                 f'{op_ab}_{stage}_{time_ave}s_{gas_comp_source}_overpasses_strict.csv')
+    #     else:
+    #         path = pathlib.PurePath('03_results', 'overpass_summary',
+    #                                 f'{op_ab}_{stage}_{time_ave}s_{gas_comp_source}_overpasses.csv')
 
-    overpass_summary = pd.read_csv(path, index_col=0, parse_dates=['overpass_datetime'])
+    overpass_summary = pd.read_csv(save_path, index_col=0, parse_dates=['overpass_datetime'])
 
     return overpass_summary
 
@@ -537,9 +557,9 @@ def calc_meter_uncertainty(meter, flow_kgh):
     Uncertainty is a percentage of total gas flow rate, as reported by Emerson. """
     # cutoff dictionary: for all meters, flow rates above a certain cutoff have uncertainty of 0.25% of flow rate
     cutoff = {
-        'bc': 4.84,
-        'mc': 32.6,
-        'pc': 350,
+        'bc': 4.84, #kgh
+        'mc': 32.6, # kgh
+        'pc': 350, # kgh
     }
 
     # Data from Emerson Sizing tool for each meter (see files downloaded from Emerson website in meter_sizing_graphs folder
@@ -1480,7 +1500,7 @@ def calc_daily_altitude(operator):
 
 
 # %%
-# TODO adjust code so that we use this to calculate the release rate of a given time period???
+
 def calc_average_release(start_t, stop_t, gas_comp_source='km'):
     """ Calculate the average flow rate and associated uncertainty given a start and stop time.
     Inputs:
@@ -1492,70 +1512,94 @@ def calc_average_release(start_t, stop_t, gas_comp_source='km'):
       - ch4_kgh_sigma is the sigma value that combines uncertainty associated with: 1) variability of flow rate over the time period being analyzed 2) meter reading 3) variability in gas composition"""
 
     if start_t.date() != stop_t.date():
+        # End function if start and end t are on different dates
         print(
             'Do not attempt to calculate average flow across multiple dates. Please consider a new start or end time.')
+        return
+    elif start_t.date() > stop_t.date():
+        print('Start time is after end time. Time for *you* to do some debugging!')
+        return
     else:
         # Load data
         file_name = start_t.strftime('%m_%d')
-        file_path = pathlib.PurePath('02_meter_data', 'daily_meter_data', 'whole_gas_clean',
+        # use subclass Path (instead of PurePath) because we need to check if the file exists
+        file_path = pathlib.Path('02_meter_data', 'daily_meter_data', 'whole_gas_clean',
                                      f'{gas_comp_source}', f'{file_name}.csv')
 
-        # Select data for averaging
-        meter_data = pd.read_csv(file_path, index_col=0, parse_dates=['datetime_utc'])
-        time_ave_mask = (meter_data['datetime_utc'] > start_t) & (meter_data['datetime_utc'] <= stop_t)
-        average_period = meter_data.loc[time_ave_mask].copy()
-        length_before_drop_na = len(average_period)
-
-        # Drop rows with NA values
-        average_period.dropna(axis='index', inplace=True, thresh=7)
-        length_after_drop_na = len(average_period)
-        dropped_rows = length_before_drop_na - length_after_drop_na
-        if dropped_rows > 0:
-            print(f'Number of rows that were NA in the average period ({start_t} to {stop_t}): {dropped_rows}')
-
-        # Calculate mean and standard deviation for gas flow rate and ch4 flow rate
-        ch4_kgh_mean = average_period['methane_kgh'].mean()
-        gas_kgh_mean = average_period['whole_gas_kgh'].mean()
-        gas_kgh_sigma = average_period['whole_gas_kgh'].std()
-        # print(f'gas std: {gas_kgh_sigma}')
-
-        # Calculate the mean methane fraction in case average_period straddles a period when the truck was changed
-        methane_fraction_mean = average_period[f'fraction_methane'].mean()
-        methane_fraction_sigma = average_period[f'fraction_methane_sigma'].mean()
-        # print(f'methane fraction sigma: {methane_fraction_sigma}')
-
-        # Calculate the meter reading uncertainty for the mean gas flow rate
-        meter_sigma = average_period['meter_sigma'].mean()
-        # print(f'meter sigma gas: {meter_sigma}')
-
-        # Combine sigma values
-
-        if ch4_kgh_mean == 0:
-            ch4_kgh_sigma = 0
+        # Check if we have a meter file for the input date
+        if not file_path.is_file():
+            # If file does not exist, we did not conduct releases on that day.
+            # Set all values of results_summary to zero or np.nan
+            results_summary = {
+                f'gas_kgh_mean': 0,  # mean gas flow, kgh whole gas
+                f'gas_kgh_sigma': 0,  # std of gas flow (physical variability in gas), kgh whole gas
+                f'meter_sigma': np.nan,  # meter sigma as kgh gas
+                f'ch4_fraction_{gas_comp_source}': np.nan,
+                # mean value for mole fraction methane (units: fraction methane)
+                f'ch4_fraction_{gas_comp_source}_sigma': np.nan,
+                # std of the methane mole fraction (units: fraction methane)
+                'ch4_kgh_mean': np.nan,  # mean methane flow rate (combined gas flow and methane fraction)
+                'ch4_kgh_sigma': np.nan,
+                # total uncertainty in methane flow rate (combined all three sources of uncertainty)
+            }
         else:
-            # Combine uncertainties associated with variability in gas flow rate and meter uncertainty
-            gas_sigma = sum_of_quadrature(gas_kgh_sigma, meter_sigma)
+            # If file exists, calculate flow rate summary info:
+            # Select data for averaging
+            meter_data = pd.read_csv(file_path, index_col=0, parse_dates=['datetime_utc'])
+            time_ave_mask = (meter_data['datetime_utc'] > start_t) & (meter_data['datetime_utc'] <= stop_t)
+            average_period = meter_data.loc[time_ave_mask].copy()
+            length_before_drop_na = len(average_period)
 
-            # Combine uncertainty associated with gas flow rate (flow variability and meter reading) with the uncertainty associated with variability in gas composition.
-            # Because we multiply gas composition by gas flow rate, use sum of quadrature on the relative uncertainty values:
+            # Drop rows with NA values
+            average_period.dropna(axis='index', inplace=True, thresh=7)
+            length_after_drop_na = len(average_period)
+            dropped_rows = length_before_drop_na - length_after_drop_na
+            if dropped_rows > 0:
+                print(f'Number of rows that were NA in the average period ({start_t} to {stop_t}): {dropped_rows}')
 
-            relative_gas_sigma = gas_sigma / gas_kgh_mean
-            relative_gas_comp_sigma = methane_fraction_sigma / methane_fraction_mean
+            # Calculate mean and standard deviation for gas flow rate and ch4 flow rate
+            ch4_kgh_mean = average_period['methane_kgh'].mean()
+            gas_kgh_mean = average_period['whole_gas_kgh'].mean()
+            gas_kgh_sigma = average_period['whole_gas_kgh'].std()
+            # print(f'gas std: {gas_kgh_sigma}')
 
-            ch4_kgh_sigma = sum_of_quadrature(relative_gas_sigma, relative_gas_comp_sigma) * ch4_kgh_mean
+            # Calculate the mean methane fraction in case average_period straddles a period when the truck was changed
+            methane_fraction_mean = average_period[f'fraction_methane'].mean()
+            methane_fraction_sigma = average_period[f'fraction_methane_sigma'].mean()
+            # print(f'methane fraction sigma: {methane_fraction_sigma}')
 
-    results_summary = {
-        f'gas_kgh_mean': gas_kgh_mean,  # mean gas flow, kgh whole gas
-        f'gas_kgh_sigma': gas_kgh_sigma,  # std of gas flow (physical variability in gas), kgh whole gas
-        f'meter_sigma': meter_sigma,  # meter sigma as kgh gas
-        f'ch4_fraction_{gas_comp_source}': methane_fraction_mean,
-        # mean value for mole fraction methane (units: fraction methane)
-        f'ch4_fraction_{gas_comp_source}_sigma': methane_fraction_sigma,
-        # std of the methane mole fraction (units: fraction methane)
-        'ch4_kgh_mean': ch4_kgh_mean,  # mean methane flow rate (combined gas flow and methane fraction)
-        'ch4_kgh_sigma': ch4_kgh_sigma,
-        # total uncertainty in methane flow rate (combined all three sources of uncertainty)
-    }
+            # Calculate the meter reading uncertainty for the mean gas flow rate
+            meter_sigma = average_period['meter_sigma'].mean()
+            # print(f'meter sigma gas: {meter_sigma}')
+
+            ############## Combine sigma values ##############
+            # prevent division by zero
+            if ch4_kgh_mean == 0:
+                ch4_kgh_sigma = 0
+            else:
+                # Combine uncertainties associated with variability in gas flow rate and meter uncertainty
+                gas_sigma = sum_of_quadrature(gas_kgh_sigma, meter_sigma)
+
+                # Combine uncertainty associated with gas flow rate (flow variability and meter reading) with the uncertainty associated with variability in gas composition.
+                # Because we multiply gas composition by gas flow rate, use sum of quadrature on the relative uncertainty values:
+
+                relative_gas_sigma = gas_sigma / gas_kgh_mean
+                relative_gas_comp_sigma = methane_fraction_sigma / methane_fraction_mean
+
+                ch4_kgh_sigma = sum_of_quadrature(relative_gas_sigma, relative_gas_comp_sigma) * ch4_kgh_mean
+
+            results_summary = {
+                f'gas_kgh_mean': gas_kgh_mean,  # mean gas flow, kgh whole gas
+                f'gas_kgh_sigma': gas_kgh_sigma,  # std of gas flow (physical variability in gas), kgh whole gas
+                f'meter_sigma': meter_sigma,  # meter sigma as kgh gas
+                f'ch4_fraction_{gas_comp_source}': methane_fraction_mean,
+                # mean value for mole fraction methane (units: fraction methane)
+                f'ch4_fraction_{gas_comp_source}_sigma': methane_fraction_sigma,
+                # std of the methane mole fraction (units: fraction methane)
+                'ch4_kgh_mean': ch4_kgh_mean,  # mean methane flow rate (combined gas flow and methane fraction)
+                'ch4_kgh_sigma': ch4_kgh_sigma,
+                # total uncertainty in methane flow rate (combined all three sources of uncertainty)
+            }
     return results_summary
 
 
