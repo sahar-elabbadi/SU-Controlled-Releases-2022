@@ -1505,11 +1505,17 @@ def calc_average_release(start_t, stop_t, gas_comp_source='km'):
     """ Calculate the average flow rate and associated uncertainty given a start and stop time.
     Inputs:
       - start_t, stop_t are datetime objects
+      - gam_comp_source (with default value set to 'km')
 
-    Outputs:
-      - Dictionary containing keys for "ch4_kgh_mean and ch4_kgh_sigma
-      - ch4_kgh_mean is the mean methane release rate over the period
-      - ch4_kgh_sigma is the sigma value that combines uncertainty associated with: 1) variability of flow rate over the time period being analyzed 2) meter reading 3) variability in gas composition"""
+    Outputs: dictionary with the following keys:
+      - gas_kgh_mean: mean gas flow rate over the time period of interest, as whole gas
+      - gas_kgh_sigma: standard deviation of the meter reading over the period of interest, as whole gas. This value represents the physical variability in the flow rate.
+      - meter_sigma: the standard deviation calculated based on the uncertainty in the meter reading for the flow rate during the period in question. Emerson reports uncertainty as a percentage of flow rate, and the function converts this value to a sigma value with units of kgh whole gas
+      - ch4_fraction_{gas_comp_source}: the fraction methane based on the input source for gas composition. Gas composition can be 'su_normalized', 'su_raw', or 'km'. See other documentation for additional details. This value is averaged over the time period of interest, although unless the trailer was changed mid-release, value is expected to be constant
+      - ch4_fraction{gas_comp_source}_sigma: the sigma value associated with the gas composition, representative of the uncertainty associated with measurements of methane mole fraction.
+      - ch4_kgh_mean: mean methane flow rate, calculated from the gas flow rate and methane mole fraction
+      - ch4_kgh_sigma: total uncertainty in the methane flow rate. This value combines physical variability in gas flow rate (gas_kgh_sigma) with uncertainty in the meter reading (meter_sigma) and uncertainty in gas composition (ch4_fraction_{gas_comp_source}_sigma.
+    """
 
     if start_t.date() != stop_t.date():
         # End function if start and end t are on different dates
