@@ -65,7 +65,7 @@ def plot_parity(operator, stage, strict_discard=False, time_ave=60, gas_comp_sou
     # Select x data
     x_data = operator_plot['release_rate_kgh']
     y_data = operator_plot['operator_quantification']
-    x_error = (2 * operator_plot['ch4_kgh_sigma'])
+    x_error = (1.96 * operator_plot['ch4_kgh_sigma'])
     y_error = operator_plot['operator_upper'] - operator_plot['operator_quantification']
 
     # Fit linear regression via least squares with numpy.polyfit
@@ -83,15 +83,16 @@ def plot_parity(operator, stage, strict_discard=False, time_ave=60, gas_comp_sou
 
     # Set x and y max values
     # Manually set largest x and y value by changing largest_kgh here to desired value:
-    # largest_kgh = 1200
+    largest_kgh = 1750
 
     # Or, determine largest_kgh by calculating largest value in x_data and y_data
+    # Comment here and below if manually setting
     # Filter out NA because operations with NA returns NA
-    if np.isnan(max(y_error)) == 1:
-        y_error.iloc[:] = 0
-
-    largest_kgh = max(max(x_data), max(y_data)) + max(y_error)
-    largest_kgh = math.ceil(largest_kgh / 100) * 100
+    # if np.isnan(max(y_error)) == 1:
+    #     y_error.iloc[:] = 0
+    #
+    # largest_kgh = max(max(x_data), max(y_data)) + max(y_error)
+    # largest_kgh = math.ceil(largest_kgh / 100) * 100
 
     # Create sequence of numbers for plotting linear fit (x)
     x_seq = np.linspace(0, largest_kgh, num=100)
@@ -799,7 +800,7 @@ def make_releases_histogram(operator, stage, strict_discard=False, time_ave=60, 
 # %% Plot meter uncertainty
 
 
-def plot_meter_uncertainty(select_meter):
+def plot_meter_uncertainty(select_meter, presentation):
     """Plot uncertainty for meters, input meter abbreviation of 'bc', 'mc', or 'pc' for Baby Corey, Mama Corey, or
      Papa Corey respectively """
 
@@ -838,7 +839,7 @@ def plot_meter_uncertainty(select_meter):
     meter_id['pc'] = 'CMFS150M'
 
     # Initialize figure
-    fig, ax = plt.subplots(1, figsize=(12, 4))
+    fig, ax = plt.subplots(1, figsize=(6, 4))
     plt.plot(x_data, y_data, color='black',
              linewidth=2)
 
@@ -847,11 +848,11 @@ def plot_meter_uncertainty(select_meter):
            )
 
     # title
-    plt.title(f'{meter_id[select_meter]} Uncertainty\n(Data from Emerson Online Sizing Tool)')
+    plt.title(f'{meter_id[select_meter]} Uncertainty\n(Data from Emerson Online Sizing Tool)', fontweight='bold')
 
     # Format axes
-    plt.xlabel('Meter Flow Rate\n(kg/hr whole gas)', fontsize=14)
-    plt.ylabel('Meter Uncertainty\n(% of flow rate)', fontsize=14)
+    plt.xlabel('Meter Flow Rate\n(kg/hr whole gas)', fontsize=14, fontweight='bold')
+    plt.ylabel('Meter Uncertainty\n(% of flow rate)', fontsize=14, fontweight='bold')
     ax.yaxis.set_major_formatter(mtick.PercentFormatter())
     plt.tick_params(direction='in', right=True, top=True)
     plt.tick_params(labelsize=12)
@@ -860,10 +861,87 @@ def plot_meter_uncertainty(select_meter):
     plt.tick_params(direction='in', which='minor', length=3, bottom=True, top=True, left=True, right=True)
     plt.tick_params(direction='in', which='major', length=6, bottom=True, top=True, left=True, right=True)
 
+    ##### Settings for presentations #####
+    if presentation is True:
+        # change all spines to thicker lineweight
+        for axis in ['top', 'bottom', 'left', 'right']:
+            ax.spines[axis].set_linewidth(2)
+        # make the ticks bold
+        plt.xticks(weight='bold')
+        plt.yticks(weight='bold')
+        ax.tick_params(which='both', width=2)
+        # ax.xaxis.set_tick_params(width=2)
+        # ax.yaxis.set_tick_params(width=2)
+
     # Save figure
 
     save_name = f'{select_meter}_percent_uncertainty'
     save_location = pathlib.PurePath('04_figures', 'meter_accuracy', save_name)
-    plt.savefig(save_location, transparent=True)
+    plt.savefig(save_location, transparent=True, bbox_inches='tight')
 
+    plt.show()
+
+
+def plot_selected_release_period(start_t, stop_t, gas_comp_source='km'):
+    """Plot flow rate (kgh CH4) for a given input period."""
+    # TODO duplicate code with calc_average_release -> turn into functions later
+    if start_t.date() != stop_t.date():
+        # End function if start and end t are on different dates
+        print(
+            "I can't currently plot data with start and end time on different dates. Why are you trying to do this anyway?")
+        return
+    elif start_t.date() > stop_t.date():
+        print('Start time is after end time. Time for *you* to do some debugging!')
+        return
+    else:
+        # Load data
+        file_name = start_t.strftime('%m_%d')
+        # use subclass Path (instead of PurePath) because we need to check if the file exists
+        file_path = pathlib.Path('02_meter_data', 'daily_meter_data', 'whole_gas_clean',
+                                 f'{gas_comp_source}', f'{file_name}.csv')
+    if not file_path.is_file():
+        # If file does not exist, we did not conduct releases on that day.
+        # Set all values of results_summary to zero or np.nan
+        print('No gas released on selected date.')
+        return
+
+    meter_data = pd.read_csv(file_path, index_col=0, parse_dates=['datetime_utc'])
+    time_ave_mask = (meter_data['datetime_utc'] > start_t) & (meter_data['datetime_utc'] <= stop_t)
+    selected_period = meter_data.loc[time_ave_mask].copy()
+
+    x_data = selected_period.datetime_utc
+    y_data = selected_period.methane_kgh
+    kgh_max = math.ceil(max(y_data) / 100) * 100  # Max kgh rounded to nearest 100
+
+    # Initialize Figure
+    fig, ax = plt.subplots(1, figsize=(5, 5))
+    plt.plot(x_data, y_data, color='black',
+             linewidth=1)
+    # Set y-axis limits
+    ax.set(ylim=(0, kgh_max))
+
+    test_date = start_t.strftime('%b %d')
+    start_string = start_t.strftime('%H:%M')
+    stop_string = stop_t.strftime('%H:%M')
+    # Title
+    plt.title(f'{test_date}: {start_string} - {stop_string} (UTC)')
+
+    # Format axes
+    ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
+    plt.xlabel('Time (UTC)', fontsize=14)
+    plt.ylabel('Metered Release Rate (kgh)', fontsize=14)
+    plt.tick_params(direction='in', right=True, top=True)
+    plt.tick_params(labelsize=12)
+    plt.minorticks_on()
+    plt.tick_params(labelbottom=True, labeltop=False, labelright=False, labelleft=True)
+    plt.tick_params(direction='in', which='minor', length=3, bottom=True, top=True, left=True, right=True)
+    plt.tick_params(direction='in', which='major', length=6, bottom=True, top=True, left=True, right=True)
+
+    # Save Fig
+    plot_period = start_t.strftime('%m-%d_%H%m')
+    now = datetime.datetime.now()
+    save_time = now.strftime("%Y%m%d")
+    fig_name = f'release_chart_{plot_period}_saved_{save_time}'
+    fig_path = pathlib.PurePath('04_figures', 'misc_flow_rate_plots', fig_name)
+    plt.savefig(fig_path, bbox_inches='tight')
     plt.show()
