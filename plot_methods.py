@@ -17,10 +17,11 @@ import math
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 import matplotlib.dates as mdates
+import matplotlib.ticker as mtick
 from matplotlib.patches import Patch
 
 from methods_source import load_overpass_summary, abbreviate_op_name, classify_histogram_data, \
-    load_operator_flight_days, load_daily_releases
+    load_operator_flight_days, load_daily_releases, calc_meter_uncertainty
 
 
 # Function: generate jitter for a given array
@@ -64,7 +65,7 @@ def plot_parity(operator, stage, strict_discard=False, time_ave=60, gas_comp_sou
     # Select x data
     x_data = operator_plot['release_rate_kgh']
     y_data = operator_plot['operator_quantification']
-    x_error = (2*operator_plot['ch4_kgh_sigma'])
+    x_error = (2 * operator_plot['ch4_kgh_sigma'])
     y_error = operator_plot['operator_upper'] - operator_plot['operator_quantification']
 
     # Fit linear regression via least squares with numpy.polyfit
@@ -793,3 +794,76 @@ def make_releases_histogram(operator, stage, strict_discard=False, time_ave=60, 
     table_name = f'histogram_high_{op_ab}_{save_time}.csv'
     table_path = pathlib.PurePath('03_results', 'histogram', table_name)
     op_histogram_high.to_csv(table_path)
+
+
+# %% Plot meter uncertainty
+
+
+def plot_meter_uncertainty(select_meter):
+    """Plot uncertainty for meters, input meter abbreviation of 'bc', 'mc', or 'pc' for Baby Corey, Mama Corey, or
+     Papa Corey respectively """
+
+    ####### Calculate Uncertainty #######
+
+    meters = ['bc', 'mc', 'pc']
+    meter_min = {}
+    meter_max = {}
+    meter_range = {}
+    meter_uncertainty = {}
+
+    meter_min['bc'] = 0.56  # kgh
+    meter_max['bc'] = 30  # kgh
+    meter_min['mc'] = 3.87  # kgh
+    meter_max['mc'] = 300  # kgh
+    meter_min['pc'] = 40  # kgh
+    meter_max['pc'] = 2000  # kgh
+
+    for meter in meters:
+        meter_range[meter] = np.linspace(meter_min[meter], meter_max[meter], 1000)
+        store_uncertainty = []
+        for flowrate in meter_range[meter]:
+            uncertainty = calc_meter_uncertainty(meter, flowrate)
+            store_uncertainty.append(uncertainty)
+
+        meter_uncertainty[meter] = store_uncertainty
+
+    ####### Plot #######
+    x_data = meter_range[select_meter]
+    y_data = meter_uncertainty[select_meter]
+
+    # Name meter for plot
+    meter_id = {}
+    meter_id['bc'] = 'CMFS015H'
+    meter_id['mc'] = 'CMF050M'
+    meter_id['pc'] = 'CMFS150M'
+
+    # Initialize figure
+    fig, ax = plt.subplots(1, figsize=(12, 4))
+    plt.plot(x_data, y_data, color='black',
+             linewidth=2)
+
+    ax.set(xlim=(0, meter_max[select_meter]),
+           ylim=(0, 2)
+           )
+
+    # title
+    plt.title(f'{meter_id[select_meter]} Uncertainty\n(Data from Emerson Online Sizing Tool)')
+
+    # Format axes
+    plt.xlabel('Meter Flow Rate\n(kg/hr whole gas)', fontsize=14)
+    plt.ylabel('Meter Uncertainty\n(% of flow rate)', fontsize=14)
+    ax.yaxis.set_major_formatter(mtick.PercentFormatter())
+    plt.tick_params(direction='in', right=True, top=True)
+    plt.tick_params(labelsize=12)
+    plt.minorticks_on()
+    plt.tick_params(labelbottom=True, labeltop=False, labelright=False, labelleft=True)
+    plt.tick_params(direction='in', which='minor', length=3, bottom=True, top=True, left=True, right=True)
+    plt.tick_params(direction='in', which='major', length=6, bottom=True, top=True, left=True, right=True)
+
+    # Save figure
+
+    save_name = f'{select_meter}_percent_uncertainty'
+    save_location = pathlib.PurePath('04_figures', 'meter_accuracy', save_name)
+    plt.savefig(save_location, transparent=True)
+
+    plt.show()
