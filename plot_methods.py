@@ -164,6 +164,7 @@ def plot_parity(operator, stage, strict_discard=False, time_ave=60, gas_comp_sou
     # Save data used to make figure
     save_parity_data = pd.DataFrame()
     save_parity_data['release_rate'] = x_data
+    save_parity_data['x_error'] = x_error
     save_parity_data['operator_report'] = y_data
     save_parity_data['operator_sigma'] = y_error
 
