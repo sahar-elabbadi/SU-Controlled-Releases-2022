@@ -1260,17 +1260,17 @@ def classify_histogram_data(operator, stage, threshold_lower, threshold_upper, n
     cm_meter_raw, ghg_meter_raw, kairos_meter_raw, mair_meter_raw, sciav_meter_raw = load_summary_files()
 
     if operator == 'Carbon Mapper':
-        missing = find_missing_data(operator, cm_meter_raw, time_ave=time_ave, gas_comp_source=gas_comp_source)
+        missing = find_missing_data(operator, time_ave=time_ave, gas_comp_source=gas_comp_source)
     elif operator == 'GHGSat':
-        missing = find_missing_data(operator, ghg_meter_raw, time_ave=time_ave, gas_comp_source=gas_comp_source)
+        missing = find_missing_data(operator, time_ave=time_ave, gas_comp_source=gas_comp_source)
     elif operator == 'Kairos':
-        missing = find_missing_data(operator, kairos_meter_raw, time_ave=time_ave, gas_comp_source=gas_comp_source)
+        missing = find_missing_data(operator, time_ave=time_ave, gas_comp_source=gas_comp_source)
     elif operator == 'Kairos LS23':
-        missing = find_missing_data(operator, kairos_meter_raw, time_ave=time_ave, gas_comp_source=gas_comp_source)
+        missing = find_missing_data(operator, time_ave=time_ave, gas_comp_source=gas_comp_source)
     elif operator == 'Kairos LS25':
-        missing = find_missing_data(operator, kairos_meter_raw, time_ave=time_ave, gas_comp_source=gas_comp_source)
+        missing = find_missing_data(operator, time_ave=time_ave, gas_comp_source=gas_comp_source)
     elif operator == 'Methane Air':
-        missing = find_missing_data(operator, mair_meter_raw, time_ave=time_ave, gas_comp_source=gas_comp_source)
+        missing = find_missing_data(operator, time_ave=time_ave, gas_comp_source=gas_comp_source)
     elif operator == 'Scientific Aviation':
         missing = []
 
@@ -1284,12 +1284,12 @@ def classify_histogram_data(operator, stage, threshold_lower, threshold_upper, n
             count_missing_zero = 0
         else:
             # Make a subset of the missing non-zero values
-            missing_non_zero = missing.query(f'kgh_ch4_{time_ave}_mean_{gas_comp_source} > 0')
+            missing_non_zero = missing.query(f'ch4_kgh_{time_ave}_mean_{gas_comp_source} > 0')
             count_missing = make_histogram_bins(missing_non_zero, threshold_lower, threshold_upper,
                                                 n_bins).n_data_points
 
             # Make a subset of the missing zero values
-            missing_zero = missing.query(f'kgh_ch4_{time_ave}_mean_{gas_comp_source} == 0')
+            missing_zero = missing.query(f'ch4_kgh_{time_ave}_mean_{gas_comp_source} == 0')
             count_missing_zero = make_histogram_bins(missing_zero, threshold_lower, threshold_upper,
                                                      n_bins).n_data_points
 
