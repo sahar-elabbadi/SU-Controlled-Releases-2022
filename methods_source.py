@@ -29,25 +29,50 @@ def abbreviate_op_name(operator):
      - 'Kairos LS25': 'kairos_ls25'
      - 'Methane Air': 'mair'
     """
-    if operator == 'Carbon Mapper' or operator == 'CarbonMapper':
-        op_abb = 'cm'
-    elif operator == "GHGSat":
-        op_abb = 'ghg'
-    elif operator == 'Kairos':
-        op_abb = 'kairos'
-    elif operator == 'Kairos LS23':
-        op_abb = 'kairos_ls23'
-    elif operator == 'Kairos LS25':
-        op_abb = 'kairos_ls25'
-    elif operator == 'Methane Air' or operator == 'MethaneAir':
-        op_abb = 'mair'
-    elif operator == 'Scientific Aviation':
-        op_abb = 'sciav'
-    else:
-        print('Typo in operator name')
-        return
 
-    return op_abb
+    operator_nicknames = {
+        'Carbon Mapper': 'cm',
+        'CarbonMapper': 'cm',
+        'GHGSat': 'ghg',
+        'GHG Sat': 'ghg',
+        'Kairos': 'kairos',
+        'Kairos LS23': 'kairos_ls23',
+        'Kairos LS25': 'kairos_ls25',
+        'Methane Air': 'mair',
+        'MethaneAir': 'mair',
+        'Methane Air mIME': 'mair_mime',
+        'Methane Air DI': 'mair_di',
+        'MethaneAir mIME': 'mair_mime',
+        'MethaneAir DI': 'mair_di',
+        'MethaneAIR': 'mair',
+        'MethaneAIR mIME': 'mair_mime',
+        'MethaneAIR DI': 'mair_di',
+        'Scientific Aviation': 'sciav',
+    }
+
+    return operator_nicknames[operator] if operator in operator_nicknames else 'Type in operator name'
+
+    return op_ab
+
+def make_operator_full_name(operator_nickname):
+    """Take operator nickname and output full operator name
+    (used in figure titles, any written text with operator name)
+    """
+
+    name_dictionary = {
+        'cm': 'Carbon Mapper',
+        'ghg': 'GHGSat',
+        'kairos': 'Kairos',
+        'kairos_ls23': 'Kairos LS23',
+        'kairos_ls25': 'Kairos LS25',
+        'mair': 'MethaneAIR',
+        'mair_mime': 'MethaneAIR mIME',
+        'mair_di': 'MethaneAIR DI',
+        'sciav': 'Scientific Aviation'}
+
+    return name_dictionary[operator_nickname] if operator_nickname in name_dictionary else 'Type in operator nickname'
+
+    return op_ab
 
 
 # %% method for loading Philippines summary files (saved in 02_meter_data > summary_files)
@@ -71,6 +96,8 @@ def load_summary_files(input_operator='all'):
 
         if (op_ab == 'kairos_ls23') or (op_ab == 'kairos_ls25'):
             meter_abb = 'kairos'  # meter file is same for both Kairos pods
+        elif (op_ab == 'mair_mime') or (op_ab == 'mair_di'):
+            meter_abb = 'mair'
         else:
             meter_abb = op_ab
 
@@ -369,12 +396,16 @@ def make_qc_table(strict_discard=False, time_ave=60, gas_comp_source='km'):
     # Methane Air
     mair_1_qc = summarize_qc(operator="Methane Air", stage=1, strict_discard=strict_discard, time_ave=time_ave,
                              gas_comp_source=gas_comp_source)
+    mair_mime_1_qc = summarize_qc(operator="Methane Air mIME", stage=1, strict_discard=strict_discard, time_ave=time_ave,
+                             gas_comp_source=gas_comp_source)
+    mair_di_1_qc = summarize_qc(operator="Methane Air DI", stage=1, strict_discard=strict_discard, time_ave=time_ave,
+                             gas_comp_source=gas_comp_source)
 
     # Combine all individual QC dataframes
 
     all_qc = [cm_1_qc, cm_2_qc, cm_3_qc, ghg_1_qc, ghg_2_qc, ghg_3_qc, kairos_1_qc, kairos_2_qc, kairos_3_qc,
               kairos_ls23_1_qc, kairos_ls23_2_qc, kairos_ls23_3_qc, kairos_ls25_1_qc, kairos_ls25_2_qc,
-              kairos_ls25_3_qc, sciav_1_qc, mair_1_qc]
+              kairos_ls25_3_qc, sciav_1_qc, mair_1_qc, mair_mime_1_qc, mair_di_1_qc]
 
     all_qc = pd.concat(all_qc)
 
@@ -674,6 +705,9 @@ def load_daily_releases(operator):
 # %% Load clean data
 
 def load_clean_operator_reports():
+    #TODO code cleaning: this can be much more brief if I use a loop across all operators
+    # Will need to change naming scheme for clean kairos meters first
+
     # Carbon Mapper Stage 1
     cm_path_1 = pathlib.PurePath('01_clean_reports', 'cm_1_clean.csv')
     cm_1 = pd.read_csv(cm_path_1, index_col=0)
@@ -742,15 +776,25 @@ def load_clean_operator_reports():
     mair_clean_path = pathlib.PurePath('01_clean_reports', 'mair_1_clean.csv')
     mair_1 = pd.read_csv(mair_clean_path)  # do not set index_col to 0, there is none
 
+    # MAIR mIME Stage 1
+    mair_mime_clean_path = pathlib.PurePath('01_clean_reports', 'mair_mIME_1_clean.csv')
+    mair_mime_1 = pd.read_csv(mair_mime_clean_path)  # do not set index_col to 0, there is none
+
+    # MAIR DI Stage 1
+    mair_di_clean_path = pathlib.PurePath('01_clean_reports', 'mair_di_1_clean.csv')
+    mair_di_1 = pd.read_csv(mair_di_clean_path)  # do not set index_col to 0, there is none
+
     return cm_1, cm_2, cm_3, ghg_1, ghg_2, ghg_3, kairos_1, kairos_2, kairos_3, kairos_1_ls23, kairos_1_ls25, kairos_2_ls23, kairos_2_ls25, \
-        kairos_3_ls23, kairos_3_ls25, sciav_1, mair_1
+        kairos_3_ls23, kairos_3_ls25, sciav_1, mair_1, mair_mime_1, mair_di_1
 
 
 # %% Load meter data
 
 def load_meter_data_dictionary(timekeeper='flightradar', gas_comp_source='km', time_ave=60):
-    """Input timekeeper. Must be string, all lower case: flightradar, operator, stanford"""
-    operators = ['Carbon Mapper', 'GHGSat', 'Kairos', 'Methane Air', 'Scientific Aviation', 'Kairos LS23', 'Kairos LS25']
+    """Input timekeeper. Must be string, all lower case: flightradar, operator, stanford
+    Outputs a dictionary with the meter file for each operator """
+    operators = ['Carbon Mapper', 'GHGSat', 'Kairos', 'Methane Air', 'Scientific Aviation',
+                 'Kairos LS23', 'Kairos LS25', 'Methane Air mIME', 'Methane Air DI']
     meter_files = {}
     for operator in operators:
         op_ab = abbreviate_op_name(operator)
@@ -761,6 +805,9 @@ def load_meter_data_dictionary(timekeeper='flightradar', gas_comp_source='km', t
         elif (op_ab == 'kairos_ls23') or (op_ab == 'kairos_ls25'):
             op_path = pathlib.PurePath('02_meter_data', 'operator_meter_data', f'{timekeeper}_timestamp',
                                        f'kairos_{time_ave}s_{gas_comp_source}_meter.csv')
+        elif (op_ab == 'mair_mime') or (op_ab == 'mair_di'):
+            op_path = pathlib.PurePath('02_meter_data', 'operator_meter_data', f'{timekeeper}_timestamp',
+                                   f'mair_{time_ave}s_{gas_comp_source}_meter.csv')
         else:
             op_path = pathlib.PurePath('02_meter_data', 'operator_meter_data', f'{timekeeper}_timestamp',
                                        f'{op_ab}_{time_ave}s_{gas_comp_source}_meter.csv')
@@ -1090,16 +1137,18 @@ def make_operator_meter_dataset(operator, timekeeper='flightradar', time_ave=60,
     cm_summary, ghg_summary, kairos_summary, mair_summary, sciav_summary = load_summary_files()
 
     flight_summary = {
-        'Carbon Mapper': cm_summary,
-        'GHGSat': ghg_summary,
-        'Kairos': kairos_summary,
-        'Kairos LS23': kairos_summary,
-        'Kairos LS25': kairos_summary,
-        'MethaneAir': mair_summary,
-        'Scientific Aviation': sciav_summary,
+        'cm': cm_summary,
+        'ghg': ghg_summary,
+        'kairos': kairos_summary,
+        'kairos_ls23': kairos_summary,
+        'kairos_ls25': kairos_summary,
+        'mair': mair_summary,
+        'mair_mime': mair_summary,
+        'mair_di': mair_summary,
+        'sciav': sciav_summary,
     }
-
-    operator_summary = flight_summary[operator]
+    op_ab = abbreviate_op_name(operator)
+    operator_summary = flight_summary[op_ab]
 
     if operator == "Scientific Aviation":
         print('Making SciAV operator meter dataset')
@@ -1258,20 +1307,24 @@ def classify_histogram_data(operator, stage, threshold_lower, threshold_upper, n
     # Find data points where we have a flightradar overpass but we do not have an operator overpass
 
     cm_meter_raw, ghg_meter_raw, kairos_meter_raw, mair_meter_raw, sciav_meter_raw = load_summary_files()
-
-    if operator == 'Carbon Mapper':
+    op_ab = abbreviate_op_name(operator)
+    if op_ab == 'cm':
         missing = find_missing_data(operator, time_ave=time_ave, gas_comp_source=gas_comp_source)
-    elif operator == 'GHGSat':
+    elif op_ab == 'ghg':
         missing = find_missing_data(operator, time_ave=time_ave, gas_comp_source=gas_comp_source)
-    elif operator == 'Kairos':
+    elif op_ab == 'kairos':
         missing = find_missing_data(operator, time_ave=time_ave, gas_comp_source=gas_comp_source)
-    elif operator == 'Kairos LS23':
+    elif op_ab == 'kairos_ls23':
         missing = find_missing_data(operator, time_ave=time_ave, gas_comp_source=gas_comp_source)
-    elif operator == 'Kairos LS25':
+    elif op_ab == 'kairos_ls25':
         missing = find_missing_data(operator, time_ave=time_ave, gas_comp_source=gas_comp_source)
-    elif operator == 'Methane Air':
+    elif op_ab == 'mair':
         missing = find_missing_data(operator, time_ave=time_ave, gas_comp_source=gas_comp_source)
-    elif operator == 'Scientific Aviation':
+    elif op_ab == 'mair_mime':
+        missing = find_missing_data(operator, time_ave=time_ave, gas_comp_source=gas_comp_source)
+    elif op_ab == 'mair_di':
+        missing = find_missing_data(operator, time_ave=time_ave, gas_comp_source=gas_comp_source)
+    elif op_ab == 'sciav':
         missing = []
 
     if operator == 'Scientific Aviation':
@@ -1395,7 +1448,7 @@ def load_operator_report_dictionary():
     # Load clean operator data
     # format for naming: [operator]_stage
     cm_1, cm_2, cm_3, ghg_1, ghg_2, ghg_3, kairos_1, kairos_2, kairos_3, kairos_ls23_1, kairos_ls25_1, kairos_ls23_2, \
-        kairos_ls25_2, kairos_ls23_3, kairos_ls25_3, sciav_1, mair_1 = load_clean_operator_reports()
+        kairos_ls25_2, kairos_ls23_3, kairos_ls25_3, sciav_1, mair_1, mair_mime_1, mair_di_1 = load_clean_operator_reports()
 
     report_dictionary = {
         'cm_1': cm_1,
@@ -1415,6 +1468,8 @@ def load_operator_report_dictionary():
         'kairos_ls25_3': kairos_ls25_3,
         'sciav_1': sciav_1,
         'mair_1': mair_1,
+        'mair_mime_1': mair_mime_1,
+        'mair_di_1': mair_di_1,
     }
 
     return report_dictionary
@@ -1424,25 +1479,24 @@ def generate_all_overpass_reports(strict_discard=False, timekeeper='flightradar'
     """Generate all overpass reports"""
     check_timekeep_capitalization(timekeeper)
 
-    operators = ['Carbon Mapper', 'GHGSat', 'Kairos', 'Kairos LS23', 'Kairos LS25', 'Methane Air', 'Scientific Aviation']
-
+    # operators = ['Carbon Mapper', 'GHGSat', 'Kairos', 'Kairos LS23', 'Kairos LS25',
+    #              'Methane Air', 'Methane Air mIME', 'Methane Air DI', 'Scientific Aviation']
+    operators = ['cm', 'ghg', 'kairos', 'kairos_ls23', 'kairos_ls25', 'mair', 'mair_mime', 'mair_di', 'sciav']
     # Load operator reports
     report_dictionary = load_operator_report_dictionary()
 
     # Load meter data
     meter_dictionary = load_meter_data_dictionary(timekeeper, gas_comp_source, time_ave)
 
+    stage_1_only = ['mair', 'mair_mime', 'mair_di', 'sciav'] # Methane Air, SciAv only did one stage
     for operator in operators:
-        if (operator == 'Methane Air') or (operator == 'Scientific Aviation'):
-            stages = [1]  # Methane Air only did one stage
-        else:
-            stages = [1, 2, 3]
+        stages = [1] if operator in stage_1_only else [1, 2, 3]
 
         # For each operator, make a overpass summary for each stage they participated in
         for stage in stages:
-            op_ab = abbreviate_op_name(operator)
-            print(f'Generating operator summary file for {operator} Stage {stage}')
-            generate_overpass_summary(operator, stage, timekeeper, strict_discard, gas_comp_source, time_ave)
+            operator_full_name = make_operator_full_name(operator)
+            print(f'Generating operator summary file for {operator_full_name} Stage {stage}')
+            generate_overpass_summary(operator_full_name, stage, timekeeper, strict_discard, gas_comp_source, time_ave)
 
 
 # %% Compare overpass lenght
