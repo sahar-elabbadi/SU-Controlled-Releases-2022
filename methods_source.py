@@ -657,6 +657,13 @@ def generate_daily_releases(gas_comp_sources=['km']):
 
         for i in range(len(dates)):
             for source in gas_comp_sources:
+                # for now, replace 'km' with 'ms' for measurement station
+                #TODO change to remove all 'km'
+                if source == 'km':
+                    source_ab = 'ms'
+                else:
+                    source_ab = source
+
                 day = dates[i]
                 date_meter = load_daily_meter_data(day,
                                                    source)  # default value here is 'km' if no other gas source is specified
@@ -674,11 +681,12 @@ def generate_daily_releases(gas_comp_sources=['km']):
                 # Calculate the 95% confidence interval for each secondly measurement (airplane operators may also want to easily so this)
                 date_meter['CI95_upper'] = date_meter['methane_kgh'] + 1.96 * date_meter['methane_kgh_sigma']
                 date_meter['CI95_lower'] = date_meter['methane_kgh'] - 1.96 * date_meter['methane_kgh_sigma']
-                date_meter['gas_comp_source'] = source
+                date_meter['gas_comp_source'] = source_ab
 
                 # Save the test_period dataframe
                 op_ab = abbreviate_op_name(operator)
-                save_path = pathlib.PurePath('03_results', 'daily_releases', f'{op_ab}_{day}_{source}.csv')
+
+                save_path = pathlib.PurePath('03_results', 'daily_releases', f'{op_ab}_{day}_{source_ab}.csv')
                 date_meter.to_csv(save_path)
 
     return
