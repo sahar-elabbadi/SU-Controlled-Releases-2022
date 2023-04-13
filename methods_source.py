@@ -686,7 +686,8 @@ def generate_daily_releases(gas_comp_sources=['km']):
                 # Save the test_period dataframe
                 op_ab = abbreviate_op_name(operator)
 
-                save_path = pathlib.PurePath('03_results', 'daily_releases', f'{op_ab}_{day}_{source_ab}.csv')
+                #TODO finalize naming convention here - do I want to include gas comp sourse?
+                save_path = pathlib.PurePath('03_results', 'daily_releases', f'{op_ab}_{day}.csv')
                 date_meter.to_csv(save_path)
 
     return

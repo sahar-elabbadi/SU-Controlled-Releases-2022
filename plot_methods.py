@@ -474,7 +474,7 @@ def plot_daily_releases(operator, stage, strict_discard=False, time_ave=60, gas_
         daily_data = operator_releases[day]
 
         x_data = daily_data['datetime_utc']
-        y_data = daily_data[f'kgh_ch4_{gas_comp_source}']
+        y_data = daily_data[f'methane_kgh']
         kgh_max = math.ceil(max(y_data) / 100) * 100  # Max kgh rounded to nearest 100
 
         # Initialize Figure
