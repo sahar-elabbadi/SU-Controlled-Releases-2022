@@ -1247,29 +1247,33 @@ def make_histogram_bins(df, threshold_lower, threshold_upper, n_bins):
 
 def find_missing_data(operator, time_ave=60, gas_comp_source='km'):
     """ Missing data refers to overpasses documented by Stanford that are not reported by the operator"""
-    summary_file = load_summary_files(operator)
 
-    operator_missing_raw = summary_file.query(
-        'PerformerOverpassID.isnull() == True & StanfordOverpassID.isnull() == False')
-    operator_missing = clean_summary_file_colnames(operator, operator_missing_raw, 'FlightradarOverpassID',
-                                                   'flightradar')
-
-    if operator_missing.empty:
-        operator_missing['release_rate_kgh'] = None
-
+    if operator == 'Scientific Aviation':
+        operator_missing = pd.DataFrame()
     else:
-        # Combine date and time
-        missing_datetime = operator_missing.apply(lambda x: combine_datetime(x['date'], x['time']), axis=1)
-        operator_missing.insert(loc=0, column='datetime_utc', value=missing_datetime)
-        # Now that we have removed NA values in time, we can remove date and time columns from operator_meter
-        operator_missing = operator_missing.drop(columns=['time', 'date'])
+        summary_file = load_summary_files(operator)
 
-        # Calculate whole gas average for given overpass id
-        gas_flow_rates = calc_average_gas_flow_all_overpasses(operator, operator_missing, time_ave, gas_comp_source)
-        operator_missing = operator_missing.merge(gas_flow_rates, on='overpass_id')
+        operator_missing_raw = summary_file.query(
+            'PerformerOverpassID.isnull() == True & StanfordOverpassID.isnull() == False')
+        operator_missing = clean_summary_file_colnames(operator, operator_missing_raw, 'FlightradarOverpassID',
+                                                       'flightradar')
 
-        # make a column with the desired release_rate_kgh value (so this dataframe can be ready by files that read an overpass summary file)
-        operator_missing['release_rate_kgh'] = operator_missing[f'ch4_kgh_{time_ave}_mean_{gas_comp_source}']
+        if operator_missing.empty:
+            operator_missing['release_rate_kgh'] = None
+
+        else:
+            # Combine date and time
+            missing_datetime = operator_missing.apply(lambda x: combine_datetime(x['date'], x['time']), axis=1)
+            operator_missing.insert(loc=0, column='datetime_utc', value=missing_datetime)
+            # Now that we have removed NA values in time, we can remove date and time columns from operator_meter
+            operator_missing = operator_missing.drop(columns=['time', 'date'])
+
+            # Calculate whole gas average for given overpass id
+            gas_flow_rates = calc_average_gas_flow_all_overpasses(operator, operator_missing, time_ave, gas_comp_source)
+            operator_missing = operator_missing.merge(gas_flow_rates, on='overpass_id')
+
+            # make a column with the desired release_rate_kgh value (so this dataframe can be ready by files that read an overpass summary file)
+            operator_missing['release_rate_kgh'] = operator_missing[f'ch4_kgh_{time_ave}_mean_{gas_comp_source}']
 
     return operator_missing
 

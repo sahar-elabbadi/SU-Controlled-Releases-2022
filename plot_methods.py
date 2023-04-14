@@ -30,15 +30,19 @@ def rand_jitter(input_list):
     return input_list + np.random.randn(len(input_list)) * delta
 
 
-# %% Function: plot_parity
+# %% Functions for making parity plots
 
-# Inputs:
-# > operator
-# > stage
-# > operator_report
-# > operator_meter
-def plot_parity(operator, stage, strict_discard=False, time_ave=60, gas_comp_source='km'):
-    """Inputs are operator name, stage of analysis, operator_plot dataframe containing all relevant data"""
+def get_parity_data(operator, stage, strict_discard=False, time_ave=60, gas_comp_source='km'):
+    """
+
+    :param operator: name of operator
+    :param stage: stage of analysis
+    :param strict_discard: boolean, True for strict discard, False for lax discard
+    :param time_ave: time average period for meter data
+    :param gas_comp_source: source of gas composition for CNG
+    :return save_parity_data: dataframe with columns release_rate, release_sigma, operator_report, and operator_sigma
+    :return data_description: dictionary with key data parameters (operator, stage, strict_discard, time_ave, gas_comp_source)
+    """
 
     # Load overpass summary csv file
     operator_plot = load_overpass_summary(operator, stage, strict_discard, time_ave, gas_comp_source)
@@ -60,21 +64,67 @@ def plot_parity(operator, stage, strict_discard=False, time_ave=60, gas_comp_sou
         operator_plot = operator_plot[(operator_plot.phase_iii == 0)]
 
     # Select values for which operator provided a quantification estimate
-    y_index = np.isfinite(operator_plot['operator_quantification'])
+    # I think this is old code from when I was including zeros in the parity plot
+    # y_index = np.isfinite(operator_plot['operator_quantification'])
 
     # Select x data
     x_data = operator_plot['release_rate_kgh']
     y_data = operator_plot['operator_quantification']
-    x_error = (1.96 * operator_plot['ch4_kgh_sigma'])
+    x_error = operator_plot['ch4_kgh_sigma']
     y_error = operator_plot['operator_upper'] - operator_plot['operator_quantification']
+
+
+    # Save data used to make figure
+    save_parity_data = pd.DataFrame()
+    save_parity_data['release_rate'] = x_data
+    save_parity_data['release_sigma'] = x_error
+    save_parity_data['operator_report'] = y_data
+    save_parity_data['operator_sigma'] = y_error
+
+    # Save data description
+    data_description = {
+        'operator': operator,
+        'stage': stage,
+        'strict_discard': strict_discard,
+        'time_ave': time_ave,
+        'gas_comp_source': gas_comp_source,
+        'strict_discard': strict_discard,
+    }
+
+
+    return save_parity_data, data_description
+
+def make_parity_plot(data, data_description, ax, plot_lim='largest_kgh'):
+    """
+    :param data: processed data to be plotted
+    :param data_description: dictionary with descriptions of data used for plot annotations
+    :param ax: subplot ax to plot on
+    :param plot_lim: limit of x and y axes
+    :return: ax: is the plotted parity charg
+    """
+
+    ############ Data Preparation and Linear Regression ############
+
+    # Load data description
+    operator = data_description['operator']
+    stage = data_description['stage']
+    time_ave = data_description['time_ave']
+    gas_comp_source = data_description['gas_comp_source']
+    strict_discard = data_description['strict_discard']
+
+    # Set x and y data and error values
+    x_data = data.release_rate
+    y_data = data.operator_report
+    x_error = data.release_sigma * 1.96 # value is sigma, multiply by 1.96 for 95% CI
+    y_error = data.operator_sigma
 
     # Fit linear regression via least squares with numpy.polyfit
     # m is slope, intercept is b
-    m, b = np.polyfit(x_data[y_index], y_data[y_index], deg=1)
+    m, b = np.polyfit(x_data, y_data, deg=1)
 
     # Calculate R^2 value
     # (using method described here: https://www.askpython.com/python/coefficient-of-determination)
-    correlation_matrix = np.corrcoef(x_data[y_index], y_data[y_index])
+    correlation_matrix = np.corrcoef(x_data, y_data)
     correlation = correlation_matrix[0, 1]
     r2 = correlation ** 2
 
@@ -83,44 +133,47 @@ def plot_parity(operator, stage, strict_discard=False, time_ave=60, gas_comp_sou
 
     # Set x and y max values
     # Manually set largest x and y value by changing largest_kgh here to desired value:
-    largest_kgh = 1750
+    largest_kgh = max(plot_lim)
 
-    # Or, determine largest_kgh by calculating largest value in x_data and y_data
-    # Comment here and below if manually setting
-    # Filter out NA because operations with NA returns NA
-    # if np.isnan(max(y_error)) == 1:
-    #     y_error.iloc[:] = 0
-    #
-    # largest_kgh = max(max(x_data), max(y_data)) + max(y_error)
-    # largest_kgh = math.ceil(largest_kgh / 100) * 100
+    if plot_lim == 'largest_kgh':
+        # Filter out NA because operations with NA returns NA
+        if np.isnan(max(y_error)) == 1:
+            y_error.iloc[:] = 0
+
+        largest_kgh = max(max(x_data), max(y_data)) + max(y_error)
+        largest_kgh = math.ceil(largest_kgh / 100) * 100
+
+        # set plot_lim:
+        plot_lim = [0, largest_kgh]
 
     # Create sequence of numbers for plotting linear fit (x)
     x_seq = np.linspace(0, largest_kgh, num=100)
 
-    fig, ax = plt.subplots(1, figsize=(6, 6))
-    # Add linear regression
-    plt.plot(x_seq, m * x_seq + b, color='k', lw=2,
-             label=f'Best Fit ($y = {m:0.2f}x+{b:0.2f}$, $R^2 =$ {r2:0.4f})')
+    ############ Generate Figure  ############
 
-    # Add x = y line
-    plt.plot(x_seq, x_seq, color='k', lw=2, linestyle='--',
-             label='y = x')
+    # Add linear regression to in put ax
+    ax.plot(x_seq, m * x_seq + b, color='k', lw=2,
+             label=f'Best Fit, $R^2 =$ {r2:0.2f}\n$y = {m:0.2f}x+{b:0.2f}$')
+
+    # Add parity line
+    ax.plot(x_seq, x_seq, color='k', lw=2, linestyle='--',
+             label='Parity Line')
 
     ax.errorbar(x_data, y_data,
                 xerr=x_error,
                 yerr=y_error,
                 linestyle='none',
                 mfc='white',
-                label=f'{operator} Stage {stage} data',
+                label=f'n = {sample_size}',
                 fmt='o',
                 markersize=5)
 
     # Set title
-    plt.title(f'{operator} Stage {stage} Results ({sample_size} measurements)')
-
+    # ax.title(f'{operator} Stage {stage} Results ({sample_size} measurements)')
+    ax.annotate(f'{operator}\n Stage {stage}', xy=(0.03, 0.89), xycoords = 'axes fraction', fontsize=13)
     # Set axes
-    ax.set(xlim=(0, largest_kgh),
-           ylim=(0, largest_kgh),
+    ax.set(xlim=plot_lim,
+           ylim=plot_lim,
            alpha=0.8)
 
     # Equalize Axes
@@ -134,18 +187,37 @@ def plot_parity(operator, stage, strict_discard=False, time_ave=60, gas_comp_sou
     ax.spines['bottom'].set_color('black')
 
     # Axes labels
-    plt.xlabel('Methane Release Rate (kgh)', fontsize=14)
-    plt.ylabel('Reported Release Rate (kgh)', fontsize=14)
-    plt.tick_params(direction='in', right=True, top=True)
-    plt.tick_params(labelsize=12)
-    plt.minorticks_on()
-    plt.tick_params(labelbottom=True, labeltop=False, labelright=False, labelleft=True)
-    plt.tick_params(direction='in', which='minor', length=3, bottom=True, top=True, left=True, right=True)
-    plt.tick_params(direction='in', which='major', length=6, bottom=True, top=True, left=True, right=True)
-    plt.grid(False)  # remove grid lines
+    ax.set_xlabel('Methane Release Rate (kgh)', fontsize=14)
+    ax.set_ylabel('Reported Release Rate (kgh)', fontsize=14)
+    ax.tick_params(direction='in', right=True, top=True)
+    ax.tick_params(labelsize=12)
+    ax.minorticks_on()
+    ax.tick_params(labelbottom=True, labeltop=False, labelright=False, labelleft=True)
+    ax.tick_params(direction='in', which='minor', length=3, bottom=True, top=True, left=True, right=True)
+    ax.tick_params(direction='in', which='major', length=6, bottom=True, top=True, left=True, right=True)
+    ax.grid(False)  # remove grid lines
 
     # Legend
-    plt.legend(facecolor='white')
+    ax.legend(facecolor='white', loc='lower right')
+
+    return ax
+
+# Inputs:
+# > operator
+# > stage
+# > operator_report
+# > operator_meter
+def plot_parity(operator, stage, strict_discard=False, time_ave=60, gas_comp_source='km'):
+    """Inputs are operator name, stage of analysis, operator_plot dataframe containing all relevant data"""
+
+    # Generate parity data
+    parity_data, parity_notes = get_parity_data(operator, stage, strict_discard, time_ave, gas_comp_source)
+
+    # Initialize figure
+    fig, ax = plt.subplots(1, figsize=(6, 6))
+
+    # Make figure
+    ax = make_parity_plot(parity_data, parity_notes, ax)
 
     # Save figure
     if strict_discard == True:
@@ -156,20 +228,18 @@ def plot_parity(operator, stage, strict_discard=False, time_ave=60, gas_comp_sou
     now = datetime.datetime.now()
     op_ab = abbreviate_op_name(operator)
     save_time = now.strftime("%Y%m%d")
-    fig_name = f'{op_ab}_{stage}_{discard}_parity_{save_time}_test'
+    fig_name = f'{op_ab}_{stage}_{discard}_parity_{save_time}'
     fig_path = pathlib.PurePath('04_figures', 'parity_plots', fig_name)
     plt.savefig(fig_path)
     plt.show()
 
     # Save data used to make figure
-    save_parity_data = pd.DataFrame()
-    save_parity_data['release_rate'] = x_data
-    save_parity_data['x_error'] = x_error
-    save_parity_data['operator_report'] = y_data
-    save_parity_data['operator_sigma'] = y_error
 
     save_path = pathlib.PurePath('03_results', 'parity_plot_data', f'{op_ab}_{stage}_{discard}_parity_{save_time}.csv')
-    save_parity_data.to_csv(save_path)
+    parity_data.to_csv(save_path)
+
+
+    return
 
 
 # %% Function: plot_detection_limit

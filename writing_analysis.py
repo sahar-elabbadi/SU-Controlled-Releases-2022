@@ -17,10 +17,10 @@ def print_overpass_info(release):
     print(f'(sigma from gas composition: {release.sigma_gas_composition:1f})')
     print(f'(combined total sigma: {release.ch4_kgh_sigma:1f})\n')
 
-def operator_releases_summary_stats(operator):
+def operator_releases_summary_stats(operator, strict_discard=False):
     """ Function for generating the data used in operator overview paragraphs of Results section"""
 
-    overpasses = load_overpass_summary(operator, stage=1)
+    overpasses = load_overpass_summary(operator=operator, strict_discard=strict_discard, stage=1)
     print(f'{operator}: {len(overpasses)} flightlines reported to SU')
     fail_su_qc = overpasses.loc[overpasses.stanford_kept == False]
     print(f'{len(fail_su_qc)} overpasses that fail SU QC')
@@ -39,17 +39,6 @@ def operator_releases_summary_stats(operator):
     relevant_cols = ['release_rate_kgh', 'lower_95CI', 'upper_95CI', 'ch4_kgh_sigma', 'sigma_flow_variability',
                         'sigma_meter_reading', 'sigma_gas_composition']
 
-
-    # Find largest release given by Stanford that passes all QC
-    max_su_info = pass_su_qc.loc[pass_su_qc.release_rate_kgh.idxmax()][relevant_cols]
-    print(f'Largest volume overpass for {operator} that passes SU qc:')
-    print_overpass_info(max_su_info)
-
-    # Find largest release given by Stanford that passes all QC
-    max_info = pass_all_qc.loc[pass_all_qc.release_rate_kgh.idxmax()][relevant_cols]
-    print(f'Largest volume overpass for {operator} that passes operator & SU qc:')
-    print_overpass_info(max_info)
-
     # Find smallest non-zero release to pass SU filtering
     non_zero_overpasses_su = pass_su_qc.loc[pass_su_qc.non_zero_release == True]
     min_su_info = non_zero_overpasses_su.loc[non_zero_overpasses_su.release_rate_kgh.idxmin()][relevant_cols]
@@ -61,6 +50,16 @@ def operator_releases_summary_stats(operator):
     min_info = non_zero_overpasses.loc[non_zero_overpasses.release_rate_kgh.idxmin()][relevant_cols]
     print(f'Smallest non-zero volume overpass for {operator} that passes operator and SU qc:')
     print_overpass_info(min_info)
+
+    # Find largest release given by Stanford that passes all QC
+    max_su_info = pass_su_qc.loc[pass_su_qc.release_rate_kgh.idxmax()][relevant_cols]
+    print(f'Largest volume overpass for {operator} that passes SU qc:')
+    print_overpass_info(max_su_info)
+
+    # Find largest release given by Stanford that passes all QC
+    max_info = pass_all_qc.loc[pass_all_qc.release_rate_kgh.idxmax()][relevant_cols]
+    print(f'Largest volume overpass for {operator} that passes operator & SU qc:')
+    print_overpass_info(max_info)
 
 
     # Zero releases
@@ -85,10 +84,11 @@ def operator_releases_summary_stats(operator):
     else:
         print(f'False negatives detected: {len(false_negatives)}\n')
 
-    # Largest false negative:
-    largest_false_neg = false_negatives.loc[false_negatives.release_rate_kgh.idxmax()][relevant_cols]
-    print(f'Largest false negative for {operator}: ')
-    print_overpass_info(largest_false_neg)
+        # Find largest false negative:
+        largest_false_neg = false_negatives.loc[false_negatives.release_rate_kgh.idxmax()][relevant_cols]
+        print(f'Largest false negative for {operator}: ')
+        print_overpass_info(largest_false_neg)
+
 
     # Find smallest plume that operator detected
     detected_non_zero = non_zero_overpasses.loc[non_zero_overpasses.operator_detected == True]
