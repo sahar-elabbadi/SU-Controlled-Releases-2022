@@ -2,7 +2,7 @@
 
 # setup
 
-from methods_source import find_missing_data, load_overpass_summary, classify_confusion_categories
+from methods_source import find_missing_data, load_overpass_summary, classify_confusion_categories, abbreviate_op_name
 
 def print_overpass_info(release):
     """Print relevant columns (release rate, uncertainty) for a specific overpass from an overpass summary file"""
@@ -101,3 +101,78 @@ def operator_releases_summary_stats(operator, strict_discard=False):
     min_quantified = quantified_non_zero.loc[quantified_non_zero.release_rate_kgh.idxmin()]
     print(f'Smallest quantified plume by {operator}:')
     print_overpass_info(min_quantified)
+
+
+def test_parity(x_value, y_value, y_error):
+    """Test if a given y-value and associated error pass the parity line. Returns boolean True or False"""
+
+    # Define upper and lower bounds
+    y_upper = y_value + y_error
+    y_lower = y_value - y_error
+
+    # Test if x_value is in between y_upper and y_lower
+    if (x_value <= y_upper) and (x_value >= y_lower):
+        return True
+    else:
+        return False
+
+
+def calc_parity_intersection(operator, stage, strict_discard=False):
+    """Determine the percent of quantification estimates that cross the parity line"""
+
+    all_overpasses = load_overpass_summary(operator=operator, strict_discard=strict_discard, stage=stage)
+
+    # Only consider points that pass all QC
+    overpasses = all_overpasses.loc[all_overpasses.pass_all_qc == True].copy()
+
+    # Only consider overpasses where operator quantification estimate is a real number
+    overpasses = overpasses[overpasses.operator_quantification.notnull()]
+
+    # Uncertainty types for each operator
+    operator_uncertainty_dictionary = {
+        'cm': '1-sigma',
+        'ghg': '1-sigma',
+        'kairos': 'pod_val',
+        'mair': '95_CI',
+        'sciav': '1-sigma',
+    }
+
+    # Multiplier for concerting uncertainty
+    uncertainty_multiplier = {
+        '1-sigma': 1.96,
+        '95_CI': 1,
+    }
+
+    op_ab = abbreviate_op_name(operator)
+    operator_multiplier = uncertainty_multiplier[operator_uncertainty_dictionary[op_ab]]
+    overpasses['operator_error_bound'] = (overpasses['operator_upper'] - overpasses['operator_quantification'])
+    overpasses['operator_95CI_bounds'] = overpasses['operator_error_bound'] * operator_multiplier
+
+    overpasses['intersect_parity_line'] = overpasses.apply(lambda x: test_parity(x['release_rate_kgh'],
+                                                                                 x['operator_quantification'],
+                                                                                 x['operator_95CI_bounds']),
+                                                           axis=1)
+
+    cross_parity = len(overpasses.loc[overpasses.intersect_parity_line == True])
+    percent_cross_parity = cross_parity / len(overpasses)
+    print(
+        f'Fraction of {operator} Stage {stage} overpasses with 95% CI that encompasses parity line: {percent_cross_parity * 100:.0f}%')
+
+    return
+
+
+def test_parity_all_stages(operator):
+    op_ab = abbreviate_op_name(operator)
+    operator_stages = {
+        'cm': 3,
+        'ghg': 3,
+        'kairos': 3,
+        'mair': 1,
+        'sciav': 1,
+    }
+
+    for i in range(operator_stages[op_ab]):
+        calc_parity_intersection(operator, stage=(i + 1))
+
+    print('\n')
+    return

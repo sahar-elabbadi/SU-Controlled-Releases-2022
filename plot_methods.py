@@ -982,7 +982,11 @@ def plot_selected_release_period(start_t, stop_t, gas_comp_source='km'):
 
     x_data = selected_period.datetime_utc
     y_data = selected_period.methane_kgh
-    kgh_max = math.ceil(max(y_data) / 100) * 100  # Max kgh rounded to nearest 100
+
+    if max(y_data) > 100:
+        kgh_max = math.ceil(max(y_data) / 100) * 100  # Max kgh rounded to nearest 100
+    else:
+        kgh_max = math.ceil(max(y_data) / 10) * 10  # Max kgh rounded to nearest 100
 
     # Initialize Figure
     fig, ax = plt.subplots(1, figsize=(5, 5))
@@ -991,6 +995,12 @@ def plot_selected_release_period(start_t, stop_t, gas_comp_source='km'):
     # Set y-axis limits
     ax.set(ylim=(0, kgh_max))
 
+    x_interval = (stop_t - start_t)/5 # x-axis will have 5 intervals
+    # Convert datetime to string and back to float
+    x_interval = int(str(x_interval)[2:4])
+
+
+
     test_date = start_t.strftime('%b %d')
     start_string = start_t.strftime('%H:%M')
     stop_string = stop_t.strftime('%H:%M')
@@ -998,6 +1008,7 @@ def plot_selected_release_period(start_t, stop_t, gas_comp_source='km'):
     plt.title(f'{test_date}: {start_string} - {stop_string} (UTC)')
 
     # Format axes
+    ax.xaxis.set_major_locator(mdates.MinuteLocator(interval=x_interval))
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
     plt.xlabel('Time (UTC)', fontsize=14)
     plt.ylabel('Metered Release Rate (kgh)', fontsize=14)
