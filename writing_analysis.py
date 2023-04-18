@@ -158,7 +158,7 @@ def calc_parity_intersection(operator, stage, strict_discard=False):
     print(
         f'Fraction of {operator} Stage {stage} overpasses with 95% CI that encompasses parity line: {percent_cross_parity * 100:.0f}%')
 
-    return
+    return overpasses
 
 
 def test_parity_all_stages(operator):

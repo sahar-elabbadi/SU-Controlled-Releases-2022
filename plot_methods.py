@@ -19,6 +19,7 @@ from matplotlib.lines import Line2D
 import matplotlib.dates as mdates
 import matplotlib.ticker as mtick
 from matplotlib.patches import Patch
+import matplotlib.offsetbox as offsetbox
 
 from methods_source import load_overpass_summary, abbreviate_op_name, classify_histogram_data, \
     load_operator_flight_days, load_daily_releases, calc_meter_uncertainty
@@ -103,6 +104,12 @@ def make_parity_plot(data, data_description, ax, plot_lim='largest_kgh'):
     :return: ax: is the plotted parity charg
     """
 
+    # Stage key for blinded status
+    stage_description = {
+        1: 'Fully blinded results',
+        2: 'Unblinded wind',
+        3: 'Partially unblinded\n(unblinded releases not included)',
+    }
     ############ Data Preparation and Linear Regression ############
 
     # Load data description
@@ -170,7 +177,15 @@ def make_parity_plot(data, data_description, ax, plot_lim='largest_kgh'):
 
     # Set title
     # ax.title(f'{operator} Stage {stage} Results ({sample_size} measurements)')
-    ax.annotate(f'{operator}\n Stage {stage}', xy=(0.03, 0.89), xycoords = 'axes fraction', fontsize=13)
+    stage_text = stage_description[stage]
+    # ax.annotate(f'{operator}\n {stage_text}', xy=(1, 1), xytext=(-15, -15), fontsize=13,
+    #             bbox=dict(boxstyle='square', facecolor='white'))
+
+    text = f'{operator}\n {stage_text}'
+    ob = offsetbox.AnchoredText(text, loc='upper left')
+    ob.set(alpha=0.8)
+    ax.add_artist(ob)
+
     # Set axes
     ax.set(xlim=plot_lim,
            ylim=plot_lim,
@@ -209,6 +224,7 @@ def make_parity_plot(data, data_description, ax, plot_lim='largest_kgh'):
 # > operator_meter
 def plot_parity(operator, stage, strict_discard=False, time_ave=60, gas_comp_source='km'):
     """Inputs are operator name, stage of analysis, operator_plot dataframe containing all relevant data"""
+
 
     # Generate parity data
     parity_data, parity_notes = get_parity_data(operator, stage, strict_discard, time_ave, gas_comp_source)
