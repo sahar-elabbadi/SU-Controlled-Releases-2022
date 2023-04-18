@@ -17,10 +17,11 @@ import math
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 import matplotlib.dates as mdates
+import matplotlib.ticker as mtick
 from matplotlib.patches import Patch
 
 from methods_source import load_overpass_summary, abbreviate_op_name, classify_histogram_data, \
-    load_operator_flight_days, load_daily_releases
+    load_operator_flight_days, load_daily_releases, calc_meter_uncertainty
 
 
 # Function: generate jitter for a given array
@@ -29,15 +30,19 @@ def rand_jitter(input_list):
     return input_list + np.random.randn(len(input_list)) * delta
 
 
-# %% Function: plot_parity
+# %% Functions for making parity plots
 
-# Inputs:
-# > operator
-# > stage
-# > operator_report
-# > operator_meter
-def plot_parity(operator, stage, strict_discard=False, time_ave=60, gas_comp_source='km'):
-    """Inputs are operator name, stage of analysis, operator_plot dataframe containing all relevant data"""
+def get_parity_data(operator, stage, strict_discard=False, time_ave=60, gas_comp_source='km'):
+    """
+
+    :param operator: name of operator
+    :param stage: stage of analysis
+    :param strict_discard: boolean, True for strict discard, False for lax discard
+    :param time_ave: time average period for meter data
+    :param gas_comp_source: source of gas composition for CNG
+    :return save_parity_data: dataframe with columns release_rate, release_sigma, operator_report, and operator_sigma
+    :return data_description: dictionary with key data parameters (operator, stage, strict_discard, time_ave, gas_comp_source)
+    """
 
     # Load overpass summary csv file
     operator_plot = load_overpass_summary(operator, stage, strict_discard, time_ave, gas_comp_source)
@@ -59,21 +64,67 @@ def plot_parity(operator, stage, strict_discard=False, time_ave=60, gas_comp_sou
         operator_plot = operator_plot[(operator_plot.phase_iii == 0)]
 
     # Select values for which operator provided a quantification estimate
-    y_index = np.isfinite(operator_plot['operator_quantification'])
+    # I think this is old code from when I was including zeros in the parity plot
+    # y_index = np.isfinite(operator_plot['operator_quantification'])
 
     # Select x data
     x_data = operator_plot['release_rate_kgh']
     y_data = operator_plot['operator_quantification']
-    x_error = (2*operator_plot['ch4_kgh_sigma'])
+    x_error = operator_plot['ch4_kgh_sigma']
     y_error = operator_plot['operator_upper'] - operator_plot['operator_quantification']
+
+
+    # Save data used to make figure
+    save_parity_data = pd.DataFrame()
+    save_parity_data['release_rate'] = x_data
+    save_parity_data['release_sigma'] = x_error
+    save_parity_data['operator_report'] = y_data
+    save_parity_data['operator_sigma'] = y_error
+
+    # Save data description
+    data_description = {
+        'operator': operator,
+        'stage': stage,
+        'strict_discard': strict_discard,
+        'time_ave': time_ave,
+        'gas_comp_source': gas_comp_source,
+        'strict_discard': strict_discard,
+    }
+
+
+    return save_parity_data, data_description
+
+def make_parity_plot(data, data_description, ax, plot_lim='largest_kgh'):
+    """
+    :param data: processed data to be plotted
+    :param data_description: dictionary with descriptions of data used for plot annotations
+    :param ax: subplot ax to plot on
+    :param plot_lim: limit of x and y axes
+    :return: ax: is the plotted parity charg
+    """
+
+    ############ Data Preparation and Linear Regression ############
+
+    # Load data description
+    operator = data_description['operator']
+    stage = data_description['stage']
+    time_ave = data_description['time_ave']
+    gas_comp_source = data_description['gas_comp_source']
+    strict_discard = data_description['strict_discard']
+
+    # Set x and y data and error values
+    x_data = data.release_rate
+    y_data = data.operator_report
+    x_error = data.release_sigma * 1.96 # value is sigma, multiply by 1.96 for 95% CI
+    y_error = data.operator_sigma
 
     # Fit linear regression via least squares with numpy.polyfit
     # m is slope, intercept is b
-    m, b = np.polyfit(x_data[y_index], y_data[y_index], deg=1)
+    m, b = np.polyfit(x_data, y_data, deg=1)
 
     # Calculate R^2 value
     # (using method described here: https://www.askpython.com/python/coefficient-of-determination)
-    correlation_matrix = np.corrcoef(x_data[y_index], y_data[y_index])
+    correlation_matrix = np.corrcoef(x_data, y_data)
     correlation = correlation_matrix[0, 1]
     r2 = correlation ** 2
 
@@ -82,43 +133,47 @@ def plot_parity(operator, stage, strict_discard=False, time_ave=60, gas_comp_sou
 
     # Set x and y max values
     # Manually set largest x and y value by changing largest_kgh here to desired value:
-    # largest_kgh = 1200
+    largest_kgh = max(plot_lim)
 
-    # Or, determine largest_kgh by calculating largest value in x_data and y_data
-    # Filter out NA because operations with NA returns NA
-    if np.isnan(max(y_error)) == 1:
-        y_error.iloc[:] = 0
+    if plot_lim == 'largest_kgh':
+        # Filter out NA because operations with NA returns NA
+        if np.isnan(max(y_error)) == 1:
+            y_error.iloc[:] = 0
 
-    largest_kgh = max(max(x_data), max(y_data)) + max(y_error)
-    largest_kgh = math.ceil(largest_kgh / 100) * 100
+        largest_kgh = max(max(x_data), max(y_data)) + max(y_error)
+        largest_kgh = math.ceil(largest_kgh / 100) * 100
+
+        # set plot_lim:
+        plot_lim = [0, largest_kgh]
 
     # Create sequence of numbers for plotting linear fit (x)
     x_seq = np.linspace(0, largest_kgh, num=100)
 
-    fig, ax = plt.subplots(1, figsize=(6, 6))
-    # Add linear regression
-    plt.plot(x_seq, m * x_seq + b, color='k', lw=2,
-             label=f'Best Fit ($y = {m:0.2f}x+{b:0.2f}$, $R^2 =$ {r2:0.4f})')
+    ############ Generate Figure  ############
 
-    # Add x = y line
-    plt.plot(x_seq, x_seq, color='k', lw=2, linestyle='--',
-             label='y = x')
+    # Add linear regression to in put ax
+    ax.plot(x_seq, m * x_seq + b, color='k', lw=2,
+             label=f'Best Fit, $R^2 =$ {r2:0.2f}\n$y = {m:0.2f}x+{b:0.2f}$')
+
+    # Add parity line
+    ax.plot(x_seq, x_seq, color='k', lw=2, linestyle='--',
+             label='Parity Line')
 
     ax.errorbar(x_data, y_data,
                 xerr=x_error,
                 yerr=y_error,
                 linestyle='none',
                 mfc='white',
-                label=f'{operator} Stage {stage} data',
+                label=f'n = {sample_size}',
                 fmt='o',
                 markersize=5)
 
     # Set title
-    plt.title(f'{operator} Stage {stage} Results ({sample_size} measurements)')
-
+    # ax.title(f'{operator} Stage {stage} Results ({sample_size} measurements)')
+    ax.annotate(f'{operator}\n Stage {stage}', xy=(0.03, 0.89), xycoords = 'axes fraction', fontsize=13)
     # Set axes
-    ax.set(xlim=(0, largest_kgh),
-           ylim=(0, largest_kgh),
+    ax.set(xlim=plot_lim,
+           ylim=plot_lim,
            alpha=0.8)
 
     # Equalize Axes
@@ -132,18 +187,37 @@ def plot_parity(operator, stage, strict_discard=False, time_ave=60, gas_comp_sou
     ax.spines['bottom'].set_color('black')
 
     # Axes labels
-    plt.xlabel('Methane Release Rate (kgh)', fontsize=14)
-    plt.ylabel('Reported Release Rate (kgh)', fontsize=14)
-    plt.tick_params(direction='in', right=True, top=True)
-    plt.tick_params(labelsize=12)
-    plt.minorticks_on()
-    plt.tick_params(labelbottom=True, labeltop=False, labelright=False, labelleft=True)
-    plt.tick_params(direction='in', which='minor', length=3, bottom=True, top=True, left=True, right=True)
-    plt.tick_params(direction='in', which='major', length=6, bottom=True, top=True, left=True, right=True)
-    plt.grid(False)  # remove grid lines
+    ax.set_xlabel('Methane Release Rate (kgh)', fontsize=14)
+    ax.set_ylabel('Reported Release Rate (kgh)', fontsize=14)
+    ax.tick_params(direction='in', right=True, top=True)
+    ax.tick_params(labelsize=12)
+    ax.minorticks_on()
+    ax.tick_params(labelbottom=True, labeltop=False, labelright=False, labelleft=True)
+    ax.tick_params(direction='in', which='minor', length=3, bottom=True, top=True, left=True, right=True)
+    ax.tick_params(direction='in', which='major', length=6, bottom=True, top=True, left=True, right=True)
+    ax.grid(False)  # remove grid lines
 
     # Legend
-    plt.legend(facecolor='white')
+    ax.legend(facecolor='white', loc='lower right')
+
+    return ax
+
+# Inputs:
+# > operator
+# > stage
+# > operator_report
+# > operator_meter
+def plot_parity(operator, stage, strict_discard=False, time_ave=60, gas_comp_source='km'):
+    """Inputs are operator name, stage of analysis, operator_plot dataframe containing all relevant data"""
+
+    # Generate parity data
+    parity_data, parity_notes = get_parity_data(operator, stage, strict_discard, time_ave, gas_comp_source)
+
+    # Initialize figure
+    fig, ax = plt.subplots(1, figsize=(6, 6))
+
+    # Make figure
+    ax = make_parity_plot(parity_data, parity_notes, ax)
 
     # Save figure
     if strict_discard == True:
@@ -154,19 +228,18 @@ def plot_parity(operator, stage, strict_discard=False, time_ave=60, gas_comp_sou
     now = datetime.datetime.now()
     op_ab = abbreviate_op_name(operator)
     save_time = now.strftime("%Y%m%d")
-    fig_name = f'{op_ab}_{stage}_{discard}_parity_{save_time}_test'
+    fig_name = f'{op_ab}_{stage}_{discard}_parity_{save_time}'
     fig_path = pathlib.PurePath('04_figures', 'parity_plots', fig_name)
     plt.savefig(fig_path)
     plt.show()
 
     # Save data used to make figure
-    save_parity_data = pd.DataFrame()
-    save_parity_data['release_rate'] = x_data
-    save_parity_data['operator_report'] = y_data
-    save_parity_data['operator_sigma'] = y_error
 
     save_path = pathlib.PurePath('03_results', 'parity_plot_data', f'{op_ab}_{stage}_{discard}_parity_{save_time}.csv')
-    save_parity_data.to_csv(save_path)
+    parity_data.to_csv(save_path)
+
+
+    return
 
 
 # %% Function: plot_detection_limit
@@ -184,7 +257,16 @@ def plot_detection_limit(operator, stage, n_bins, threshold, strict_discard=Fals
     operator_df = load_overpass_summary(operator, stage, strict_discard, time_ave, gas_comp_source)
 
     # Apply QC filter
-    operator_df = operator_df[(operator_df.qc_summary == 'pass_all')]
+    # For SI: Carbon Mapper's QC for determining quantification only, and treat their detection column as applied to all points
+
+    # if (operator == 'Carbon Mapper') or (operator == 'Scientific Aviation'):
+    #     operator_df = operator_df[(operator_df.stanford_kept == 1)]
+    if (operator == 'Scientific Aviation'):
+        # Scientific Aviation explicitly stated that all data could be used in determining detection, their QC only
+        # applied to quantification
+        operator_df = operator_df[(operator_df.stanford_kept == 1)]
+    else:
+        operator_df = operator_df[(operator_df.qc_summary == 'pass_all')]
 
     # Must be non-zero values
     operator_df = operator_df.query('non_zero_release == True')
@@ -462,7 +544,7 @@ def plot_daily_releases(operator, stage, strict_discard=False, time_ave=60, gas_
         daily_data = operator_releases[day]
 
         x_data = daily_data['datetime_utc']
-        y_data = daily_data[f'kgh_ch4_{gas_comp_source}']
+        y_data = daily_data[f'methane_kgh']
         kgh_max = math.ceil(max(y_data) / 100) * 100  # Max kgh rounded to nearest 100
 
         # Initialize Figure
@@ -784,3 +866,164 @@ def make_releases_histogram(operator, stage, strict_discard=False, time_ave=60, 
     table_name = f'histogram_high_{op_ab}_{save_time}.csv'
     table_path = pathlib.PurePath('03_results', 'histogram', table_name)
     op_histogram_high.to_csv(table_path)
+
+
+# %% Plot meter uncertainty
+
+
+def plot_meter_uncertainty(select_meter, presentation):
+    """Plot uncertainty for meters, input meter abbreviation of 'bc', 'mc', or 'pc' for Baby Corey, Mama Corey, or
+     Papa Corey respectively """
+
+    ####### Calculate Uncertainty #######
+
+    meters = ['bc', 'mc', 'pc']
+    meter_min = {}
+    meter_max = {}
+    meter_range = {}
+    meter_uncertainty = {}
+
+    meter_min['bc'] = 0.56  # kgh
+    meter_max['bc'] = 30  # kgh
+    meter_min['mc'] = 3.87  # kgh
+    meter_max['mc'] = 300  # kgh
+    meter_min['pc'] = 40  # kgh
+    meter_max['pc'] = 2000  # kgh
+
+    for meter in meters:
+        meter_range[meter] = np.linspace(meter_min[meter], meter_max[meter], 1000)
+        store_uncertainty = []
+        for flowrate in meter_range[meter]:
+            uncertainty = calc_meter_uncertainty(meter, flowrate)
+            store_uncertainty.append(uncertainty)
+
+        meter_uncertainty[meter] = store_uncertainty
+
+    ####### Plot #######
+    x_data = meter_range[select_meter]
+    y_data = meter_uncertainty[select_meter]
+
+    # Name meter for plot
+    meter_id = {}
+    meter_id['bc'] = 'CMFS015H'
+    meter_id['mc'] = 'CMF050M'
+    meter_id['pc'] = 'CMFS150M'
+
+    # Initialize figure
+    fig, ax = plt.subplots(1, figsize=(6, 4))
+    plt.plot(x_data, y_data, color='black',
+             linewidth=2)
+
+    ax.set(xlim=(0, meter_max[select_meter]),
+           ylim=(0, 2)
+           )
+
+    # title
+    plt.title(f'{meter_id[select_meter]} Uncertainty\n(Data from Emerson Online Sizing Tool)', fontweight='bold')
+
+    # Format axes
+    plt.xlabel('Meter Flow Rate\n(kg/hr whole gas)', fontsize=14, fontweight='bold')
+    plt.ylabel('Meter Uncertainty\n(% of flow rate)', fontsize=14, fontweight='bold')
+    ax.yaxis.set_major_formatter(mtick.PercentFormatter())
+    plt.tick_params(direction='in', right=True, top=True)
+    plt.tick_params(labelsize=12)
+    plt.minorticks_on()
+    plt.tick_params(labelbottom=True, labeltop=False, labelright=False, labelleft=True)
+    plt.tick_params(direction='in', which='minor', length=3, bottom=True, top=True, left=True, right=True)
+    plt.tick_params(direction='in', which='major', length=6, bottom=True, top=True, left=True, right=True)
+
+    ##### Settings for presentations #####
+    if presentation is True:
+        # change all spines to thicker lineweight
+        for axis in ['top', 'bottom', 'left', 'right']:
+            ax.spines[axis].set_linewidth(2)
+        # make the ticks bold
+        plt.xticks(weight='bold')
+        plt.yticks(weight='bold')
+        ax.tick_params(which='both', width=2)
+        # ax.xaxis.set_tick_params(width=2)
+        # ax.yaxis.set_tick_params(width=2)
+
+    # Save figure
+
+    save_name = f'{select_meter}_percent_uncertainty'
+    save_location = pathlib.PurePath('04_figures', 'meter_accuracy', save_name)
+    plt.savefig(save_location, transparent=True, bbox_inches='tight')
+
+    plt.show()
+
+
+def plot_selected_release_period(start_t, stop_t, gas_comp_source='km'):
+    """Plot flow rate (kgh CH4) for a given input period."""
+    # TODO duplicate code with calc_average_release -> turn into functions later
+    if start_t.date() != stop_t.date():
+        # End function if start and end t are on different dates
+        print(
+            "I can't currently plot data with start and end time on different dates. Why are you trying to do this anyway?")
+        return
+    elif start_t.date() > stop_t.date():
+        print('Start time is after end time. Time for *you* to do some debugging!')
+        return
+    else:
+        # Load data
+        file_name = start_t.strftime('%m_%d')
+        # use subclass Path (instead of PurePath) because we need to check if the file exists
+        file_path = pathlib.Path('02_meter_data', 'daily_meter_data', 'whole_gas_clean',
+                                 f'{gas_comp_source}', f'{file_name}.csv')
+    if not file_path.is_file():
+        # If file does not exist, we did not conduct releases on that day.
+        # Set all values of results_summary to zero or np.nan
+        print('No gas released on selected date.')
+        return
+
+    meter_data = pd.read_csv(file_path, index_col=0, parse_dates=['datetime_utc'])
+    time_ave_mask = (meter_data['datetime_utc'] > start_t) & (meter_data['datetime_utc'] <= stop_t)
+    selected_period = meter_data.loc[time_ave_mask].copy()
+
+    x_data = selected_period.datetime_utc
+    y_data = selected_period.methane_kgh
+
+    if max(y_data) > 100:
+        kgh_max = math.ceil(max(y_data) / 100) * 100  # Max kgh rounded to nearest 100
+    else:
+        kgh_max = math.ceil(max(y_data) / 10) * 10  # Max kgh rounded to nearest 100
+
+    # Initialize Figure
+    fig, ax = plt.subplots(1, figsize=(5, 5))
+    plt.plot(x_data, y_data, color='black',
+             linewidth=1)
+    # Set y-axis limits
+    ax.set(ylim=(0, kgh_max))
+
+    x_interval = (stop_t - start_t)/5 # x-axis will have 5 intervals
+    # Convert datetime to string and back to float
+    x_interval = int(str(x_interval)[2:4])
+
+
+
+    test_date = start_t.strftime('%b %d')
+    start_string = start_t.strftime('%H:%M')
+    stop_string = stop_t.strftime('%H:%M')
+    # Title
+    plt.title(f'{test_date}: {start_string} - {stop_string} (UTC)')
+
+    # Format axes
+    ax.xaxis.set_major_locator(mdates.MinuteLocator(interval=x_interval))
+    ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
+    plt.xlabel('Time (UTC)', fontsize=14)
+    plt.ylabel('Metered Release Rate (kgh)', fontsize=14)
+    plt.tick_params(direction='in', right=True, top=True)
+    plt.tick_params(labelsize=12)
+    plt.minorticks_on()
+    plt.tick_params(labelbottom=True, labeltop=False, labelright=False, labelleft=True)
+    plt.tick_params(direction='in', which='minor', length=3, bottom=True, top=True, left=True, right=True)
+    plt.tick_params(direction='in', which='major', length=6, bottom=True, top=True, left=True, right=True)
+
+    # Save Fig
+    plot_period = start_t.strftime('%m-%d_%H%m')
+    now = datetime.datetime.now()
+    save_time = now.strftime("%Y%m%d")
+    fig_name = f'release_chart_{plot_period}_saved_{save_time}'
+    fig_path = pathlib.PurePath('04_figures', 'misc_flow_rate_plots', fig_name)
+    plt.savefig(fig_path, bbox_inches='tight')
+    plt.show()

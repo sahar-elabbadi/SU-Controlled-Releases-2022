@@ -1,0 +1,25 @@
+,Operator,Stage,overpass_id,DateOfSurvey,TimestampUTC,Detected,QuantifiedPlume,FacilityEmissionRate,FacilityEmissionRateUpper,FacilityEmissionRateLower,UncertaintyType,OperatorWindspeed_RMS,OperatorWindspeed_HRRR,QCFlag,OperatorKeep
+0,Methane Air,1,1.0,10/25/22,17:15:00,True,True,196.1,251.0,141.2,confidence_95,1.17,1.46,clear,True
+1,Methane Air,1,2.0,10/25/22,17:32:00,True,True,56.6,99.8,13.4,max_min,0.9,0.88,clear,True
+2,Methane Air,1,3.0,10/25/22,17:51:00,True,True,957.4,1233.0,681.8,confidence_95,1.09,0.88,clear,True
+3,Methane Air,1,4.0,10/25/22,18:09:00,True,True,889.9,1131.5,648.3,confidence_95,1.35,0.88,clear,True
+4,Methane Air,1,5.0,10/25/22,18:27:00,False,True,-13.4,40.0,-34.8,confidence_95,1.58,0.37,clear,True
+5,Methane Air,1,6.0,10/25/22,18:47:00,True,True,769.4,1027.8,510.9,confidence_95,1.49,1.28,clear,True
+6,Methane Air,1,7.0,10/25/22,19:07:00,False,True,-74.0,-24.8,-123.2,confidence_95,1.86,0.95,clear,True
+7,Methane Air,1,8.0,10/25/22,19:27:00,True,True,530.7,697.3,364.1,confidence_95,1.71,1.28,clear,True
+8,Methane Air,1,9.0,10/25/22,20:10:00,True,True,350.3,469.7,231.0,max_min,1.73,1.36,clear,True
+9,Methane Air,1,10.0,10/25/22,20:29:00,False,True,-133.2,-83.4,-183.1,confidence_95,2.11,1.36,clear,True
+10,Methane Air,1,11.0,10/25/22,20:46:00,True,True,147.5,197.5,97.4,confidence_95,2.18,1.42,clear,True
+11,Methane Air,1,12.0,10/29/22,16:25:00,True,True,58.2,113.1,-24.0,confidence_95,0.46,1.08,clear,True
+12,Methane Air,1,13.0,10/29/22,16:50:00,True,True,308.5,406.9,210.1,confidence_95,0.73,1.5,clear,True
+13,Methane Air,1,14.0,10/29/22,17:17:00,True,True,946.7,1442.8,450.5,confidence_95,1.43,1.5,clear,True
+14,Methane Air,1,15.0,10/29/22,17:43:00,True,True,485.9,857.1,114.8,confidence_95,1.97,1.18,clear,True
+15,Methane Air,1,16.0,10/29/22,18:07:00,False,True,-2.2,78.7,-83.2,confidence_95,2.07,1.01,clear,True
+16,Methane Air,1,17.0,10/29/22,18:31:00,True,True,283.2,372.8,193.7,confidence_95,2.42,2.42,clear,True
+17,Methane Air,1,18.0,10/29/22,18:54:00,True,True,709.3,1115.4,303.2,confidence_95,2.54,1.13,clear,True
+18,Methane Air,1,19.0,10/29/22,19:17:00,True,True,888.3,1197.5,579.1,confidence_95,2.52,1.13,clear,True
+19,Methane Air,1,20.0,10/29/22,19:38:00,True,True,1308.5,1787.8,829.1,confidence_95,2.75,1.43,clear,True
+20,Methane Air,1,21.0,10/29/22,20:00:00,True,True,438.3,618.2,258.5,confidence_95,2.24,1.43,clear,True
+21,Methane Air,1,22.0,10/29/22,20:21:00,True,True,259.9,364.8,155.0,confidence_95,2.03,1.43,clear,True
+22,Methane Air,1,23.0,10/29/22,20:42:00,True,True,531.6,785.5,277.7,confidence_95,1.95,1.68,clear,True
+23,Methane Air,1,24.0,10/29/22,21:02:00,True,True,30.8,162.4,-100.9,confidence_95,2.52,1.68,clear,True
