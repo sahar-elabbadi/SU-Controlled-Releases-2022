@@ -13,7 +13,7 @@ from scipy.stats.mstats import ttest_ind
 def evaluate_error_profile(operator, stage):
     """Evaluate percent error for different Stanford QC criteria"""
 
-    # Load overpass summary with errors calculated. Note: calc_percent_error returns np.nan for percent error on zero
+    # Load overpass summary with errors calculated. Note: calc_error_abs_percent returns np.nan for percent error on zero
     # releases
     op_error = make_overpass_error_df(operator=operator, stage=stage)
 

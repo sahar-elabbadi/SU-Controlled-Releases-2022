@@ -3,6 +3,44 @@
 # setup
 
 from methods_source import find_missing_data, load_overpass_summary, classify_confusion_categories, abbreviate_op_name
+import numpy as np
+import pandas as pd
+
+def summarize_operator_stages_defaults():
+    """Generate dataframe summarizing default conditions. Iterate through this dataframe in order to
+    apply functions to all operators across all stages"""
+
+    operators = ['Carbon Mapper', 'GHGSat', 'Kairos', 'MethaneAIR', 'Scientific Aviation']
+    stage_dictionary = {
+        'cm': 3,
+        'ghg': 3,
+        'kairos': 3,
+        'mair': 1,
+        'sciav': 1,
+    }
+
+    operator_stage_list =[]
+    for operator in operators:
+        op_ab = abbreviate_op_name(operator)
+        max_stage = stage_dictionary[op_ab]
+        for i in range(1, max_stage+1):
+            if op_ab == 'sciav':
+                qc_strict = True
+            else:
+                qc_strict = False
+            new_row = {
+                'operator': operator,
+                'stage': i,
+                'strict_discard': qc_strict
+            }
+
+            # save new row
+            operator_stage_list.append(new_row)
+
+    operator_stages = pd.DataFrame(operator_stage_list)
+
+    return operator_stages
+
 
 def print_overpass_info(release):
     """Print relevant columns (release rate, uncertainty) for a specific overpass from an overpass summary file"""
@@ -176,3 +214,99 @@ def test_parity_all_stages(operator):
 
     print('\n')
     return
+
+def calc_residual(x, y, m, b):
+    y_fit = m * x + b
+    residual = y - y_fit
+    return residual
+
+def calc_error_absolute(expected, observed):
+    return observed - expected
+
+def calc_error_percent(expected, observed):
+    """Calculate perfect error between an observation and the expected value. Returns value as percent.  """
+
+    # Remove zeros, don't divide by zero
+    if expected == 0:
+        # True zeros where expected and observed values are both zero
+        if observed == 0:
+            return 0
+        else:
+            return np.nan
+
+    #
+    # if observed == 0:
+    #     return np.nan
+
+    # keep overpasses that aren't quantified in series so it can be aligned later
+    if pd.isnull(observed):
+        return np.nan
+    else:
+        return (observed - expected) / expected * 100
+
+def calculate_residuals_and_error(operator, stage, qc_status, strict_discard=False, time_ave=60, gas_comp_source='km'):
+    """ Calculate the measurement residuals for operator
+    qc_status can be: 'pass_all', 'all_points', 'pass_operator'
+    """
+    # data, description = get_parity_data(operator, stage, strict_discard, time_ave, gas_comp_source)
+
+    overpass_summary = load_overpass_summary(operator, stage, strict_discard, time_ave, gas_comp_source)
+
+    # Remove rows where operator did not quantify
+    overpass_summary = overpass_summary.dropna(subset='operator_quantification')
+
+    # Select which QC we want
+    if qc_status == 'pass_all':
+        qc_mask = (overpass_summary['stanford_kept'] == True) & (overpass_summary['operator_kept'] == True)
+    elif qc_status == 'pass_operator':
+        qc_mask = (overpass_summary['operator_kept'] == True)
+    elif qc_status == 'all_points':
+        qc_mask = overpass_summary['operator_quantification'].notna() # generic mask to select all points in dataset
+
+    data = overpass_summary.loc[qc_mask].copy()
+
+    # Set x and y data
+    data['meter_data'] = overpass_summary.release_rate_kgh
+    data['operator_data'] = overpass_summary.operator_quantification
+    data['qc'] = overpass_summary.qc_summary
+
+    # Fit linear regression via least squares with numpy.polyfit
+    # m is slope, intercept is b
+    m, b = np.polyfit(data.meter_data, data.operator_data, deg=1)
+
+    # Calculate the residual for each row
+    data['residual'] = data.apply(lambda dataset:
+                                  calc_residual(dataset['meter_data'],
+                                                dataset['operator_data'], m, b), axis=1)
+
+    data['quant_error_absolute'] = data.apply(lambda dataset:
+                                              calc_error_absolute(dataset['meter_data'],
+                                                                            dataset['operator_data']), axis=1)
+
+    data['quant_error_percent'] = data.apply(lambda dataset: calc_error_percent(dataset['meter_data'],
+                                                                                dataset['operator_data']), axis=1)
+
+    return data
+
+def determine_relevant_error_ranges(operator, stage, qc_status, strict_discard, time_ave=60, gas_comp_source='km'):
+    """ Determine the relevant ranges """
+    op_stage = calculate_residuals_and_error(operator, stage, qc_status, strict_discard, time_ave=60, gas_comp_source='km')
+    max_residual = op_stage.residual.max()
+    min_residual = op_stage.residual.min()
+    max_error_percent = op_stage.quant_error_percent.max()
+    min_error_percent = op_stage.quant_error_percent.min()
+    max_error_absolute = op_stage.quant_error_absolute.max()
+    min_error_absolute = op_stage.quant_error_absolute.min()
+
+    relevant_ranges = {
+        'operator': operator,
+        'stage': stage,
+        'max_residual': max_residual,
+        'min_residual': min_residual,
+        'max_error_percent': max_error_percent,
+        'min_error_percent': min_error_percent,
+        'max_error_absolute': max_error_absolute,
+        'min_error_absolute': min_error_absolute,
+    }
+
+    return relevant_ranges

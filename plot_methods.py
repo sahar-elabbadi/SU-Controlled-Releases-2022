@@ -23,13 +23,13 @@ import matplotlib.offsetbox as offsetbox
 
 from methods_source import load_overpass_summary, abbreviate_op_name, classify_histogram_data, \
     load_operator_flight_days, load_daily_releases, calc_meter_uncertainty
+from writing_analysis import calculate_residuals_and_error
 
 
 # Function: generate jitter for a given array
 def rand_jitter(input_list):
     delta = 0.2
     return input_list + np.random.randn(len(input_list)) * delta
-
 
 # %% Functions for making parity plots
 
@@ -108,7 +108,7 @@ def make_parity_plot(data, data_description, ax, plot_lim='largest_kgh'):
     stage_description = {
         1: 'Fully blinded results',
         2: 'Unblinded wind',
-        3: 'Partially unblinded\n(unblinded releases not included)',
+        3: 'Partially unblinded\n(unblinded releases\nnot included)',
     }
     ############ Data Preparation and Linear Regression ############
 
@@ -166,6 +166,7 @@ def make_parity_plot(data, data_description, ax, plot_lim='largest_kgh'):
     ax.plot(x_seq, x_seq, color='k', lw=2, linestyle='--',
              label='Parity Line')
 
+    # Add scatter plots with error bars
     ax.errorbar(x_data, y_data,
                 xerr=x_error,
                 yerr=y_error,
@@ -1043,3 +1044,134 @@ def plot_selected_release_period(start_t, stop_t, gas_comp_source='km'):
     fig_path = pathlib.PurePath('04_figures', 'misc_flow_rate_plots', fig_name)
     plt.savefig(fig_path, bbox_inches='tight')
     plt.show()
+
+def set_axes_clean_formatting(ax):
+    """Set default axes formats"""
+    # Equalize Axes
+    ax.set_aspect('equal', adjustable='box')
+
+    # Set axes and background color to white
+    ax.set_facecolor('white')
+    ax.spines['top'].set_color('black')
+    ax.spines['left'].set_color('black')
+    ax.spines['right'].set_color('black')
+    ax.spines['bottom'].set_color('black')
+
+    # Axes labels
+    # ax.set_xlabel('Methane Release Rate (kgh)', fontsize=14)
+    # ax.set_ylabel('Reported Release Rate (kgh)', fontsize=14)
+    ax.tick_params(direction='in', right=True, top=True)
+    ax.tick_params(labelsize=12)
+    ax.minorticks_on()
+    ax.tick_params(labelbottom=True, labeltop=False, labelright=False, labelleft=True)
+    ax.tick_params(direction='in', which='minor', length=3, bottom=True, top=True, left=True, right=True)
+    ax.tick_params(direction='in', which='major', length=6, bottom=True, top=True, left=True, right=True)
+    ax.grid(False)  # remove grid lines
+
+    return ax
+
+def make_generic_plot(x_data, y_data, ax, x_lim='largest_input', y_lim='largest_input'):
+
+    # Add plots to ax
+    ax.scatter(x_data, y_data, alpha = 0.5)
+    ax = set_axes_clean_formatting(ax)
+
+    if x_lim == 'largest_input':
+        largest_x = max(x_data)
+        x_lim = [0, largest_x +20]
+
+
+    if y_lim == 'largest_input':
+        smallest_y = min(y_data)
+        largest_y = max(y_data)
+        # print(f'smallest y: {smallest_y}')
+        # print(f'largest y: {largest_y}')
+        y_lim = [smallest_y - 50, largest_y + 50]
+
+    # Set axes
+    ax.set(xlim=x_lim,
+           ylim=y_lim,
+           alpha=0.8)
+
+    return ax
+
+def plot_residuals(ax, x_lim, y_lim, operator, stage, qc_status, strict_discard=False, time_ave=60, gas_comp_source='km'):
+    """Plot residuals"""
+    error_dataset = calculate_residuals_and_error(operator, stage, qc_status, strict_discard, time_ave, gas_comp_source)
+    x_data = error_dataset.meter_data
+    y_data = error_dataset.residual
+
+
+    # Initialize figure
+    # fig, ax = plt.subplots(1, figsize=(6, 6))
+    make_generic_plot(x_data, y_data, ax, x_lim=x_lim, y_lim=y_lim)
+    plt.title(f'{operator} Stage {stage} Residuals')
+    ax.set_xlabel('Methane Release Rate (kgh)', fontsize=14)
+    ax.set_ylabel('Residual (kgh)', fontsize=14)
+
+    # Stage key for blinded status
+    stage_description = {
+        1: 'Fully blinded results',
+        2: 'Unblinded wind',
+        3: 'Partially unblinded\n(unblinded releases not included)',
+    }
+
+    stage_text = stage_description[stage]
+
+    text = f'{operator}\n {stage_text}'
+    ob = offsetbox.AnchoredText(text, loc='upper left')
+    ob.set(alpha=0.8)
+    ax.add_artist(ob)
+
+def plot_quant_error_absolute(ax, x_lim, y_lim, operator, stage, qc_status, strict_discard=False, time_ave=60, gas_comp_source='km'):
+    """Plot absolute error"""
+    error_dataset = calculate_residuals_and_error(operator, stage, qc_status, strict_discard, time_ave, gas_comp_source)
+    x_data = error_dataset.meter_data
+    y_data = error_dataset.quant_error_absolute
+
+    # Initialize figure
+    make_generic_plot(x_data, y_data, ax,  x_lim=x_lim, y_lim=y_lim)
+    plt.title(f'{operator} Stage {stage} Absolute Error')
+    ax.set_xlabel('Methane Release Rate (kgh)', fontsize=14)
+    ax.set_ylabel('Quantification Error (absolute kg/hr)', fontsize=14)
+
+    # Stage key for blinded status
+    stage_description = {
+        1: 'Fully blinded results',
+        2: 'Unblinded wind',
+        3: f'Partially unblinded\n(unblinded releases\nnot included)',
+    }
+
+    stage_text = stage_description[stage]
+
+    text = f'{operator}\n {stage_text}'
+    ob = offsetbox.AnchoredText(text, loc='upper left')
+    ob.set(alpha=0.8)
+    ax.add_artist(ob)
+
+def plot_quant_error_percent(ax, x_lim, y_lim, operator, stage, qc_status, strict_discard=False, time_ave=60, gas_comp_source='km'):
+    """Plot percent error"""
+    error_dataset = calculate_residuals_and_error(operator, stage, qc_status, strict_discard, time_ave, gas_comp_source)
+    x_data = error_dataset.meter_data
+    y_data = error_dataset.quant_error_percent
+
+
+    # Initialize figure
+    make_generic_plot(x_data, y_data, ax, x_lim=x_lim, y_lim=y_lim)
+    plt.title(f'{operator} Stage {stage} Percent Error')
+    ax.set_xlabel('Methane Release Rate (kgh)', fontsize=14)
+    ax.set_ylabel('Percent Quantification Error (%)', fontsize=14)
+
+    # Stage key for blinded status
+    stage_description = {
+        1: 'Fully blinded results',
+        2: 'Unblinded wind',
+        3: 'Partially unblinded\n(unblinded releases not included)',
+    }
+
+    stage_text = stage_description[stage]
+
+    text = f'{operator}\n {stage_text}'
+    ob = offsetbox.AnchoredText(text, loc='upper left')
+    ob.set(alpha=0.8)
+    ax.add_artist(ob)

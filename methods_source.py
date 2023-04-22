@@ -1397,7 +1397,7 @@ def classify_histogram_data(operator, stage, threshold_lower, threshold_upper, n
     return summary
 
 
-def calc_percent_error(observed, expected):
+def calc_error_abs_percent(observed, expected):
     """Calculate perfect error between an observation and the expected value. Returns value as percent.  """
     # don't divide by zero:
     if expected == 0:
@@ -1448,7 +1448,7 @@ def make_overpass_error_df(operator, stage):
     ########## Calculate percent error for each overpass ##########
 
     # Calculate percent error for all overpasses
-    percent_error = op_error.apply(lambda x: calc_percent_error(x['operator_quantification'], x['release_rate_kgh']),
+    percent_error = op_error.apply(lambda x: calc_error_abs_percent(x['operator_quantification'], x['release_rate_kgh']),
                                    axis=1)
     op_error['percent_error'] = percent_error
     return op_error
