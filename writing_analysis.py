@@ -166,6 +166,13 @@ def calc_parity_intersection(operator, stage, strict_discard=False):
     # Only consider overpasses where operator quantification estimate is a real number
     overpasses = overpasses[overpasses.operator_quantification.notnull()]
 
+    # Only consider non-zero releases
+    overpasses = overpasses[overpasses.non_zero_release == True]
+
+    # Operator quantification > 0
+    overpasses = overpasses[overpasses.operator_quantification > 0]
+
+
     # Uncertainty types for each operator
     operator_uncertainty_dictionary = {
         'cm': '1-sigma',
