@@ -101,7 +101,7 @@ def make_parity_plot(data, data_description, ax, plot_lim='largest_kgh'):
     :param data_description: dictionary with descriptions of data used for plot annotations
     :param ax: subplot ax to plot on
     :param plot_lim: limit of x and y axes
-    :return: ax: is the plotted parity charg
+    :return: ax: is the plotted parity chart
     """
 
     # Stage key for blinded status
