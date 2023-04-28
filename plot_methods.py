@@ -22,7 +22,7 @@ from matplotlib.patches import Patch
 import matplotlib.offsetbox as offsetbox
 
 from methods_source import load_overpass_summary, abbreviate_op_name, classify_histogram_data, \
-    load_operator_flight_days, load_daily_releases, calc_meter_uncertainty
+    load_operator_flight_days, load_daily_releases, calc_meter_uncertainty, load_uncertainty_multipliers
 from writing_analysis import calculate_residuals_and_error
 
 
@@ -33,11 +33,12 @@ def rand_jitter(input_list):
 
 # %% Functions for making parity plots
 
-def get_parity_data(operator, stage, strict_discard=False, time_ave=60, gas_comp_source='km'):
+def get_parity_data(operator, stage, error_type = '95_CI', strict_discard=False, time_ave=60, gas_comp_source='km'):
     """
 
     :param operator: name of operator
     :param stage: stage of analysis
+    :param error_type: indicate type of error. Default is 95% CI, alternative is "operator_reported"
     :param strict_discard: boolean, True for strict discard, False for lax discard
     :param time_ave: time average period for meter data
     :param gas_comp_source: source of gas composition for CNG
@@ -68,11 +69,29 @@ def get_parity_data(operator, stage, strict_discard=False, time_ave=60, gas_comp
     # I think this is old code from when I was including zeros in the parity plot
     # y_index = np.isfinite(operator_plot['operator_quantification'])
 
+
     # Select x data
     x_data = operator_plot['release_rate_kgh']
     y_data = operator_plot['operator_quantification']
     x_error = operator_plot['ch4_kgh_sigma']
-    y_error = operator_plot['operator_upper'] - operator_plot['operator_quantification']
+
+    ######### Select error bars for operator quantification #########
+
+    if error_type == '95_CI':
+        operator_multiplier = load_uncertainty_multipliers(operator)
+        legend_error = '95% CI'
+    elif error_type == 'operator_reported':
+        operator_multiplier = 1
+        legend_error = 'Operator Reported Error Bars'
+    else:
+        operator_multiplier = 1
+        legend_error = 'Operator Reported Error Bars'
+        print(f'Please correct input error type. Currently using operator reported error bars')
+
+    if operator in ['Kairos', 'Kairos LS23', 'Kairos LS25']:
+        legend_error = 'x-error: 95% CI)\n(y-error: measurement variability'
+
+    y_error = (operator_plot['operator_upper'] - operator_plot['operator_quantification']) * operator_multiplier
 
 
     # Save data used to make figure
@@ -90,6 +109,7 @@ def get_parity_data(operator, stage, strict_discard=False, time_ave=60, gas_comp
         'time_ave': time_ave,
         'gas_comp_source': gas_comp_source,
         'strict_discard': strict_discard,
+        'legend_error': legend_error,
     }
 
 
@@ -118,12 +138,13 @@ def make_parity_plot(data, data_description, ax, plot_lim='largest_kgh'):
     time_ave = data_description['time_ave']
     gas_comp_source = data_description['gas_comp_source']
     strict_discard = data_description['strict_discard']
+    legend_error = data_description['legend_error']
 
     # Set x and y data and error values
     x_data = data.release_rate
     y_data = data.operator_report
     x_error = data.release_sigma * 1.96 # value is sigma, multiply by 1.96 for 95% CI
-    y_error = data.operator_sigma
+    y_error = data.operator_sigma # error bars are determined in get_parity_data function
 
     # Fit linear regression via least squares with numpy.polyfit
     # m is slope, intercept is b
@@ -172,7 +193,7 @@ def make_parity_plot(data, data_description, ax, plot_lim='largest_kgh'):
                 yerr=y_error,
                 linestyle='none',
                 mfc='white',
-                label=f'n = {sample_size}',
+                label=f'n = {sample_size}\n({legend_error})',
                 fmt='o',
                 markersize=5)
 
