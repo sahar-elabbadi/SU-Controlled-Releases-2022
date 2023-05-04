@@ -91,7 +91,11 @@ def get_parity_data(operator, stage, error_type = '95_CI', strict_discard=False,
     if operator in ['Kairos', 'Kairos LS23', 'Kairos LS25']:
         legend_error = 'x-error: 95% CI)\n(y-error: measurement variability'
 
-    y_error = (operator_plot['operator_upper'] - operator_plot['operator_quantification']) * operator_multiplier
+    # Kairos individual pods don't report error
+    if operator in ['Kairos LS23', 'Kairos LS25']:
+        y_error = 0 * len(operator_plot)
+    else:
+        y_error = (operator_plot['operator_upper'] - operator_plot['operator_quantification']) * operator_multiplier
 
 
     # Save data used to make figure
