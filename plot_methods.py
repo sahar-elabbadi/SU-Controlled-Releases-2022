@@ -47,7 +47,8 @@ def get_parity_data(operator, stage, error_type = '95_CI', strict_discard=False,
     """
 
     # Load overpass summary csv file
-    operator_plot = load_overpass_summary(operator, stage, strict_discard, time_ave, gas_comp_source)
+    operator_plot = load_overpass_summary(operator=operator, stage=stage, strict_discard=strict_discard,
+                                          time_ave=time_ave, gas_comp_source=gas_comp_source)
 
     # Apply the following filters to overpass data :
     # Must pass all QC filters:
@@ -253,7 +254,8 @@ def plot_parity(operator, stage, strict_discard=False, time_ave=60, gas_comp_sou
 
 
     # Generate parity data
-    parity_data, parity_notes = get_parity_data(operator, stage, strict_discard, time_ave, gas_comp_source)
+    parity_data, parity_notes = get_parity_data(operator=operator, stage=stage, strict_discard=strict_discard,
+                                                time_ave=time_ave, gas_comp_source=gas_comp_source)
 
     # Initialize figure
     fig, ax = plt.subplots(1, figsize=(6, 6))
