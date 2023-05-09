@@ -1776,3 +1776,92 @@ def load_uncertainty_multipliers(operator):
         operator_multiplier = uncertainty_multiplier[operator_uncertainty_dictionary[op_ab]]
 
     return operator_multiplier
+
+
+def summarize_wind_conditions(start_t, stop_t):
+    """ Calculate the average flow rate and associated uncertainty given a start and stop time.
+    Inputs:
+      - start_t, stop_t are datetime objects
+
+    Outputs: dictionary with the following keys:
+      - average_windspeed
+      - average_winddirection
+      - stdev_windspeed
+      - stdev_winddirection
+    """
+
+    if start_t.date() != stop_t.date():
+        # End function if start and end t are on different dates
+        print(
+            'Do not attempt to calculate average flow across multiple dates. Please consider a new start or end time.')
+        return
+    elif start_t.date() > stop_t.date():
+        print('Start time is after end time. Time for *you* to do some debugging!')
+        return
+    else:
+        # Load data
+        file_name = start_t.strftime('%m_%d')
+        # use subclass Path (instead of PurePath) because we need to check if the file exists
+        file_path = pathlib.Path('03_wind_data', f'{file_name}.csv')
+
+        # Check if we have a meter file for the input date
+        if not file_path.is_file():
+            # If file does not exist, we did not conduct releases on that day.
+            # Set all values of results_summary to zero or np.nan
+            results_summary = {
+                'average_windspeed': np.nan,
+                'average_winddirection': np.nan,
+                'stdev_windspeed': np.nan,
+                'stdev_winddirection': np.nan,
+            }
+        else:
+            # If file exists, calculate flow rate summary info:
+            # Select data for averaging
+            wind_data = pd.read_csv(file_path, parse_dates=['datetime'])
+            time_ave_mask = (wind_data['datetime'] >= start_t) & (wind_data['datetime'] <= stop_t)
+            average_period = wind_data.loc[time_ave_mask].copy()
+            length_before_drop_na = len(average_period)
+
+            # Drop rows with NA values
+            average_period.dropna(axis='index', inplace=True, thresh=7)
+            length_after_drop_na = len(average_period)
+            dropped_rows = length_before_drop_na - length_after_drop_na
+            if dropped_rows > 0:
+                print(f'Number of rows that were NA in the average period ({start_t} to {stop_t}): {dropped_rows}')
+
+            # Calculate mean and standard deviation for gas flow rate and ch4 flow rate
+            average_windspeed = average_period['windspeed'].mean()
+            average_winddirection = average_period['winddirection'].mean()
+            stdev_windspeed = average_period['windspeed'].std()
+            stdev_winddirection = average_period['winddirection'].std()
+
+
+            results_summary = {
+                'average_windspeed': average_windspeed,
+                'average_winddirection': average_winddirection,
+                'stdev_windspeed': stdev_windspeed,
+                'stdev_winddirection': stdev_winddirection,
+            }
+    return results_summary
+
+def calc_1min_windspeed(timestamp, direction='backward'):
+    """Calculate the 1-minute windspeed.
+    Inputs:
+      - timestamp: datetime object for timestamp
+      - direction: indicates directino of 1-min averaging period, can be either forward or backward. Default is backward (ie enter timestamp, then calculate the wind speed considering the one minute immediately leading up to the windspeed
+
+    Outputs:
+      - windspeed: in m/s
+    """
+
+    if direction == 'backward':
+        start_t = timestamp - datetime.timedelta(minutes=1)
+        wind_conditions = summarize_wind_conditions(start_t, timestamp)
+    elif direction == 'forward':
+        end_t = timestamp + datetime.timedelta(minutes=1)
+        wind_conditions = summarize_wind_conditions(timestamp, end_t)
+    else:
+        print(f'Please enter a valid direction for calculating average windspeed.\n You entered {direction}')
+
+    windspeed = wind_conditions['average_windspeed']
+    return windspeed
