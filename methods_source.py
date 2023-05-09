@@ -130,10 +130,10 @@ def overpass_summary_save_path(op_ab, stage, gas_comp_source='km', time_ave=60, 
         save_strict = 'lax'
 
     if op_ab == 'sciav':
-        save_path = pathlib.PurePath('03_results', 'overpass_summary',
+        save_path = pathlib.PurePath('06_results', 'overpass_summary',
                                      f'{op_ab}_{stage}_{gas_comp_source}_{save_strict}_overpasses.csv')
     else:
-        save_path = pathlib.PurePath('03_results', 'overpass_summary',
+        save_path = pathlib.PurePath('06_results', 'overpass_summary',
                                      f'{op_ab}_{stage}_{time_ave}s_{gas_comp_source}_{save_strict}_overpasses.csv')
 
     return save_path
@@ -270,10 +270,10 @@ def generate_overpass_summary(operator, stage, timekeeper='flightradar', strict_
     save_path = overpass_summary_save_path(op_ab, stage, gas_comp_source, time_ave, strict_discard)
 
     # if op_ab == 'sciav':
-    #     save_path = pathlib.PurePath('03_results', 'overpass_summary',
+    #     save_path = pathlib.PurePath('06_results', 'overpass_summary',
     #                                  f'{op_ab}_{stage}_{gas_comp_source}_{save_strict}_overpasses.csv')
     # else:
-    #     save_path = pathlib.PurePath('03_results', 'overpass_summary',
+    #     save_path = pathlib.PurePath('06_results', 'overpass_summary',
     #                                  f'{op_ab}_{stage}_{time_ave}s_{gas_comp_source}_{save_strict}_overpasses.csv')
 
     overpass_summary.to_csv(save_path)
@@ -299,13 +299,13 @@ def load_overpass_summary(operator, stage, strict_discard=False, time_ave=60, ga
     save_path = overpass_summary_save_path(op_ab, stage, gas_comp_source, time_ave, strict_discard)
 
     # if operator == 'Scientific Aviation':
-    #     path = pathlib.PurePath('03_results', 'overpass_summary', f'{op_ab}_{stage}_{gas_comp_source}_')
+    #     path = pathlib.PurePath('06_results', 'overpass_summary', f'{op_ab}_{stage}_{gas_comp_source}_')
     # else:
     #     if strict_discard is True:
-    #         path = pathlib.PurePath('03_results', 'overpass_summary',
+    #         path = pathlib.PurePath('06_results', 'overpass_summary',
     #                                 f'{op_ab}_{stage}_{time_ave}s_{gas_comp_source}_overpasses_strict.csv')
     #     else:
-    #         path = pathlib.PurePath('03_results', 'overpass_summary',
+    #         path = pathlib.PurePath('06_results', 'overpass_summary',
     #                                 f'{op_ab}_{stage}_{time_ave}s_{gas_comp_source}_overpasses.csv')
 
     overpass_summary = pd.read_csv(save_path, index_col=0, parse_dates=['overpass_datetime'])
@@ -344,7 +344,7 @@ def summarize_qc(operator, stage, strict_discard=False, time_ave=60, gas_comp_so
         'fail_operator_only': qc_count_operator_fail - qc_count_both_fail,
     }, index=[0])
 
-    qc_summary.to_csv(pathlib.PurePath('03_results', 'qc_comparison', f'{op_ab}_{stage}_qc.csv'))
+    qc_summary.to_csv(pathlib.PurePath('06_results', 'qc_comparison', f'{op_ab}_{stage}_qc.csv'))
     return qc_summary
 
 
@@ -417,7 +417,7 @@ def make_qc_table(strict_discard=False, time_ave=60, gas_comp_source='km'):
         save_name = 'all_qc_strict.csv'
     else:
         save_name = 'all_qc.csv'
-    all_qc.to_csv(pathlib.PurePath('03_results', 'qc_comparison', save_name))
+    all_qc.to_csv(pathlib.PurePath('06_results', 'qc_comparison', save_name))
     return all_qc
 
 
@@ -552,11 +552,11 @@ def load_flight_days(operator='all'):
     mair_flight_days = pd.DataFrame.from_dict(mair_flight_days)
     sciav_flight_days = pd.DataFrame.from_dict(sciav_flight_days)
 
-    cm_flight_days.to_csv(pathlib.PurePath('03_results', 'flight_days', f'cm_flight_days.csv'))
-    ghg_flight_days.to_csv(pathlib.PurePath('03_results', 'flight_days', f'ghg_flight_days.csv'))
-    kairos_flight_days.to_csv(pathlib.PurePath('03_results', 'flight_days', f'kairos_flight_days.csv'))
-    mair_flight_days.to_csv(pathlib.PurePath('03_results', 'flight_days', f'mair_flight_days.csv'))
-    sciav_flight_days.to_csv(pathlib.PurePath('03_results', 'flight_days', f'sciav_flight_days.csv'))
+    cm_flight_days.to_csv(pathlib.PurePath('06_results', 'flight_days', f'cm_flight_days.csv'))
+    ghg_flight_days.to_csv(pathlib.PurePath('06_results', 'flight_days', f'ghg_flight_days.csv'))
+    kairos_flight_days.to_csv(pathlib.PurePath('06_results', 'flight_days', f'kairos_flight_days.csv'))
+    mair_flight_days.to_csv(pathlib.PurePath('06_results', 'flight_days', f'mair_flight_days.csv'))
+    sciav_flight_days.to_csv(pathlib.PurePath('06_results', 'flight_days', f'sciav_flight_days.csv'))
 
     # Return flight day for the operator
     if operator == 'all':
@@ -581,7 +581,7 @@ def load_flight_days(operator='all'):
 def load_operator_flight_days(operator):
     """Load CSV file with operator flight days"""
     op_ab = abbreviate_op_name(operator)
-    flight_days = pd.read_csv(pathlib.PurePath('03_results', 'flight_days', f'{op_ab}_flight_days.csv'),
+    flight_days = pd.read_csv(pathlib.PurePath('06_results', 'flight_days', f'{op_ab}_flight_days.csv'),
                               index_col=0, parse_dates=['start_time', 'end_time'])
     return flight_days
 
@@ -691,7 +691,7 @@ def generate_daily_releases(gas_comp_sources=['km']):
                 op_ab = abbreviate_op_name(operator)
 
                 # TODO finalize naming convention here - do I want to include gas comp sourse?
-                save_path = pathlib.PurePath('03_results', 'daily_releases', f'{op_ab}_{day}.csv')
+                save_path = pathlib.PurePath('06_results', 'daily_releases', f'{op_ab}_{day}.csv')
                 date_meter.to_csv(save_path)
 
     return
@@ -708,7 +708,7 @@ def load_daily_releases(operator):
 
     for i in range(len(dates)):
         day = dates[i]
-        daily_release = pd.read_csv(pathlib.PurePath('03_results', 'daily_releases', f'{op_ab}_{day}.csv'),
+        daily_release = pd.read_csv(pathlib.PurePath('06_results', 'daily_releases', f'{op_ab}_{day}.csv'),
                                     index_col=0, parse_dates=['datetime_utc'])
         operator_releases[day] = daily_release
 
@@ -1071,7 +1071,7 @@ def calc_average_gas_flow_all_overpasses(operator, operator_meter, time_ave=60, 
         }
 
         # flight_date_code = overpass_datetime.strftime('%m_%d')
-        # flight_data = pd.read_csv(pathlib.PurePath('03_results', 'daily_releases',
+        # flight_data = pd.read_csv(pathlib.PurePath('06_results', 'daily_releases',
         #                                            f'{op_ab}_{flight_date_code}_{comp_source}.csv'),
         #                           parse_dates=['datetime_utc'], index_col=0)
         # Create the time period for averaging
@@ -1568,7 +1568,7 @@ def calc_daily_altitude(operator):
     op_daily_altitude = pd.DataFrame.from_dict(op_daily_altitude, orient='index')
     op_daily_altitude.columns = ['altitude_feet']
     op_ab = abbreviate_op_name(operator)
-    op_daily_altitude.to_csv(pathlib.PurePath('03_results', 'daily_altitude', f'{op_ab}_altitude_feet.csv'))
+    op_daily_altitude.to_csv(pathlib.PurePath('06_results', 'daily_altitude', f'{op_ab}_altitude_feet.csv'))
     return op_daily_altitude
 
 

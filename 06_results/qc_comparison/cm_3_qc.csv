@@ -1,0 +1,2 @@
+,operator,stage,total_overpasses,pass_stanford_qc,pass_operator_qc,pass_all_qc,fail_stanford_qc,fail_operator_qc,fail_all_qc,fail_stanford_only,fail_operator_only
+0,cm,3,121,113,98,95,8,23,5,3,18

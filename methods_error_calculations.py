@@ -19,7 +19,7 @@ def evaluate_error_profile(operator, stage):
 
     # Save op_error in results
     op_ab = abbreviate_op_name(operator)
-    op_error.to_csv(pathlib.PurePath('03_results', 'overpass_error', f'{op_ab}_error_summary.csv'))
+    op_error.to_csv(pathlib.PurePath('06_results', 'overpass_error', f'{op_ab}_error_summary.csv'))
 
     # Filter to only include overpasses that pass the operator QC criteria:
     op_error = op_error.query('operator_kept == True')

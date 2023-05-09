@@ -1,0 +1,6 @@
+,bin_median,detection_prob_mean,detection_prob_two_sigma_upper,detection_prob_two_sigma_lower,n_data_points,n_detected
+0,2.5,0.0,0.0,0.0,1,0
+1,7.5,0.0,0.0,0.0,2,0
+2,12.5,1.0,0.0,0.0,2,2
+3,17.5,1.0,0.0,0.0,1,1
+4,22.5,1.0,0.0,0.0,4,4

@@ -279,7 +279,7 @@ def plot_parity(operator, stage, strict_discard=False, time_ave=60, gas_comp_sou
 
     # Save data used to make figure
 
-    save_path = pathlib.PurePath('03_results', 'parity_plot_data', f'{op_ab}_{stage}_{discard}_parity_{save_time}.csv')
+    save_path = pathlib.PurePath('06_results', 'parity_plot_data', f'{op_ab}_{stage}_{discard}_parity_{save_time}.csv')
     parity_data.to_csv(save_path)
 
 
@@ -454,9 +454,9 @@ def plot_detection_limit(operator, stage, n_bins, threshold, strict_discard=Fals
     plt.show()
 
     # Save data used to make plots
-    operator_df.to_csv(pathlib.PurePath('03_results', 'detect_probability_data',
+    operator_df.to_csv(pathlib.PurePath('06_results', 'detect_probability_data',
                                         f'{op_ab}_{stage}_detect_{save_time}.csv'))
-    detection_prob.to_csv(pathlib.PurePath('03_results', 'detect_probability_data',
+    detection_prob.to_csv(pathlib.PurePath('06_results', 'detect_probability_data',
                                            f'{op_ab}_{stage}_{threshold}kgh_{n_bins}bins_{save_time}.csv'))
     return
 
@@ -471,7 +471,7 @@ def plot_qc_summary(operators, stage, strict_discard=False):
     else:
         file_name = 'all_qc.csv'
         discard = 'lax'
-    all_qc = pd.read_csv(pathlib.PurePath('03_results', 'qc_comparison', file_name), index_col=0)
+    all_qc = pd.read_csv(pathlib.PurePath('06_results', 'qc_comparison', file_name), index_col=0)
     # Plot
 
     category = ['fail_stanford_only', 'fail_all_qc', 'fail_operator_only']
@@ -903,12 +903,12 @@ def make_releases_histogram(operator, stage, strict_discard=False, time_ave=60, 
 
     # Save histogram low kgh inputs
     table_name = f'histogram_low_{op_ab}_{save_time}.csv'
-    table_path = pathlib.PurePath('03_results', 'histogram', table_name)
+    table_path = pathlib.PurePath('06_results', 'histogram', table_name)
     op_histogram_low.to_csv(table_path)
 
     # Save histogram high kgh inputs
     table_name = f'histogram_high_{op_ab}_{save_time}.csv'
-    table_path = pathlib.PurePath('03_results', 'histogram', table_name)
+    table_path = pathlib.PurePath('06_results', 'histogram', table_name)
     op_histogram_high.to_csv(table_path)
 
 

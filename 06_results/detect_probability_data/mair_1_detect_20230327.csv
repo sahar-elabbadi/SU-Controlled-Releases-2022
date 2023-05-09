@@ -1,0 +1,2 @@
+,overpass_id,overpass_datetime,zero_release,non_zero_release,operator_kept,stanford_kept,phase_iii,pass_all_qc,altitude_feet,fail_all_qc,operator_detected,release_rate_kgh,operator_quantification,operator_lower,operator_upper,qc_summary
+6,7.0,2022-10-25 19:07:10,False,True,True,True,0,True,43626.23549,False,False,24.35743357211063,0,-100,100,pass_all

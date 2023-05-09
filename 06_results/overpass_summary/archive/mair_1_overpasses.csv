@@ -1,0 +1,25 @@
+,overpass_id,overpass_datetime,zero_release,non_zero_release,operator_kept,stanford_kept,phase_iii,pass_all_qc,altitude_feet,fail_all_qc,operator_detected,release_rate_kgh,operator_quantification,operator_lower,operator_upper,qc_summary
+0,1.0,2022-10-25 17:15:08,False,True,True,True,0,True,41623.97797,False,True,205.5185589218292,177,121,232,pass_all
+1,2.0,2022-10-25 17:32:52,False,True,True,True,0,True,41630.46886,False,True,97.0260008310352,61,18,105,pass_all
+2,3.0,2022-10-25 17:50:42,False,True,True,False,0,False,42633.14464,False,True,987.91199091809,855,578,1133,fail_stanford
+3,4.0,2022-10-25 18:09:11,False,True,True,True,0,True,42635.03948,False,True,986.167936231928,908,662,1155,pass_all
+4,5.0,2022-10-25 18:27:57,True,False,True,False,0,False,43640.08684,False,False,0.0,0,-100,100,fail_stanford
+5,6.0,2022-10-25 18:47:09,False,True,True,True,0,True,43643.14464,False,True,467.06636570210094,669,409,928,pass_all
+6,7.0,2022-10-25 19:07:10,False,True,True,True,0,True,43626.23549,False,False,24.35743357211063,0,-100,100,pass_all
+7,8.0,2022-10-25 19:28:04,False,True,True,True,0,True,43632.51964,False,True,633.9051355130091,544,374,714,pass_all
+8,9.0,2022-10-25 20:10:31,False,True,True,True,0,True,44646.26964,False,True,141.8345484768,303,183,423,pass_all
+9,10.0,2022-10-25 20:29:58,False,True,True,True,0,True,44667.51964,False,True,74.45209850943027,89,-11,189,pass_all
+10,11.0,2022-10-25 20:46:41,False,True,True,True,0,True,44667.51964,False,True,62.912702467639015,140,89,191,pass_all
+11,12.0,2022-10-29 16:25:02,True,False,True,True,0,True,42617.54368,False,False,0.0,0,-100,100,pass_all
+12,13.0,2022-10-29 16:50:52,False,True,True,True,0,True,42642.51964,False,True,339.5653167427604,196,97,294,pass_all
+13,14.0,2022-10-29 17:17:02,False,True,True,True,0,True,42642.51964,False,True,670.3644371370983,787,290,1283,pass_all
+14,15.0,2022-10-29 17:42:47,False,True,True,True,0,True,43641.47456,False,True,405.0717141210984,644,271,1017,pass_all
+15,16.0,2022-10-29 18:07:14,False,True,True,True,0,True,43640.19821,False,True,33.52153627965879,94,-6,194,pass_all
+16,17.0,2022-10-29 18:31:01,False,True,True,True,0,True,43625.62149,False,True,337.1116523594586,388,296,480,pass_all
+17,18.0,2022-10-29 18:54:09,False,True,True,True,0,True,43635.8699,False,True,815.2200133589017,958,549,1368,pass_all
+18,19.0,2022-10-29 19:16:43,False,True,True,True,0,True,43617.51964,False,True,1061.160948438828,1199,886,1512,pass_all
+19,20.0,2022-10-29 19:38:38,False,True,True,True,0,True,44617.51964,False,True,1288.375416986276,1489,1004,1974,pass_all
+20,21.0,2022-10-29 19:59:57,False,True,True,True,0,True,44608.46226,False,True,583.8238531382741,579,397,761,pass_all
+21,22.0,2022-10-29 20:21:33,False,True,True,False,0,False,44617.51964,False,True,194.1391081044465,252,147,357,fail_stanford
+22,23.0,2022-10-29 20:42:37,False,True,True,False,0,False,44617.51964,False,True,492.5988902058828,584,328,839,fail_stanford
+23,24.0,2022-10-29 21:02:19,False,True,True,True,0,True,44627.8691,False,True,168.4673864244,112,-21,244,pass_all
