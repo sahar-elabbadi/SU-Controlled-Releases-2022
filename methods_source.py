@@ -18,6 +18,10 @@ import datetime
 import math
 
 
+#%%
+def feet_per_meter():
+    return 3.28084
+
 # %% Abbreviate operator name
 def abbreviate_op_name(operator):
     """Abbreviate operator name for saving files. Use because input to my functions will often be the operator name spelled out in full for plotting purposes,
