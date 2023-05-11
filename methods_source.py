@@ -16,6 +16,7 @@ import pandas as pd
 import numpy as np
 import datetime
 import math
+from scipy.stats import circmean, circstd
 
 
 #%%
@@ -1830,10 +1831,12 @@ def summarize_wind_conditions(start_t, stop_t):
                 print(f'Number of rows that were NA in the average period ({start_t} to {stop_t}): {dropped_rows}')
 
             # Calculate mean and standard deviation for gas flow rate and ch4 flow rate
+            # Uses circular mean and standard deviation for wind direction summary statistics
+            radians_to_degrees = 180/np.pi
             average_windspeed = average_period['windspeed'].mean()
-            average_winddirection = average_period['winddirection'].mean()
+            average_winddirection = circmean(pd.to_numeric(average_period['winddirection'], errors='coerce'), nan_policy='omit')*radians_to_degrees # .mean()
             stdev_windspeed = average_period['windspeed'].std()
-            stdev_winddirection = average_period['winddirection'].std()
+            stdev_winddirection = circstd(pd.to_numeric(average_period['winddirection'],errors='coerce'), nan_policy='omit')*radians_to_degrees # .std()
 
 
             results_summary = {
@@ -1842,23 +1845,24 @@ def summarize_wind_conditions(start_t, stop_t):
                 'stdev_windspeed': stdev_windspeed,
                 'stdev_winddirection': stdev_winddirection,
             }
-    return results_summary
+    return results_summary # average_period
 
-def calc_1min_windspeed(timestamp, direction='backward'):
-    """Calculate the 1-minute windspeed.
+def calc_avg_windspeed(timestamp, duration=1, direction='backward'):
+    """Calculate the X-minute windspeed, defaulting 1-minute average.
     Inputs:
       - timestamp: datetime object for timestamp
-      - direction: indicates directino of 1-min averaging period, can be either forward or backward. Default is backward (ie enter timestamp, then calculate the wind speed considering the one minute immediately leading up to the windspeed
+      - duration: Floating point number indicating the number of minutes in the averaging period
+      - direction: indicates direction of averaging period, can be either forward or backward. Default is backward (ie enter timestamp, then calculate the wind speed considering the X minutes immediately leading up to the windspeed
 
     Outputs:
       - windspeed: in m/s
     """
 
     if direction == 'backward':
-        start_t = timestamp - datetime.timedelta(minutes=1)
+        start_t = timestamp - datetime.timedelta(minutes=duration)
         wind_conditions = summarize_wind_conditions(start_t, timestamp)
     elif direction == 'forward':
-        end_t = timestamp + datetime.timedelta(minutes=1)
+        end_t = timestamp + datetime.timedelta(minutes=duration)
         wind_conditions = summarize_wind_conditions(timestamp, end_t)
     else:
         print(f'Please enter a valid direction for calculating average windspeed.\n You entered {direction}')
