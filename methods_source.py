@@ -1834,9 +1834,9 @@ def summarize_wind_conditions(start_t, stop_t):
             # Uses circular mean and standard deviation for wind direction summary statistics
             radians_to_degrees = 180/np.pi
             average_windspeed = average_period['windspeed'].mean()
-            average_winddirection = circmean(pd.to_numeric(average_period['winddirection'], errors='coerce'), nan_policy='omit')*radians_to_degrees # .mean()
+            average_winddirection = circmean(pd.to_numeric(average_period['winddirection'], errors='coerce')/radians_to_degrees, nan_policy='omit')*radians_to_degrees # .mean()
             stdev_windspeed = average_period['windspeed'].std()
-            stdev_winddirection = circstd(pd.to_numeric(average_period['winddirection'],errors='coerce'), nan_policy='omit')*radians_to_degrees # .std()
+            stdev_winddirection = circstd(pd.to_numeric(average_period['winddirection'],errors='coerce')/radians_to_degrees, nan_policy='omit')*radians_to_degrees # .std()
 
 
             results_summary = {
