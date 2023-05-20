@@ -251,7 +251,7 @@ def calc_error_percent(expected, observed):
     else:
         return (observed - expected) / expected * 100
 
-def calculate_residuals_and_error(operator, stage, qc_status, strict_discard=False, time_ave=60, gas_comp_source='km'):
+def calculate_residuals_and_error(operator, stage, qc_status, strict_discard=False, time_ave=60, gas_comp_source='ms'):
     """ Calculate the measurement residuals for operator
     qc_status can be: 'pass_all', 'all_points', 'pass_operator'
     """
@@ -295,9 +295,9 @@ def calculate_residuals_and_error(operator, stage, qc_status, strict_discard=Fal
 
     return data
 
-def determine_relevant_error_ranges(operator, stage, qc_status, strict_discard, time_ave=60, gas_comp_source='km'):
+def determine_relevant_error_ranges(operator, stage, qc_status, strict_discard, time_ave=60, gas_comp_source='ms'):
     """ Determine the relevant ranges """
-    op_stage = calculate_residuals_and_error(operator, stage, qc_status, strict_discard, time_ave=60, gas_comp_source='km')
+    op_stage = calculate_residuals_and_error(operator, stage, qc_status, strict_discard, time_ave=60, gas_comp_source='ms')
     max_residual = op_stage.residual.max()
     min_residual = op_stage.residual.min()
     max_error_percent = op_stage.quant_error_percent.max()

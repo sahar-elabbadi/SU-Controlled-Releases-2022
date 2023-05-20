@@ -33,7 +33,7 @@ def rand_jitter(input_list):
 
 # %% Functions for making parity plots
 
-def get_parity_data(operator, stage, error_type = '95_CI', strict_discard=False, time_ave=60, gas_comp_source='km'):
+def get_parity_data(operator, stage, error_type = '95_CI', strict_discard=False, time_ave=60, gas_comp_source='ms'):
     """
 
     :param operator: name of operator
@@ -249,7 +249,7 @@ def make_parity_plot(data, data_description, ax, plot_lim='largest_kgh'):
 # > stage
 # > operator_report
 # > operator_meter
-def plot_parity(operator, stage, strict_discard=False, time_ave=60, gas_comp_source='km'):
+def plot_parity(operator, stage, strict_discard=False, time_ave=60, gas_comp_source='ms'):
     """Inputs are operator name, stage of analysis, operator_plot dataframe containing all relevant data"""
 
 
@@ -289,14 +289,7 @@ def plot_parity(operator, stage, strict_discard=False, time_ave=60, gas_comp_sou
 # %% Function: plot_detection_limit
 
 
-# inputs:
-# operator: name of operator
-# operator_report: operator data report
-# operator_meter: operator meter data
-# n_bins: number of bins desired in plot
-# threshold: highest release rate in kgh to show in detection threshold graph
-
-def plot_detection_limit(operator, stage, n_bins, threshold, strict_discard=False, time_ave=60, gas_comp_source='km'):
+def make_detection_limit_df(operator, stage, n_bins, threshold, strict_discard=False, time_ave=60, gas_comp_source='ms'):
     # Load overpass summary for operator, stage, and discard criteria:
     operator_df = load_overpass_summary(operator, stage, strict_discard, time_ave, gas_comp_source)
 
@@ -311,6 +304,181 @@ def plot_detection_limit(operator, stage, n_bins, threshold, strict_discard=Fals
         operator_df = operator_df[(operator_df.stanford_kept == 1)]
     else:
         operator_df = operator_df[(operator_df.qc_summary == 'pass_all')]
+
+    # Must be non-zero values
+    operator_df = operator_df.query('non_zero_release == True')
+
+    # Select release under threshold value
+    operator_df = operator_df.query('release_rate_kgh <= @threshold')
+
+    # Create bins for plot
+    bins = np.linspace(0, threshold, n_bins + 1)
+    detection_probability = np.zeros(n_bins)
+
+    # These variables are for keeping track of values as I iterate through the bins in the for loop below:
+    bin_size, bin_num_detected = np.zeros(n_bins).astype('int'), np.zeros(n_bins).astype('int')
+    bin_median = np.zeros(n_bins)
+    bin_two_sigma = np.zeros(n_bins)
+    two_sigma_upper, two_sigma_lower = np.zeros(n_bins), np.zeros(n_bins)
+
+    # For each bin, find number of data points and detection probability
+
+    for i in range(n_bins):
+
+        # Set boundary of bin
+        bin_min = bins[i]
+        bin_max = bins[i + 1]
+        bin_median[i] = (bin_min + bin_max) / 2
+
+        # Select data within the bin range
+        binned_data = operator_df.loc[operator_df.release_rate_kgh < bin_max].loc[
+            operator_df.release_rate_kgh >= bin_min]
+
+        # Count the total number of overpasses detected within each bin
+        bin_num_detected[i] = binned_data.operator_detected.sum()
+
+        n = len(binned_data)
+        bin_size[i] = n  # this is the y-value for the bin in the plot
+        p = binned_data.operator_detected.sum() / binned_data.shape[0]  # df.shape[0] gives number of rows
+        detection_probability[i] = p
+
+        # Standard Deviation of a binomial distribution
+        sigma = np.sqrt(p * (1 - p) / n)
+        bin_two_sigma[i] = 2 * sigma
+
+        # Find the lower and upper bound defined by two sigma
+        two_sigma_lower[i] = 2 * sigma
+        two_sigma_upper[i] = 2 * sigma
+        if 2 * sigma + p > 1:
+            two_sigma_upper[i] = 1 - p  # probability cannot exceed 1
+        if p - 2 * sigma < 0:
+            two_sigma_lower[i] = p  # if error bar includes zero, set lower bound to p?
+
+    detection_prob = pd.DataFrame({
+        "bin_median": bin_median,
+        "detection_prob_mean": detection_probability,
+        "detection_prob_two_sigma_upper": two_sigma_upper,
+        "detection_prob_two_sigma_lower": two_sigma_lower,
+        "n_data_points": bin_size,
+        "n_detected": bin_num_detected})
+
+    return detection_prob, operator_df
+
+def plot_detection_limit(ax, operator, stage, n_bins, threshold, strict_discard=False, time_ave=60, gas_comp_source='ms'):
+    """
+      :param ax: subplot to plot
+      :param operator: name of operator
+      :param stage: stage of testing
+      :param threshold: max value for plotting (we are looking at all releases under threshold value)
+      :param n_bins: number of bins for plot
+      :param strict_discard: Boolean, use Stanford strict discard criteria or lax discard criteria
+      :param time_ave: time average for metered data
+      :gas_comp_source: source of gas composition, default value is measurement station (ms)
+      """
+
+    detection_plot, operator_df = make_detection_limit_df(operator, stage, n_bins, threshold, strict_discard, time_ave, gas_comp_source)
+
+    # Set bin width:
+    w = threshold / n_bins / 2.5
+
+    # Use n_bins set above
+    for i in range(n_bins):
+        ax.annotate(f'{detection_plot.n_detected[i]} / {detection_plot.n_data_points[i]}',
+                    [detection_plot.bin_median[i] - w / 1.8, 0.03], fontsize=10)
+
+    # for plotting purpose, we don't want a small hyphen indicating zero uncertainty interval
+    detection_plot.loc[detection_plot['detection_prob_two_sigma_lower'] == 0, 'detection_prob_two_sigma_lower'] = np.nan
+    detection_plot.loc[detection_plot.detection_prob_two_sigma_upper == 0, 'detection_prob_two_sigma_upper'] = np.nan
+    detection_plot.loc[detection_plot.detection_prob_mean == 0, 'detection_prob_mean'] = np.nan
+
+    # To avoid RuntimeWarning: All-NaN axis encountered, set yerr to None if all values are np.nan in sigma values
+    # (this is the case for Carbon Mapper)
+
+    sigma_lower = detection_plot.detection_prob_two_sigma_lower
+    sigma_upper = detection_plot.detection_prob_two_sigma_upper
+
+    if sigma_lower.isnull().all() or sigma_upper.isnull().all():
+        y_error = None
+    else:
+        y_error = [sigma_lower, sigma_upper]
+
+    # Plot bars and detection points
+    ax.bar(detection_plot.bin_median,
+           detection_plot.detection_prob_mean,
+           # yerr=[detection_plot.detection_prob_two_sigma_lower, detection_plot.detection_prob_two_sigma_upper],
+           yerr=y_error,
+           error_kw=dict(lw=2, capsize=3, capthick=1, alpha=0.3),
+           width=threshold / n_bins - 0.5, alpha=0.6, color='#9ecae1', ecolor='black', capsize=2)
+
+    # yulia's color: edgecolor="black",facecolors='none'
+    x_data = rand_jitter(operator_df.release_rate_kgh)
+
+    ax.scatter(x_data, np.multiply(operator_df.operator_detected, 1),
+               facecolors='black',
+               marker='|')
+
+    # Add more room on top and bottom
+    ax.set_ylim([-0.05, 1.05])
+    ax.set_xlim([0, threshold + 0.5])
+
+    # Axes formatting and labels
+    ax.set_yticks([0.0, 0.2, 0.4, 0.6, 0.8, 1.0])
+    ax.set_yticklabels([0.0, 0.2, 0.4, 0.6, 0.8, 1.0], fontsize=11)
+    ax.set_xlabel('Methane Release Rate (kgh)', fontsize=14)
+    ax.set_ylabel('Proportion detected', fontsize=14)
+    ax.tick_params(direction='in', right=True, top=True)
+    ax.tick_params(labelsize=12)
+    ax.minorticks_on()
+    ax.tick_params(labelbottom=True, labeltop=False, labelright=False, labelleft=True)
+    ax.tick_params(direction='in', which='minor', length=3, bottom=False, top=False, left=True, right=True)
+    ax.tick_params(direction='in', which='major', length=6, bottom=True, top=True, left=True, right=True)
+
+    # Set axes and background color to white
+    ax.set_facecolor('white')
+    ax.spines['top'].set_color('black')
+    ax.spines['left'].set_color('black')
+    ax.spines['right'].set_color('black')
+    ax.spines['bottom'].set_color('black')
+
+    # Set more room on top for annotation
+    ax.set_ylim([-0.05,1.22])
+    ax.set_xlim([0,threshold])
+    ax.set_yticks([0.0,0.2,0.4,0.6,0.8,1.0])
+    ax.set_yticklabels([0.0,0.2,0.4,0.6,0.8,1.0],fontsize=11)
+
+    # Stage key for blinded status
+    stage_description = {
+        1: 'Fully blinded results',
+        2: 'Unblinded wind',
+        3: 'Partially unblinded\n(unblinded releases\nnot included)',
+    }
+
+    stage_text = stage_description[stage]
+    text = f'{operator}\n {stage_text}'
+
+    ax.annotate(text, xy=(0.03, 0.89), xycoords='axes fraction', fontsize=13)
+
+    return ax
+
+
+
+def plot_detection_limit_su_filter_only(operator, stage, n_bins, threshold, strict_discard=False, time_ave=60, gas_comp_source='ms'):
+    # Load overpass summary for operator, stage, and discard criteria:
+    operator_df = load_overpass_summary(operator, stage, strict_discard, time_ave, gas_comp_source)
+
+    # Apply QC filter
+    # For SI: Carbon Mapper's QC for determining quantification only, and treat their detection column as applied to all points
+
+    if (operator == 'Carbon Mapper') or (operator == 'Scientific Aviation'):
+        operator_df = operator_df[(operator_df.stanford_kept == 1)]
+    # if (operator == 'Scientific Aviation'):
+    #     # Scientific Aviation explicitly stated that all data could be used in determining detection, their QC only
+    #     # applied to quantification
+    #     operator_df = operator_df[(operator_df.stanford_kept == 1)]
+    else:
+        print(f'Your operator is: {operator}.\nOnly use this function with Carbon Mapper or Scientific Aviation, as their QC only applies to quantification.')
+        print('For all other operators, please use standard plot_detection_limit function.')
+        return
 
     # Must be non-zero values
     operator_df = operator_df.query('non_zero_release == True')
@@ -448,18 +616,17 @@ def plot_detection_limit(operator, stage, n_bins, threshold, strict_discard=Fals
     now = datetime.datetime.now()
     save_time = now.strftime("%Y%m%d")
     op_ab = abbreviate_op_name(operator)
-    fig_name = f'detect_limit_{op_ab}_stage{stage}_{discard}_{save_time}'
+    fig_name = f'detect_limit_{op_ab}_stage{stage}_{discard}_{save_time}_su_filter_only'
     fig_path = pathlib.PurePath('04_figures', 'detection_limit', fig_name)
     plt.savefig(fig_path)
     plt.show()
 
     # Save data used to make plots
-    operator_df.to_csv(pathlib.PurePath('06_results', 'detect_probability_data',
-                                        f'{op_ab}_{stage}_detect_{save_time}.csv'))
-    detection_prob.to_csv(pathlib.PurePath('06_results', 'detect_probability_data',
-                                           f'{op_ab}_{stage}_{threshold}kgh_{n_bins}bins_{save_time}.csv'))
+    # operator_df.to_csv(pathlib.PurePath('03_results', 'detect_probability_data',
+    #                                     f'{op_ab}_{stage}_detect_{save_time}.csv'))
+    # detection_prob.to_csv(pathlib.PurePath('03_results', 'detect_probability_data',
+    #                                        f'{op_ab}_{stage}_{threshold}kgh_{n_bins}bins_{save_time}.csv'))
     return
-
 
 # %%
 
@@ -553,7 +720,7 @@ def plot_qc_summary(operators, stage, strict_discard=False):
 
 
 # %% Plot daily releases function
-def plot_daily_releases(operator, stage, strict_discard=False, time_ave=60, gas_comp_source='km'):
+def plot_daily_releases(operator, stage, strict_discard=False, time_ave=60, gas_comp_source='ms'):
     """Function to plot daily releases for operators.
     Inputs:
       - Operator is the operator name
@@ -672,7 +839,7 @@ def plot_daily_releases(operator, stage, strict_discard=False, time_ave=60, gas_
 
 # %%
 
-def make_releases_histogram(operator, stage, strict_discard=False, time_ave=60, gas_comp_source='km'):
+def make_releases_histogram(operator, stage, strict_discard=False, time_ave=60, gas_comp_source='ms'):
     ############## Setup Data ##############
 
     # Create bins for middle histogram plot
@@ -997,7 +1164,7 @@ def plot_meter_uncertainty(select_meter, presentation):
     plt.show()
 
 
-def plot_selected_release_period(start_t, stop_t, gas_comp_source='km'):
+def plot_selected_release_period(start_t, stop_t, gas_comp_source='ms'):
     """Plot flow rate (kgh CH4) for a given input period."""
     # TODO duplicate code with calc_average_release -> turn into functions later
     if start_t.date() != stop_t.date():
@@ -1122,7 +1289,7 @@ def make_generic_plot(x_data, y_data, ax, x_lim='largest_input', y_lim='largest_
 
     return ax
 
-def plot_residuals(ax, x_lim, y_lim, operator, stage, qc_status, strict_discard=False, time_ave=60, gas_comp_source='km'):
+def plot_residuals(ax, x_lim, y_lim, operator, stage, qc_status, strict_discard=False, time_ave=60, gas_comp_source='ms'):
     """Plot residuals"""
     error_dataset = calculate_residuals_and_error(operator, stage, qc_status, strict_discard, time_ave, gas_comp_source)
     x_data = error_dataset.meter_data
@@ -1150,7 +1317,7 @@ def plot_residuals(ax, x_lim, y_lim, operator, stage, qc_status, strict_discard=
     ob.set(alpha=0.8)
     ax.add_artist(ob)
 
-def plot_quant_error_absolute(ax, x_lim, y_lim, operator, stage, qc_status, strict_discard=False, time_ave=60, gas_comp_source='km'):
+def plot_quant_error_absolute(ax, x_lim, y_lim, operator, stage, qc_status, strict_discard=False, time_ave=60, gas_comp_source='ms'):
     """Plot absolute error"""
     error_dataset = calculate_residuals_and_error(operator, stage, qc_status, strict_discard, time_ave, gas_comp_source)
     x_data = error_dataset.meter_data
@@ -1176,7 +1343,7 @@ def plot_quant_error_absolute(ax, x_lim, y_lim, operator, stage, qc_status, stri
     ob.set(alpha=0.8)
     ax.add_artist(ob)
 
-def plot_quant_error_percent(ax, x_lim, y_lim, operator, stage, qc_status, strict_discard=False, time_ave=60, gas_comp_source='km'):
+def plot_quant_error_percent(ax, x_lim, y_lim, operator, stage, qc_status, strict_discard=False, time_ave=60, gas_comp_source='ms'):
     """Plot percent error"""
     error_dataset = calculate_residuals_and_error(operator, stage, qc_status, strict_discard, time_ave, gas_comp_source)
     x_data = error_dataset.meter_data

@@ -84,8 +84,19 @@ def make_operator_full_name(operator_nickname):
 # %% method for loading Philippines summary files (saved in 02_meter_data > summary_files)
 
 def load_summary_files(input_operator='all'):
+    """Load summary files of airplane overpasses"""
+
     all_summary = {}
-    operators = ['Carbon Mapper', 'GHGSat', 'Kairos', 'Methane Air', 'Scientific Aviation']
+    operators = ['Carbon Mapper',
+                 'GHGSat',
+                 'Kairos',
+                 'Methane Air',
+                 'Scientific Aviation',
+                 'Kairos LS23',
+                 'Kairos LS25',
+                 'MethaneAIR DI',
+                 'MethaneAIR mIME',
+                 ]
 
     # Philippine's files use a slightly different naming convention, dictionary to match with my op_ab convention
     philippine_names = {
@@ -99,6 +110,7 @@ def load_summary_files(input_operator='all'):
     for operator in operators:
         op_ab = abbreviate_op_name(operator)
 
+        # Operators with multiple reports will still have the same summary file from the Stanford side
         if (op_ab == 'kairos_ls23') or (op_ab == 'kairos_ls25'):
             meter_abb = 'kairos'  # meter file is same for both Kairos pods
         elif (op_ab == 'mair_mime') or (op_ab == 'mair_di'):
@@ -124,7 +136,7 @@ def load_summary_files(input_operator='all'):
 
 
 # %%
-def overpass_summary_save_path(op_ab, stage, gas_comp_source='km', time_ave=60, strict_discard=False):
+def overpass_summary_save_path(op_ab, stage, gas_comp_source='ms', time_ave=60, strict_discard=False):
     if strict_discard is True:
         save_strict = 'strict'
     else:
@@ -142,7 +154,7 @@ def overpass_summary_save_path(op_ab, stage, gas_comp_source='km', time_ave=60, 
 
 # %% method summarize_qc
 def generate_overpass_summary(operator, stage, timekeeper='flightradar', strict_discard=False,
-                              gas_comp_source='km', time_ave=60):
+                              gas_comp_source='ms', time_ave=60):
     """Generate clean dataframe for each overpass with columns indicating QC status.
 
     Inputs:
@@ -151,9 +163,9 @@ def generate_overpass_summary(operator, stage, timekeeper='flightradar', strict_
       - operator_report: cleaned operator report to be merged with metered data
       - operator_meter: cleaned operator_meter database, loaded from 02_meter_data > oeprator_meter_data
       - strict_discard: True if using strict discard, False if using lax discard
-      - gas_comp_source: either 'su_raw', 'su_normalized', or 'km'. su_raw refers to raw gas composition analysis as
+      - gas_comp_source: either 'su_raw', 'su_normalized', or 'ms'. su_raw refers to raw gas composition analysis as
       reported by Eurofins Air Toxins lab, su_normalized refers to using these values normalized such that all values
-      reported add to 100%. km refers to using Kinder Morgen gas analysis
+      reported add to 100%. ms refers to using measurement station gas analysis
       - time_ave: is either '30', '60', or '90', select based on the time average period desired for kgh value
 
     Columns are:
@@ -283,7 +295,7 @@ def generate_overpass_summary(operator, stage, timekeeper='flightradar', strict_
 
 
 # %%
-def load_overpass_summary(operator, stage, strict_discard=False, time_ave=60, gas_comp_source='km'):
+def load_overpass_summary(operator, stage, strict_discard=False, time_ave=60, gas_comp_source='ms'):
     """Load overpass summary as a dataframe. Stage is a number (1, 2, 3). Input of "True" for strict_discard sets
     Stanford QC to use strict QC criteria, typical input is False. Operator names can be:
 
@@ -314,7 +326,7 @@ def load_overpass_summary(operator, stage, strict_discard=False, time_ave=60, ga
     return overpass_summary
 
 
-def summarize_qc(operator, stage, strict_discard=False, time_ave=60, gas_comp_source='km'):
+def summarize_qc(operator, stage, strict_discard=False, time_ave=60, gas_comp_source='ms'):
     """Summarize QC criteria applied by operator and Stanford"""
 
     op_ab = abbreviate_op_name(operator)
@@ -351,7 +363,7 @@ def summarize_qc(operator, stage, strict_discard=False, time_ave=60, gas_comp_so
 
 # %%
 
-def make_qc_table(strict_discard=False, time_ave=60, gas_comp_source='km'):
+def make_qc_table(strict_discard=False, time_ave=60, gas_comp_source='ms'):
     """Make a summary table all QC results. Input if strict_discard should be True or False."""
 
     cm_1_qc = summarize_qc(operator="Carbon Mapper", stage=1, strict_discard=strict_discard, time_ave=time_ave,
@@ -412,7 +424,7 @@ def make_qc_table(strict_discard=False, time_ave=60, gas_comp_source='km'):
               kairos_ls23_1_qc, kairos_ls23_2_qc, kairos_ls23_3_qc, kairos_ls25_1_qc, kairos_ls25_2_qc,
               kairos_ls25_3_qc, sciav_1_qc, mair_1_qc, mair_mime_1_qc, mair_di_1_qc]
 
-    all_qc = pd.concat(all_qc)
+    all_qc = pd.concat(all_qc, ignore_index=True)
 
     if strict_discard:
         save_name = 'all_qc_strict.csv'
@@ -424,7 +436,7 @@ def make_qc_table(strict_discard=False, time_ave=60, gas_comp_source='km'):
 
 # %% Load daily meter data
 
-def load_daily_meter_data(date, gas_source='km'):
+def load_daily_meter_data(date, gas_source='ms'):
     """Load daily meter file saved in format mm_dd.csv"""
 
     # File location
@@ -651,7 +663,7 @@ def sum_of_quadrature(*uncertainties):
 
 # %% Generate daily releases
 
-def generate_daily_releases(gas_comp_sources=['km']):
+def generate_daily_releases(gas_comp_sources=['ms']):
     """Generates daily metered data for all airplane flight days"""
     operators = ['Carbon Mapper', 'GHGSat', 'Kairos', 'Methane Air', 'Scientific Aviation']
 
@@ -662,16 +674,16 @@ def generate_daily_releases(gas_comp_sources=['km']):
 
         for i in range(len(dates)):
             for source in gas_comp_sources:
-                # for now, replace 'km' with 'ms' for measurement station
-                # TODO change to remove all 'km'
-                if source == 'km':
-                    source_ab = 'ms'
-                else:
-                    source_ab = source
+                # # TODO change to 'ms'
+                # if source == 'ms':
+                #     source_ab = 'ms'
+                # else:
+                #     source_ab = source
+                source_ab = source
 
                 day = dates[i]
                 date_meter = load_daily_meter_data(day,
-                                                   source)  # default value here is 'km' if no other gas source is specified
+                                                   source)  # default value here is 'ms' if no other gas source is specified
 
                 print(f'Operator: {operator}')
                 print(f'Flight Day: {day}')
@@ -804,7 +816,7 @@ def load_clean_operator_reports():
 
 # %% Load meter data
 
-def load_meter_data_dictionary(timekeeper='flightradar', gas_comp_source='km', time_ave=60):
+def load_meter_data_dictionary(timekeeper='flightradar', gas_comp_source='ms', time_ave=60):
     """Input timekeeper. Must be string, all lower case: flightradar, operator, stanford
     Outputs a dictionary with the meter file for each operator """
     operators = ['Carbon Mapper', 'GHGSat', 'Kairos', 'Methane Air', 'Scientific Aviation',
@@ -972,14 +984,14 @@ def clean_summary_file_colnames(operator, operator_meter_raw, overpass_id, timek
 
 
 # %%
-def select_methane_fraction(input_datetime, gas_comp_source='km'):
+def select_methane_fraction(input_datetime, gas_comp_source='ms'):
     """Determines the methane mole fraction for a given datetime.
     Inputs:
       - input_datetime is a datetime object
-      - gas_comp_source is either 'su_raw', 'su_normalized', or 'km' """
+      - gas_comp_source is either 'su_raw', 'su_normalized', or 'ms' """
 
     # Load the clean gas cmoposition data
-    gas_comp = pd.read_csv(pathlib.PurePath('02_meter_data', 'gas_comp_clean_su_km.csv'),
+    gas_comp = pd.read_csv(pathlib.PurePath('02_meter_data', 'gas_comp_clean_su_ms.csv'),
                            nrows=15,
                            parse_dates=['start_utc', 'end_utc'])
 
@@ -1008,16 +1020,16 @@ def power_fit(x_data, y_data):
 
 
 # %%
-def calc_average_gas_flow_all_overpasses(operator, operator_meter, time_ave=60, comp_source='km'):
+def calc_average_gas_flow_all_overpasses(operator, operator_meter, time_ave=60, comp_source='ms'):
     """Calculate average gas flow over the input time period (time_ave) for each operator overpass.
     Specify gas composition source. Output is a dataframe with the following columns (using default values):
        - overpass_id
-       - methane_fraction_km
-       - methane_fraction_km_sigma
+       - methane_fraction_ms
+       - methane_fraction_ms_sigma
        - kgh_gas_60_mean
        - kgh_gas_60_std
-       - kgh_ch4_60_mean_km
-       - kgh_ch4_60_std_km
+       - kgh_ch4_60_mean_ms
+       - kgh_ch4_60_std_ms
        - meter_uncertainty"""
 
     op_ab = abbreviate_op_name(operator)
@@ -1140,7 +1152,7 @@ def calc_average_gas_flow_all_overpasses(operator, operator_meter, time_ave=60, 
 # %% Function to import Philippine's meter data, select the FlightRadar columns, and with abrename columns to be more
 # brief and machine-readable
 def make_operator_meter_dataset(operator, timekeeper='flightradar', time_ave=60,
-                                gas_comp_source='km'):
+                                gas_comp_source='ms'):
     """Function to make a clean dataset for each overpass for a given operator. Input is the full name of operator
     and the operator meter file. Also include the desired timekeeper metric for when the oeprator was overhead: this
     can be one of three options:
@@ -1250,7 +1262,7 @@ def make_histogram_bins(df, threshold_lower, threshold_upper, n_bins):
     return detection_prob
 
 
-def find_missing_data(operator, time_ave=60, gas_comp_source='km'):
+def find_missing_data(operator, time_ave=60, gas_comp_source='ms'):
     """ Missing data refers to overpasses documented by Stanford that are not reported by the operator"""
 
     if operator == 'Scientific Aviation':
@@ -1285,7 +1297,7 @@ def find_missing_data(operator, time_ave=60, gas_comp_source='km'):
 
 # %%
 def classify_histogram_data(operator, stage, threshold_lower, threshold_upper, n_bins, strict_discard=False,
-                            time_ave=60, gas_comp_source='km'):
+                            time_ave=60, gas_comp_source='ms'):
     # Load operator overpass data
     op_reported = load_overpass_summary(operator=operator, stage=stage, strict_discard=strict_discard,
                                         time_ave=time_ave, gas_comp_source=gas_comp_source)
@@ -1424,12 +1436,12 @@ def make_overpass_error_df(operator, stage):
     ########## Load overpass summary data ##########
     strict_discard = False
     op_lax = load_overpass_summary(operator=operator, stage=stage, strict_discard=strict_discard, time_ave=60,
-                                   gas_comp_source='km')
+                                   gas_comp_source='ms')
 
     # Set strict_discard to True
     strict_discard = True
     op_strict = load_overpass_summary(operator=operator, stage=stage, strict_discard=strict_discard, time_ave=60,
-                                      gas_comp_source='km')
+                                      gas_comp_source='ms')
 
     ########## Make dataframe for summarizing results with strict and lax QC  ##########
 
@@ -1495,7 +1507,7 @@ def load_operator_report_dictionary():
     return report_dictionary
 
 
-def generate_all_overpass_reports(strict_discard=False, timekeeper='flightradar', gas_comp_source='km', time_ave=60):
+def generate_all_overpass_reports(strict_discard=False, timekeeper='flightradar', gas_comp_source='ms', time_ave=60):
     """Generate all overpass reports"""
     check_timekeep_capitalization(timekeeper)
 
@@ -1551,7 +1563,7 @@ def calc_daily_altitude(operator):
 
     # Load overpass summary, stage and discard don't matter here because we only care about the altitude column
     op_overpasses = load_overpass_summary(operator=operator, stage=1, strict_discard=False, time_ave=60,
-                                          gas_comp_source='km')
+                                          gas_comp_source='ms')
 
     # Set overpass_datetime to index for easier filtering
     op_datetime_index = op_overpasses.set_index('overpass_datetime')
@@ -1575,17 +1587,17 @@ def calc_daily_altitude(operator):
 
 # %%
 
-def calc_average_release(start_t, stop_t, gas_comp_source='km'):
+def calc_average_release(start_t, stop_t, gas_comp_source='ms'):
     """ Calculate the average flow rate and associated uncertainty given a start and stop time.
     Inputs:
       - start_t, stop_t are datetime objects
-      - gam_comp_source (with default value set to 'km')
+      - gam_comp_source (with default value set to 'ms')
 
     Outputs: dictionary with the following keys:
       - gas_kgh_mean: mean gas flow rate over the time period of interest, as whole gas
       - gas_kgh_sigma: standard deviation of the meter reading over the period of interest, as whole gas. This value represents the physical variability in the flow rate.
       - meter_sigma: the standard deviation calculated based on the uncertainty in the meter reading for the flow rate during the period in question. Emerson reports uncertainty as a percentage of flow rate, and the function converts this value to a sigma value with units of kgh whole gas
-      - ch4_fraction_{gas_comp_source}: the fraction methane based on the input source for gas composition. Gas composition can be 'su_normalized', 'su_raw', or 'km'. See other documentation for additional details. This value is averaged over the time period of interest, although unless the trailer was changed mid-release, value is expected to be constant
+      - ch4_fraction_{gas_comp_source}: the fraction methane based on the input source for gas composition. Gas composition can be 'su_normalized', 'su_raw', or 'ms'. See other documentation for additional details. This value is averaged over the time period of interest, although unless the trailer was changed mid-release, value is expected to be constant
       - ch4_fraction{gas_comp_source}_sigma: the sigma value associated with the gas composition, representative of the uncertainty associated with measurements of methane mole fraction.
       - ch4_kgh_mean: mean methane flow rate, calculated from the gas flow rate and methane mole fraction
       - ch4_kgh_sigma: total uncertainty in the methane flow rate. This value combines physical variability in gas flow rate (gas_kgh_sigma) with uncertainty in the meter reading (meter_sigma) and uncertainty in gas composition (ch4_fraction_{gas_comp_source}_sigma.
@@ -1695,7 +1707,7 @@ def make_sciav_operator_meter(comp_source):
         overpass_id = row['overpass_id']
         start_t = row['start_utc']
         end_t = row['end_utc']
-        release_rate_summary = calc_average_release(start_t, end_t, 'km')
+        release_rate_summary = calc_average_release(start_t, end_t, comp_source)
 
         # Discard if high degree of variance in flow is observed
         if release_rate_summary['gas_kgh_mean'] > 0:
