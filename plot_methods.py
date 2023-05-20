@@ -628,6 +628,21 @@ def plot_detection_limit_su_filter_only(operator, stage, n_bins, threshold, stri
     #                                        f'{op_ab}_{stage}_{threshold}kgh_{n_bins}bins_{save_time}.csv'))
     return
 
+
+def save_pod_plot(operator, stage, strict_discard, time_ave, gas_comp_source):
+
+    if strict_discard == True:
+        discard = 'strict'
+    else:
+        discard = 'lax'
+
+    now = datetime.datetime.now()
+    save_time = now.strftime("%Y%m%d")
+    op_ab = abbreviate_op_name(operator)
+    fig_name = f'detect_limit_{op_ab}_stage{stage}_{discard}_{save_time}'
+    fig_path = pathlib.PurePath('04_figures', 'detection_limit', fig_name)
+    plt.savefig(fig_path)
+
 # %%
 
 def plot_qc_summary(operators, stage, strict_discard=False):
