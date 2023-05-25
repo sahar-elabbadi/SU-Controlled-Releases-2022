@@ -57,7 +57,7 @@ def print_overpass_info(release):
 
 def operator_releases_summary_stats(operator, strict_discard=False):
     """ Function for generating the data used in operator overview paragraphs of Results section"""
-
+    op_ab = abbreviate_op_name(operator)
     overpasses = load_overpass_summary(operator=operator, strict_discard=strict_discard, stage=1)
     print(f'{operator}: {len(overpasses)} flightlines reported to SU')
     fail_su_qc = overpasses.loc[overpasses.stanford_kept == False]
@@ -107,6 +107,7 @@ def operator_releases_summary_stats(operator, strict_discard=False):
     # Classify confusion matrix
     # For confusoin matrix, use only the ones that pass all QC
     # only apply this to the data that pass SU filtering
+
     true_positives, false_positives, true_negatives, false_negatives = classify_confusion_categories(pass_all_qc)
 
     # Were there any false positives?
@@ -131,7 +132,7 @@ def operator_releases_summary_stats(operator, strict_discard=False):
     # Find smallest plume that operator detected
     detected_non_zero = non_zero_overpasses.loc[non_zero_overpasses.operator_detected == True]
     min_detected = detected_non_zero.loc[detected_non_zero.release_rate_kgh.idxmin()][relevant_cols]
-    print(f'Smallest detected plume by {operator}:')
+    print(f'Smallest detected plume by {operator} (that passes ALL QC):')
     print_overpass_info(min_detected)
 
     # Smallest plume quantified by operator
