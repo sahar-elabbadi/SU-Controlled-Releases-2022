@@ -20,6 +20,7 @@ import matplotlib.dates as mdates
 import matplotlib.ticker as mtick
 from matplotlib.patches import Patch
 import matplotlib.offsetbox as offsetbox
+import matplotlib.ticker as ticker
 
 from methods_source import load_overpass_summary, abbreviate_op_name, classify_histogram_data, \
     load_operator_flight_days, load_daily_releases, calc_meter_uncertainty, load_uncertainty_multipliers
@@ -90,7 +91,7 @@ def get_parity_data(operator, stage, error_type = '95_CI', strict_discard=False,
         print(f'Please correct input error type. Currently using operator reported error bars')
 
     if operator in ['Kairos', 'Kairos LS23', 'Kairos LS25']:
-        legend_error = 'x-error: 95% CI)\n(y-error: measurement variability'
+        legend_error = 'x-error: 95% CI)\n(y-error: measurement range'
 
     # Kairos individual pods don't report error
     if operator in ['Kairos LS23', 'Kairos LS25']:
@@ -133,7 +134,7 @@ def make_parity_plot(data, data_description, ax, plot_lim='largest_kgh'):
     stage_description = {
         1: 'Fully blinded results',
         2: 'Unblinded wind',
-        3: 'Partially unblinded\n(unblinded releases\nnot included)',
+        3: 'Partially unblinded',
     }
     ############ Data Preparation and Linear Regression ############
 
@@ -166,7 +167,7 @@ def make_parity_plot(data, data_description, ax, plot_lim='largest_kgh'):
 
     # Set x and y max values
     # Manually set largest x and y value by changing largest_kgh here to desired value:
-    largest_kgh = max(plot_lim)
+    # largest_kgh = max(plot_lim)
 
     if plot_lim == 'largest_kgh':
         # Filter out NA because operations with NA returns NA
@@ -178,6 +179,8 @@ def make_parity_plot(data, data_description, ax, plot_lim='largest_kgh'):
 
         # set plot_lim:
         plot_lim = [0, largest_kgh]
+    else:
+        largest_kgh = max(plot_lim)
 
     # Create sequence of numbers for plotting linear fit (x)
     x_seq = np.linspace(0, largest_kgh, num=100)
@@ -189,8 +192,11 @@ def make_parity_plot(data, data_description, ax, plot_lim='largest_kgh'):
              label=f'Best Fit, $R^2 =$ {r2:0.2f}\n$y = {m:0.2f}x+{b:0.2f}$')
 
     # Add parity line
-    ax.plot(x_seq, x_seq, color='k', lw=2, linestyle='--',
-             label='Parity Line')
+    # With label:
+    # ax.plot(x_seq, x_seq, color='k', lw=2, linestyle='--',
+    #          label='Parity Line')
+    # Without label:
+    ax.plot(x_seq, x_seq, color='k', lw=2, linestyle='--')
 
     # Add scatter plots with error bars
     ax.errorbar(x_data, y_data,
@@ -202,16 +208,18 @@ def make_parity_plot(data, data_description, ax, plot_lim='largest_kgh'):
                 fmt='o',
                 markersize=5)
 
-    # Set title
-    # ax.title(f'{operator} Stage {stage} Results ({sample_size} measurements)')
     stage_text = stage_description[stage]
-    # ax.annotate(f'{operator}\n {stage_text}', xy=(1, 1), xytext=(-15, -15), fontsize=13,
-    #             bbox=dict(boxstyle='square', facecolor='white'))
+    # Set title
+    ax.set_title(f'{operator} ({stage_text})')
 
-    text = f'{operator}\n {stage_text}'
-    ob = offsetbox.AnchoredText(text, loc='upper left')
-    ob.set(alpha=0.8)
-    ax.add_artist(ob)
+    # ax.text(100, largest_kgh-100, f'{operator} ({stage_text})', fontsize=15, horizontalalignment='left',
+    #          bbox=dict(facecolor='white', edgecolor='white', alpha=0.5))
+
+    # Annotation box
+    # text = f'{operator}\n {stage_text}'
+    # ob = offsetbox.AnchoredText(text, loc='upper left')
+    # ob.set(alpha=0.8)
+    # ax.add_artist(ob)
 
     # Set axes
     ax.set(xlim=plot_lim,
@@ -229,18 +237,29 @@ def make_parity_plot(data, data_description, ax, plot_lim='largest_kgh'):
     ax.spines['bottom'].set_color('black')
 
     # Axes labels
-    ax.set_xlabel('Methane Release Rate (kgh)', fontsize=14)
-    ax.set_ylabel('Reported Release Rate (kgh)', fontsize=14)
+    # ax.set_xlabel('Methane Release Rate (kgh)', fontsize=14)
+    # ax.set_ylabel('Reported Release Rate (kgh)', fontsize=14)
     ax.tick_params(direction='in', right=True, top=True)
-    ax.tick_params(labelsize=12)
+    ax.tick_params(labelsize=16)
     ax.minorticks_on()
     ax.tick_params(labelbottom=True, labeltop=False, labelright=False, labelleft=True)
     ax.tick_params(direction='in', which='minor', length=3, bottom=True, top=True, left=True, right=True)
     ax.tick_params(direction='in', which='major', length=6, bottom=True, top=True, left=True, right=True)
     ax.grid(False)  # remove grid lines
 
+    # Customize the tick labels with commas at the thousands place
+    ax.tick_params(labelsize=16)
+
+    # Define a formatter function to add commas
+    def comma_formatter(x, pos):
+        return '{:,.0f}'.format(x)  # Add commas to the thousands place
+
+    # Apply the formatter to the tick labels
+    ax.yaxis.set_major_formatter(ticker.FuncFormatter(comma_formatter))
+    ax.xaxis.set_major_formatter(ticker.FuncFormatter(comma_formatter))
+
     # Legend
-    ax.legend(facecolor='white', loc='lower right')
+    ax.legend(facecolor='white', loc='lower right', fontsize=11)
 
     return ax
 
@@ -262,6 +281,10 @@ def plot_parity(operator, stage, strict_discard=False, time_ave=60, gas_comp_sou
 
     # Make figure
     ax = make_parity_plot(parity_data, parity_notes, ax)
+
+    # Axes labels
+    ax.set_xlabel('Methane Release Rate (kgh)', fontsize=14)
+    ax.set_ylabel('Reported Release Rate (kgh)', fontsize=14)
 
     # Save figure
     if strict_discard == True:
@@ -450,7 +473,7 @@ def plot_detection_limit(ax, operator, stage, n_bins, threshold, strict_discard=
     stage_description = {
         1: 'Fully blinded results',
         2: 'Unblinded wind',
-        3: 'Partially unblinded\n(unblinded releases\nnot included)',
+        3: 'Partially unblinded',
     }
 
     stage_text = stage_description[stage]
@@ -1322,7 +1345,7 @@ def plot_residuals(ax, x_lim, y_lim, operator, stage, qc_status, strict_discard=
     stage_description = {
         1: 'Fully blinded results',
         2: 'Unblinded wind',
-        3: 'Partially unblinded\n(unblinded releases not included)',
+        3: 'Partially unblinded',
     }
 
     stage_text = stage_description[stage]
@@ -1348,7 +1371,7 @@ def plot_quant_error_absolute(ax, x_lim, y_lim, operator, stage, qc_status, stri
     stage_description = {
         1: 'Fully blinded results',
         2: 'Unblinded wind',
-        3: f'Partially unblinded\n(unblinded releases\nnot included)',
+        3: f'Partially unblinded',
     }
 
     stage_text = stage_description[stage]
@@ -1375,7 +1398,7 @@ def plot_quant_error_percent(ax, x_lim, y_lim, operator, stage, qc_status, stric
     stage_description = {
         1: 'Fully blinded results',
         2: 'Unblinded wind',
-        3: 'Partially unblinded\n(unblinded releases not included)',
+        3: 'Partially unblinded\n',
     }
 
     stage_text = stage_description[stage]

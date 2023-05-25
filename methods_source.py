@@ -41,6 +41,7 @@ def abbreviate_op_name(operator):
         'CarbonMapper': 'cm',
         'GHGSat': 'ghg',
         'GHG Sat': 'ghg',
+        'GHGSat-AV': 'ghg',
         'Kairos': 'kairos',
         'Kairos LS23': 'kairos_ls23',
         'Kairos LS25': 'kairos_ls25',
