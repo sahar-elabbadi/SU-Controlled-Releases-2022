@@ -23,7 +23,8 @@ import matplotlib.offsetbox as offsetbox
 import matplotlib.ticker as ticker
 
 from methods_source import load_overpass_summary, abbreviate_op_name, classify_histogram_data, \
-    load_operator_flight_days, load_daily_releases, calc_meter_uncertainty, load_uncertainty_multipliers
+    load_operator_flight_days, load_daily_releases, calc_meter_uncertainty, load_uncertainty_multipliers, \
+    make_logistic_regression
 from writing_analysis import calculate_residuals_and_error
 
 
@@ -390,6 +391,7 @@ def make_detection_limit_df(operator, stage, n_bins, threshold, strict_discard=F
 def plot_detection_limit(ax, operator, stage, n_bins, threshold, strict_discard=False, time_ave=60, gas_comp_source='ms'):
     """
       :param ax: subplot to plot
+      :param logistic_model: boolean, True for including the logistic model, false for not including it
       :param operator: name of operator
       :param stage: stage of testing
       :param threshold: max value for plotting (we are looking at all releases under threshold value)
@@ -1407,3 +1409,15 @@ def plot_quant_error_percent(ax, x_lim, y_lim, operator, stage, qc_status, stric
     ob = offsetbox.AnchoredText(text, loc='upper left')
     ob.set(alpha=0.8)
     ax.add_artist(ob)
+
+
+def plot_logistic_regression(ax, threshold, operator, stage, strict_discard, time_ave, gas_comp_source):
+    operator_model = make_logistic_regression(operator=operator, stage=stage, strict_discard=strict_discard, time_ave=time_ave, gas_comp_source=gas_comp_source)
+
+    # input values for plotting
+    x_plot = np.linspace(0, threshold, 500)
+
+    # calculate the probability from the model
+    y_plot = operator_model.predict_proba(x_plot.reshape(-1, 1))[:,1]
+    ax.plot(x_plot, y_plot, label='Logistic best fit')
+    return ax

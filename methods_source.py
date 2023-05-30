@@ -17,6 +17,8 @@ import numpy as np
 import datetime
 import math
 from scipy.stats import circmean, circstd
+from sklearn.linear_model import LogisticRegression
+
 
 
 # %%
@@ -1892,3 +1894,27 @@ def calc_avg_windspeed(timestamp, duration=1, direction='backward'):
 
     windspeed = wind_conditions['average_windspeed']
     return windspeed
+
+
+def make_logistic_regression(operator, stage, strict_discard=False, time_ave=60, gas_comp_source='ms'):
+    operator_df = load_overpass_summary(operator=operator, stage=stage, strict_discard=strict_discard, time_ave=time_ave, gas_comp_source=gas_comp_source)
+
+
+    # Include all variables used in Conrad et al., 2023 even if I won't ultimately use them
+    op_POD_variables = pd.DataFrame()
+    op_POD_variables['overpass_id'] = operator_df['overpass_id']
+    op_POD_variables['overpass_datetime'] = operator_df['overpass_datetime']
+    op_POD_variables['h'] = operator_df['altitude_feet'] / feet_per_meter() # flight altitude in m
+    op_POD_variables['u'] = operator_df['overpass_datetime'].apply(calc_avg_windspeed) # windspeed in m/s
+    op_POD_variables['Q'] = operator_df['release_rate_kgh'] # release rate in kg / hr
+    op_POD_variables['D'] = operator_df['operator_detected'].apply(int) # operator detected as 0 or 1
+
+    # Filter op_POD_variables to only include data below a threshold max kgh
+    threshold = 30 # kgh
+    op_POD_variables = op_POD_variables.loc[op_POD_variables.Q <= threshold]
+
+    # Reshape required for Logistic function
+    x = op_POD_variables['Q'].values.reshape(-1, 1)
+    y = op_POD_variables['D'].values.reshape(-1, 1).ravel()
+    model = LogisticRegression(solver='liblinear', random_state=0)
+    return model.fit(x, y)
