@@ -228,6 +228,11 @@ def calc_residual(x, y, m, b):
     residual = y - y_fit
     return residual
 
+def calc_residual_percent(x, y, m, b):
+    y_fit = m * x + b
+    residual_percent = (y - y_fit) / y_fit * 100
+    return residual_percent
+
 def calc_error_absolute(expected, observed):
     return observed - expected
 
@@ -286,6 +291,10 @@ def calculate_residuals_and_error(operator, stage, qc_status, strict_discard=Fal
     data['residual'] = data.apply(lambda dataset:
                                   calc_residual(dataset['meter_data'],
                                                 dataset['operator_data'], m, b), axis=1)
+
+    data['residual_percent_error'] = data.apply(lambda dataset:
+                                                calc_residual_percent(dataset['meter_data'],
+                                                                      dataset['operator_data'], m, b), axis=1)
 
     data['quant_error_absolute'] = data.apply(lambda dataset:
                                               calc_error_absolute(dataset['meter_data'],
