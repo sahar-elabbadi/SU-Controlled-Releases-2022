@@ -270,11 +270,23 @@ def calculate_residuals_and_error(operator, stage, qc_status, strict_discard=Fal
 
     # Select which QC we want
     if qc_status == 'pass_all':
-        qc_mask = (overpass_summary['stanford_kept'] == True) & (overpass_summary['operator_kept'] == True)
+        # Pass SU QC
+        # Pass operator QC
+        # Must be a non-zero release
+        # Operator quantification estimate must have been > 0
+
+        qc_mask = (overpass_summary['qc_summary'] == 'pass_all') & \
+                  (overpass_summary['non_zero_release'] == True) & \
+                  (overpass_summary['operator_quantification'] > 0)
     elif qc_status == 'pass_operator':
         qc_mask = (overpass_summary['operator_kept'] == True)
     elif qc_status == 'all_points':
         qc_mask = overpass_summary['operator_quantification'].notna() # generic mask to select all points in dataset
+
+    # Apply filter for Stage 3 data: remove points for which we gave the team's quantification estimates
+    # if phase_iii == 1, then we gave them this release in Phase III dataset
+    if stage == 3:
+        overpass_summary = overpass_summary[(overpass_summary.phase_iii == 0)]
 
     data = overpass_summary.loc[qc_mask].copy()
 
@@ -282,6 +294,7 @@ def calculate_residuals_and_error(operator, stage, qc_status, strict_discard=Fal
     data['meter_data'] = overpass_summary.release_rate_kgh
     data['operator_data'] = overpass_summary.operator_quantification
     data['qc'] = overpass_summary.qc_summary
+
 
     # Fit linear regression via least squares with numpy.polyfit
     # m is slope, intercept is b

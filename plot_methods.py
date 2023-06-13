@@ -451,7 +451,7 @@ def plot_detection_limit(ax, operator, stage, n_bins, threshold, strict_discard=
     # Axes formatting and labels
     ax.set_yticks([0.0, 0.2, 0.4, 0.6, 0.8, 1.0])
     ax.set_yticklabels([0.0, 0.2, 0.4, 0.6, 0.8, 1.0], fontsize=11)
-    ax.set_xlabel('Methane Release Rate (kgh)', fontsize=14)
+    ax.set_xlabel('Methane Release Rate (kg / hr)', fontsize=14)
     ax.set_ylabel('Proportion detected', fontsize=14)
     ax.tick_params(direction='in', right=True, top=True)
     ax.tick_params(labelsize=12)
@@ -1364,7 +1364,7 @@ def plot_residuals(ax, above_mdl, x_lim, y_lim, operator, stage, qc_status, stri
 
     stage_text = stage_description[stage]
 
-    text = f'{operator}\n {stage_text}'
+    text = f'{operator}\n {stage_text}\n (n={len(y_data)})'
     ob = offsetbox.AnchoredText(text, loc='upper left')
     ob.set(alpha=0.8)
     ax.add_artist(ob)
@@ -1405,7 +1405,7 @@ def plot_residual_percent_error(ax, above_mdl, x_lim, y_lim, operator, stage, qc
 
     stage_text = stage_description[stage]
 
-    text = f'{operator}\n {stage_text}'
+    text = f'{operator}\n {stage_text}\n (n={len(y_data)})'
     ob = offsetbox.AnchoredText(text, loc='upper left')
     ob.set(alpha=0.8)
     ax.add_artist(ob)
@@ -1441,7 +1441,7 @@ def plot_quant_error_absolute(ax, above_mdl, x_lim, y_lim, operator, stage, qc_s
 
     stage_text = stage_description[stage]
 
-    text = f'{operator}\n {stage_text}'
+    text = f'{operator}\n {stage_text}\n (n={len(y_data)})'
     ob = offsetbox.AnchoredText(text, loc='upper left')
     ob.set(alpha=0.8)
     ax.add_artist(ob)
@@ -1473,7 +1473,7 @@ def plot_quant_error_percent(ax, above_mdl, x_lim, y_lim, operator, stage, qc_st
 
     stage_text = stage_description[stage]
 
-    text = f'{operator}\n {stage_text}'
+    text = f'{operator}\n {stage_text}\n (n={len(y_data)})'
     ob = offsetbox.AnchoredText(text, loc='upper right')
     ob.set(alpha=0.8)
     ax.add_artist(ob)
