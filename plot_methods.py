@@ -409,9 +409,10 @@ def plot_detection_limit(ax, operator, stage, n_bins, threshold, strict_discard=
     w = threshold / n_bins / 2.5
 
     # Use n_bins set above
+    # Annotate probability of detectoin
     for i in range(n_bins):
-        ax.annotate(f'{detection_plot.n_detected[i]} / {detection_plot.n_data_points[i]}',
-                    [detection_plot.bin_median[i] - w / 1.8, 0.03], fontsize=10)
+        ax.annotate(f'{detection_plot.n_detected[i]}/{detection_plot.n_data_points[i]}',
+                    [detection_plot.bin_median[i] - w / 1.8, -0.06], fontsize=9)
 
     # for plotting purpose, we don't want a small hyphen indicating zero uncertainty interval
     detection_plot.loc[detection_plot['detection_prob_two_sigma_lower'] == 0, 'detection_prob_two_sigma_lower'] = np.nan
@@ -451,6 +452,16 @@ def plot_detection_limit(ax, operator, stage, n_bins, threshold, strict_discard=
     # Axes formatting and labels
     ax.set_yticks([0.0, 0.2, 0.4, 0.6, 0.8, 1.0])
     ax.set_yticklabels([0.0, 0.2, 0.4, 0.6, 0.8, 1.0], fontsize=11)
+
+
+    # x-tick labels
+    x_range = np.arange(0, threshold + threshold/n_bins, threshold/n_bins)
+    ax.set_xticks(x_range)
+
+    # Format the tick labels with the desired number of decimal places
+    tick_labels = ["{:.0f}".format(tick) for tick in x_range] # set so no decimal points are shown
+    ax.set_xticklabels(tick_labels, fontsize=11)
+
     ax.set_xlabel('Methane Release Rate (kg / hr)', fontsize=14)
     ax.set_ylabel('Proportion detected', fontsize=14)
     ax.tick_params(direction='in', right=True, top=True)
@@ -458,7 +469,11 @@ def plot_detection_limit(ax, operator, stage, n_bins, threshold, strict_discard=
     ax.minorticks_on()
     ax.tick_params(labelbottom=True, labeltop=False, labelright=False, labelleft=True)
     ax.tick_params(direction='in', which='minor', length=3, bottom=False, top=False, left=True, right=True)
-    ax.tick_params(direction='in', which='major', length=6, bottom=True, top=True, left=True, right=True)
+    ax.tick_params(direction='in', which='major', length=6, bottom=True, top=False, left=True, right=True)
+
+    # Set minor tick marks below y=1
+    minor_ticks = np.arange(0.1, 1.0, 0.05)  # Minor tick positions below y=1
+    ax.yaxis.set_minor_locator(ticker.FixedLocator(minor_ticks))
 
     # Set axes and background color to white
     ax.set_facecolor('white')
@@ -468,7 +483,7 @@ def plot_detection_limit(ax, operator, stage, n_bins, threshold, strict_discard=
     ax.spines['bottom'].set_color('black')
 
     # Set more room on top for annotation
-    ax.set_ylim([-0.05, 1.22])
+    ax.set_ylim([-0.10, 1.22])
     ax.set_xlim([0, threshold])
     ax.set_yticks([0.0, 0.2, 0.4, 0.6, 0.8, 1.0])
     ax.set_yticklabels([0.0, 0.2, 0.4, 0.6, 0.8, 1.0], fontsize=11)
