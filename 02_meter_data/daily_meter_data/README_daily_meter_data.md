@@ -24,11 +24,11 @@ Each _whole_gas_raw_ file contains the following columns:
 This directory contains three sub-directories, one for each source of gas composition used in the study. 
 
 Gas composition sources: 
-- km: original source of gas composition is data provided by Kinder Morgan
+- ms: original source of gas composition is data provided by measurement stations
 - su_raw: original source of gas composition is analysis by Eurofins Air Toxics laboratory. Here, we use raw values directly as inputs for methane mole fraction 
 - su_normalized: source of gas composition data is the normalized gas composition values from the Eurofins analysis. We noramlized here because total gas constituents in raw data provided by Eurofins included samples where the sum of total constituents added to over 100%. 
 
-We use 'km' as default values for gas composition in all code, and strongly recommend others do so as well. 
+We use 'ms' as default values for gas composition in all code, and strongly recommend others do so as well. 
 
 Within each gas composition sub-directory are .csv files for each date of testing, formatted using the same naming system as the raw gas files: %m_%d.csv. 
 

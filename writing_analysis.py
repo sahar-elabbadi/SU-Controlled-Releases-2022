@@ -57,7 +57,7 @@ def print_overpass_info(release):
 
 def operator_releases_summary_stats(operator, strict_discard=False):
     """ Function for generating the data used in operator overview paragraphs of Results section"""
-
+    op_ab = abbreviate_op_name(operator)
     overpasses = load_overpass_summary(operator=operator, strict_discard=strict_discard, stage=1)
     print(f'{operator}: {len(overpasses)} flightlines reported to SU')
     fail_su_qc = overpasses.loc[overpasses.stanford_kept == False]
@@ -107,6 +107,7 @@ def operator_releases_summary_stats(operator, strict_discard=False):
     # Classify confusion matrix
     # For confusoin matrix, use only the ones that pass all QC
     # only apply this to the data that pass SU filtering
+
     true_positives, false_positives, true_negatives, false_negatives = classify_confusion_categories(pass_all_qc)
 
     # Were there any false positives?
@@ -131,7 +132,7 @@ def operator_releases_summary_stats(operator, strict_discard=False):
     # Find smallest plume that operator detected
     detected_non_zero = non_zero_overpasses.loc[non_zero_overpasses.operator_detected == True]
     min_detected = detected_non_zero.loc[detected_non_zero.release_rate_kgh.idxmin()][relevant_cols]
-    print(f'Smallest detected plume by {operator}:')
+    print(f'Smallest detected plume by {operator} (that passes ALL QC):')
     print_overpass_info(min_detected)
 
     # Smallest plume quantified by operator
@@ -227,6 +228,11 @@ def calc_residual(x, y, m, b):
     residual = y - y_fit
     return residual
 
+def calc_residual_percent(x, y, m, b):
+    y_fit = m * x + b
+    residual_percent = (y - y_fit) / y_fit * 100
+    return residual_percent
+
 def calc_error_absolute(expected, observed):
     return observed - expected
 
@@ -251,7 +257,7 @@ def calc_error_percent(expected, observed):
     else:
         return (observed - expected) / expected * 100
 
-def calculate_residuals_and_error(operator, stage, qc_status, strict_discard=False, time_ave=60, gas_comp_source='km'):
+def calculate_residuals_and_error(operator, stage, qc_status, strict_discard=False, time_ave=60, gas_comp_source='ms'):
     """ Calculate the measurement residuals for operator
     qc_status can be: 'pass_all', 'all_points', 'pass_operator'
     """
@@ -264,11 +270,23 @@ def calculate_residuals_and_error(operator, stage, qc_status, strict_discard=Fal
 
     # Select which QC we want
     if qc_status == 'pass_all':
-        qc_mask = (overpass_summary['stanford_kept'] == True) & (overpass_summary['operator_kept'] == True)
+        # Pass SU QC
+        # Pass operator QC
+        # Must be a non-zero release
+        # Operator quantification estimate must have been > 0
+
+        qc_mask = (overpass_summary['qc_summary'] == 'pass_all') & \
+                  (overpass_summary['non_zero_release'] == True) & \
+                  (overpass_summary['operator_quantification'] > 0)
     elif qc_status == 'pass_operator':
         qc_mask = (overpass_summary['operator_kept'] == True)
     elif qc_status == 'all_points':
         qc_mask = overpass_summary['operator_quantification'].notna() # generic mask to select all points in dataset
+
+    # Apply filter for Stage 3 data: remove points for which we gave the team's quantification estimates
+    # if phase_iii == 1, then we gave them this release in Phase III dataset
+    if stage == 3:
+        overpass_summary = overpass_summary[(overpass_summary.phase_iii == 0)]
 
     data = overpass_summary.loc[qc_mask].copy()
 
@@ -276,6 +294,7 @@ def calculate_residuals_and_error(operator, stage, qc_status, strict_discard=Fal
     data['meter_data'] = overpass_summary.release_rate_kgh
     data['operator_data'] = overpass_summary.operator_quantification
     data['qc'] = overpass_summary.qc_summary
+
 
     # Fit linear regression via least squares with numpy.polyfit
     # m is slope, intercept is b
@@ -286,6 +305,10 @@ def calculate_residuals_and_error(operator, stage, qc_status, strict_discard=Fal
                                   calc_residual(dataset['meter_data'],
                                                 dataset['operator_data'], m, b), axis=1)
 
+    data['residual_percent_error'] = data.apply(lambda dataset:
+                                                calc_residual_percent(dataset['meter_data'],
+                                                                      dataset['operator_data'], m, b), axis=1)
+
     data['quant_error_absolute'] = data.apply(lambda dataset:
                                               calc_error_absolute(dataset['meter_data'],
                                                                             dataset['operator_data']), axis=1)
@@ -295,9 +318,9 @@ def calculate_residuals_and_error(operator, stage, qc_status, strict_discard=Fal
 
     return data
 
-def determine_relevant_error_ranges(operator, stage, qc_status, strict_discard, time_ave=60, gas_comp_source='km'):
+def determine_relevant_error_ranges(operator, stage, qc_status, strict_discard, time_ave=60, gas_comp_source='ms'):
     """ Determine the relevant ranges """
-    op_stage = calculate_residuals_and_error(operator, stage, qc_status, strict_discard, time_ave=60, gas_comp_source='km')
+    op_stage = calculate_residuals_and_error(operator, stage, qc_status, strict_discard, time_ave=60, gas_comp_source='ms')
     max_residual = op_stage.residual.max()
     min_residual = op_stage.residual.min()
     max_error_percent = op_stage.quant_error_percent.max()
