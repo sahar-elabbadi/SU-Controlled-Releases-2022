@@ -106,6 +106,7 @@ def get_parity_data(operator, stage, error_type='95_CI', strict_discard=False, t
     save_parity_data['release_sigma'] = x_error
     save_parity_data['operator_report'] = y_data
     save_parity_data['operator_sigma'] = y_error
+    save_parity_data['phase_iii'] = operator_plot['phase_iii']
 
     # Save data description
     data_description = {
