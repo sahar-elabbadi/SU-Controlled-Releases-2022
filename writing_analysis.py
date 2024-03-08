@@ -170,6 +170,10 @@ def calc_parity_intersection(operator, stage, strict_discard=False):
     # Only consider non-zero releases
     overpasses = overpasses[overpasses.non_zero_release == True]
 
+    # Only consider points NOT given in Stage III
+    if stage == 3:
+        overpasses = overpasses[overpasses.phase_iii ==0].copy()
+
     # Operator quantification > 0
     overpasses = overpasses[overpasses.operator_quantification > 0]
 
