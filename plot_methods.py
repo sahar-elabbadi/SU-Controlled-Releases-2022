@@ -139,8 +139,21 @@ def make_parity_plot(data, data_description, ax, plot_lim='largest_kgh'):
     }
     ############ Data Preparation and Linear Regression ############
 
+    ## NEW CODE for Kairos
+    kairos_dictionary = {
+        'Kairos': 'Insight M',
+        'Kairos LS23': 'Insight M LS23',
+        'Kairos LS25': 'Insight M LS25',
+        'kairos': 'Insight M',
+    }
     # Load data description
-    operator = data_description['operator']
+    if data_description['operator'] in ['Kairos', 'Kairos LS23', 'Kairos LS25']:
+        operator = kairos_dictionary[data_description['operator']]
+    else:
+        operator = data_description['operator']
+
+    ## Old code I'm commenting out:
+    # operator = data_description['operator']
     stage = data_description['stage']
     time_ave = data_description['time_ave']
     gas_comp_source = data_description['gas_comp_source']
@@ -497,6 +510,17 @@ def plot_detection_limit(ax, operator, stage, n_bins, threshold, strict_discard=
     }
 
     stage_text = stage_description[stage]
+    ## NEW CODE for Kairos name change
+    kairos_dictionary = {
+        'Kairos': 'Insight M',
+        'Kairos LS23': 'Insight M LS23',
+        'Kairos LS25': 'Insight M LS25',
+        'kairos': 'Insight M',
+    }
+    # Fix operator name for text annotation
+    if operator in ['Kairos', 'Kairos LS23', 'Kairos LS25']:
+        operator = kairos_dictionary[operator]
+
     text = f'{operator}\n {stage_text}'
 
     ax.annotate(text, xy=(0.03, 0.89), xycoords='axes fraction', fontsize=13)
@@ -866,8 +890,25 @@ def plot_daily_releases(operator, stage, strict_discard=False, time_ave=60, gas_
             overpass_legend.items()]
         lgd = ax.legend(title='Overpass Key', handles=handles, bbox_to_anchor=(1.05, 1), loc='upper left')
 
+        op_ab = abbreviate_op_name(operator) # move this up to get abbreviation before making adjustments for Kairos name change
+
+        ## NEW CODE for Kairos name change
+        kairos_dictionary = {
+            'Kairos': 'Insight M',
+            'Kairos LS23': 'Insight M LS23',
+            'Kairos LS25': 'Insight M LS25',
+            'kairos': 'Insight M',
+        }
+
+        # Fix operator name for text annotation
+        if operator in ['Kairos', 'Kairos LS23', 'Kairos LS25']:
+            op_title_name = kairos_dictionary[operator]
+        else:
+            op_title_name = operator
+
         # Title
-        plt.title(f'{test_month} {test_date}: {operator} Release Rates and Overpasses')
+        plt.title(f'{test_month} {test_date}: {op_title_name} Release Rates and Overpasses')
+
 
         # Format axes
         ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
@@ -888,7 +929,6 @@ def plot_daily_releases(operator, stage, strict_discard=False, time_ave=60, gas_
             discard = 'lax'
 
         now = datetime.datetime.now()
-        op_ab = abbreviate_op_name(operator)
         save_time = now.strftime("%Y%m%d")
         fig_name = f'release_chart_{op_ab}_{day}_{discard}_{save_time}'
         fig_path = pathlib.PurePath('04_figures', 'release_rates', fig_name)
@@ -1380,6 +1420,17 @@ def plot_residuals(ax, above_mdl, x_lim, y_lim, operator, stage, qc_status, stri
 
     stage_text = stage_description[stage]
 
+    ## NEW CODE for Kairos name change
+    kairos_dictionary = {
+        'Kairos': 'Insight M',
+        'Kairos LS23': 'Insight M LS23',
+        'Kairos LS25': 'Insight M LS25',
+        'kairos': 'Insight M',
+    }
+    # Fix operator name for text annotation
+    if operator in ['Kairos', 'Kairos LS23', 'Kairos LS25']:
+        operator = kairos_dictionary[operator]
+
     text = f'{operator}\n {stage_text}\n (n={len(y_data)})'
     ob = offsetbox.AnchoredText(text, loc='upper left')
     ob.set(alpha=0.8)
@@ -1421,8 +1472,19 @@ def plot_residual_percent_error(ax, above_mdl, x_lim, y_lim, operator, stage, qc
 
     stage_text = stage_description[stage]
 
+    ## NEW CODE for Kairos name change
+    kairos_dictionary = {
+        'Kairos': 'Insight M',
+        'Kairos LS23': 'Insight M LS23',
+        'Kairos LS25': 'Insight M LS25',
+        'kairos': 'Insight M',
+    }
+    # Fix operator name for text annotation
+    if operator in ['Kairos', 'Kairos LS23', 'Kairos LS25']:
+        operator = kairos_dictionary[operator]
+
     text = f'{operator}\n {stage_text}\n (n={len(y_data)})'
-    ob = offsetbox.AnchoredText(text, loc='upper left')
+    ob = offsetbox.AnchoredText(text, loc='upper right')
     ob.set(alpha=0.8)
     ax.add_artist(ob)
     ax.set_aspect('auto')
@@ -1454,6 +1516,17 @@ def plot_quant_error_absolute(ax, above_mdl, x_lim, y_lim, operator, stage, qc_s
         2: 'Unblinded wind',
         3: f'Partially unblinded',
     }
+
+    ## NEW CODE for Kairos name change
+    kairos_dictionary = {
+        'Kairos': 'Insight M',
+        'Kairos LS23': 'Insight M LS23',
+        'Kairos LS25': 'Insight M LS25',
+        'kairos': 'Insight M',
+    }
+    # Fix operator name for text annotation
+    if operator in ['Kairos', 'Kairos LS23', 'Kairos LS25']:
+        operator = kairos_dictionary[operator]
 
     stage_text = stage_description[stage]
 
@@ -1488,6 +1561,17 @@ def plot_quant_error_percent(ax, above_mdl, x_lim, y_lim, operator, stage, qc_st
     }
 
     stage_text = stage_description[stage]
+
+    ## NEW CODE for Kairos name change
+    kairos_dictionary = {
+        'Kairos': 'Insight M',
+        'Kairos LS23': 'Insight M LS23',
+        'Kairos LS25': 'Insight M LS25',
+        'kairos': 'Insight M',
+    }
+    # Fix operator name for text annotation
+    if operator in ['Kairos', 'Kairos LS23', 'Kairos LS25']:
+        operator = kairos_dictionary[operator]
 
     text = f'{operator}\n {stage_text}\n (n={len(y_data)})'
     ob = offsetbox.AnchoredText(text, loc='upper right')
